@@ -1,0 +1,60 @@
+#!/home/kr/src/lx/lxi
+
+# This is a sample LX file
+
+def a ():
+    (m) 5
+
+def b ():
+    (n) a
+
+def x (b .n)
+
+def y (x .m)
+
+y :wait :
+  fn (x):
+    pr "should be next-to-last"
+    y :wait (fn (x) (pr "should be last"))
+
+
+def x 7
+
+pr x# this is a comment
+def x ():
+    (run p1 p2):
+        pr p1
+        pr p2
+x .run 9 5
+pr "about to print '(x y)"
+pr '(x
+     y)
+x :: 3
+pr "about to print x, which should equal 3"
+pr x
+if x :
+    begin :
+        pr x
+
+  # weird comment in the middle
+        pr "hello, world"
+def (f x):
+    pr x
+pr (8 - 3)
+pr (8 :- 3)
+fn (x) (* x x)
+
+def o ():
+    (run) "yess"
+
+pr (o)
+
+pr ("pi is %f" % π)
+
+def d (make-dict)
+
+d :put! "hi" 42
+
+pr (d :get "hi")
+d :delete! "hi"
+pr (d :get "hi")

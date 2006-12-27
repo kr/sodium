@@ -1,0 +1,24 @@
+#!/home/kr/src/lx/lxi
+
+# Test eventual sends
+
+def a ():
+    (m) 5
+    (q) (pr "should be second")
+
+def b ():
+    (n) a
+
+a .q
+
+def x (b .n)
+
+def y (x .m)
+
+y :wait :
+  fn (x):
+    y :wait (fn (x) (pr "should be last"))
+    pr x
+    pr "should be next-to-last"
+
+pr "should be first"

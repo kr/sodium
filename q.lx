@@ -1,0 +1,9 @@
+#!/home/kr/src/lx/lxi
+
+def q (make-queue)
+
+q 3
+q 4
+q 5
+
+q :consume! pr

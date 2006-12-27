@@ -1,0 +1,17 @@
+#!/home/kr/src/lx/lxi
+
+def d (make-array 5)
+
+d :put! 0 42
+pr (d :get 0)
+
+d :put! 0 "what"
+pr (d :get 0)
+
+d :put! 4 "last"
+pr (d :get 4)
+
+#d :put! 5 "out of bounds"
+#pr (d :get 5)
+
+pr d

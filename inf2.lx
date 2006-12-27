@@ -1,0 +1,11 @@
+def n 0
+
+def (report):
+    pr ("reached depth %d" % n)
+
+def (count):
+    n :: (n + 1)
+    count
+
+report .run
+count

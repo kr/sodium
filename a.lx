@@ -1,0 +1,7 @@
+
+def (f x) :
+    pr x
+    pr x
+    x + 1
+
+pr (f 5)

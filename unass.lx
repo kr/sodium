@@ -1,0 +1,5 @@
+def (f):
+    pr x
+    def x 3
+
+f

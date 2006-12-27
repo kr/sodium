@@ -1,0 +1,12 @@
+[+] garbage collect strings
+[+] garbage collect vectors
+[ ] Make input "x:y" or "x.y" lex as 2 tokens
+[ ] (x y z) :: 3-list
+[ ] redesign punctuation messages
+[ ] square brackets for super-shorthand lambda exprs
+[ ] overloading by number of args
+[ ] var args
+[ ] modules
+[ ] bootstrap
+[+] generalized array notation output: (a . b . c . d)
+[ ] generalized array notation input: '(a . b . c . d)

@@ -1,0 +1,22 @@
+#!/usr/bin/env python2.4
+
+import sys
+import pair
+import reader
+import lx
+
+def read_file(n):
+    return reader.read(open(n).read())
+
+if len(sys.argv) < 2:
+    print 'please give me a flie'
+    sys.exit()
+
+infile = sys.argv[1]
+outfile = infile + 'c'
+
+exps = read_file(sys.argv[1])
+exp = pair.cons(lx.begin_s, exps)
+
+code = lx.compile(exp, lx.S('val'), lx.S('next'), pair.nil)
+code.assemble(open(outfile, 'w'))

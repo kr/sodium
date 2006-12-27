@@ -1,0 +1,182 @@
+LOAD_ADDR val (0, obj-table, 5)
+ADDR (0, obj-table, 5)
+MAKE_COMPILED_OBJ
+GOTO_LABEL (2, after-obj, 15)
+ADDR (2, after-obj, 15)
+DATUM 1
+DATUM m
+ADDR (1, method-entry, 8)
+COMPILED_OBJ_ENV
+LOAD_IMM
+DATUM ()
+EXTEND_ENVIRONMENT
+LOAD_IMM
+DATUM 5
+GOTO_REG
+DEFINE
+DATUM a
+LOAD_IMM
+DATUM ok
+LOAD_ADDR val (3, obj-table2, 24)
+ADDR (3, obj-table2, 24)
+MAKE_COMPILED_OBJ
+GOTO_LABEL (5, after-obj2, 34)
+ADDR (5, after-obj2, 34)
+DATUM 1
+DATUM n
+ADDR (4, method-entry2, 27)
+COMPILED_OBJ_ENV
+LOAD_IMM
+DATUM ()
+EXTEND_ENVIRONMENT
+LOOKUP
+DATUM a
+GOTO_REG
+DEFINE
+DATUM b
+LOAD_IMM
+DATUM ok
+PUSH
+LOOKUP
+DATUM send
+LOAD_IMM
+DATUM n
+LIST
+LOOKUP
+DATUM b
+CONS
+BPRIM proc (7, primitive-branch, 54)
+ADDR (7, primitive-branch, 54)
+LOAD_ADDR continue (8, after-call, 57)
+ADDR (8, after-call, 57)
+COMPILED_OBJECT_METHOD
+DATUM run
+GOTO_REG
+LOAD_IMM
+DATUM run
+APPLY_PRIMITIVE_PROC
+POP
+DEFINE
+DATUM x
+LOAD_IMM
+DATUM ok
+PUSH
+LOOKUP
+DATUM send
+LOAD_IMM
+DATUM m
+LIST
+LOOKUP
+DATUM x
+CONS
+BPRIM proc (10, primitive-branch2, 78)
+ADDR (10, primitive-branch2, 78)
+LOAD_ADDR continue (11, after-call2, 81)
+ADDR (11, after-call2, 81)
+COMPILED_OBJECT_METHOD
+DATUM run
+GOTO_REG
+LOAD_IMM
+DATUM run
+APPLY_PRIMITIVE_PROC
+POP
+DEFINE
+DATUM y
+LOAD_IMM
+DATUM ok
+LOOKUP
+DATUM y
+LOAD_ADDR val (12, obj-table3, 93)
+ADDR (12, obj-table3, 93)
+MAKE_COMPILED_OBJ
+GOTO_LABEL (26, after-obj3, 155)
+ADDR (26, after-obj3, 155)
+DATUM 1
+DATUM run
+ADDR (13, method-entry3, 96)
+COMPILED_OBJ_ENV
+LOAD_IMM
+DATUM (x)
+EXTEND_ENVIRONMENT
+PUSH
+LOOKUP
+DATUM y
+LOAD_ADDR val (14, obj-table4, 108)
+ADDR (14, obj-table4, 108)
+MAKE_COMPILED_OBJ
+GOTO_LABEL (19, after-obj4, 129)
+ADDR (19, after-obj4, 129)
+DATUM 1
+DATUM run
+ADDR (15, method-entry4, 111)
+COMPILED_OBJ_ENV
+LOAD_IMM
+DATUM (x)
+EXTEND_ENVIRONMENT
+LOOKUP
+DATUM pr
+LOAD_IMM
+DATUM should be last
+LIST
+BPRIM proc (17, primitive-branch3, 125)
+ADDR (17, primitive-branch3, 125)
+COMPILED_OBJECT_METHOD
+DATUM run
+GOTO_REG
+LOAD_IMM
+DATUM run
+APPLY_PRIMITIVE_PROC
+GOTO_REG
+LIST
+BPRIM proc (21, primitive-branch4, 137)
+ADDR (21, primitive-branch4, 137)
+LOAD_ADDR continue (22, after-call4, 140)
+ADDR (22, after-call4, 140)
+COMPILED_OBJECT_METHOD
+DATUM wait
+GOTO_REG
+LOAD_IMM
+DATUM wait
+APPLY_PRIMITIVE_PROC
+POP
+LOOKUP
+DATUM pr
+LOAD_IMM
+DATUM should be next-to-last
+LIST
+BPRIM proc (24, primitive-branch5, 151)
+ADDR (24, primitive-branch5, 151)
+COMPILED_OBJECT_METHOD
+DATUM run
+GOTO_REG
+LOAD_IMM
+DATUM run
+APPLY_PRIMITIVE_PROC
+GOTO_REG
+LIST
+BPRIM proc (28, primitive-branch6, 163)
+ADDR (28, primitive-branch6, 163)
+LOAD_ADDR continue (29, after-call6, 166)
+ADDR (29, after-call6, 166)
+COMPILED_OBJECT_METHOD
+DATUM wait
+GOTO_REG
+LOAD_IMM
+DATUM wait
+APPLY_PRIMITIVE_PROC
+LOOKUP
+DATUM pr
+LOAD_IMM
+DATUM should be first
+LIST
+BPRIM proc (31, primitive-branch7, 178)
+ADDR (31, primitive-branch7, 178)
+LOAD_ADDR continue (32, after-call7, 181)
+ADDR (32, after-call7, 181)
+COMPILED_OBJECT_METHOD
+DATUM run
+GOTO_REG
+LOAD_IMM
+DATUM run
+APPLY_PRIMITIVE_PROC
+QUIT

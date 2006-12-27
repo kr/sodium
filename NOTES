@@ -1,0 +1,116 @@
+These notes are from 2006-09-13 around 7 p.m.
+
+Lisp:
+    (f x y)
+
+
+Smalltalk:
+    o m: x n: y
+
+
+LX:
+    (o.m x y) === (o .m x y)
+    (o:m x y) === (o :m x y)
+    (x := a)
+    (x y := a b)
+    '(...)
+
+    (f x y) => (f.run x y)
+    (a + b) => (a.run + b) =[a.run]=> (+ a b)
+
+    expr : atom
+         | list
+
+    list : '(' expr+ ')'
+         | '(' atom+ ':=' expr+ ')'
+
+    atom : NAME
+         | INT
+         | DEC
+
+special methods:
+    run
+
+New notes, revised on 2006-09-21 around 8:30 p.m.
+
+Lisp:
+    (f x y)
+
+
+Smalltalk:
+    o m: x n: y
+
+
+LX:
+    (o .m x y)
+    (o :m x y)
+    (x :: a)
+    # not yet # (x y :: a b)
+    '(...)
+
+    (f x y) => (f :run x y)
+    (a + b) => (a :run + b) =[a :run]=> (+ a b)
+
+    expr : atom
+         | list
+
+    list : '(' expr+ ')'
+         | '(' atom+ '::' expr+ ')'
+
+    atom : NAME
+         | INT
+         | DEC
+
+special methods:
+    run
+
+
+New notes, revised on 2006-10-02 around 6:30 p.m.
+
+LX:
+    perhaps soon restore
+    (o.m x y) === (o .m x y)
+    (o:m x y) === (o :m x y)
+
+    soon
+    ((x y) :: (list a b))
+
+    (a + b) => (a :+ b)
+
+New notes, added on 2006-11-19 around 10:10 p.m.
+
+LX shorthand notation:
+    (x :m :n a) === ((x :m) :n a) ???
+    (x :m a :n b) === ((x :m a) :n a) ???
+
+Support overloading by number of args as in E:
+    def queue ():
+        (run x):
+            # push item x onto the back
+        (run):
+            # pull an item from the front
+
+These methods would be known as run:1 and run:0, similarly to E's convention.
+
+Also allow variable arg lists as in Scheme:
+    def o ():
+        (run x . args):
+            # do something cool
+
+But maybe don't allow the programmer to mix the two (that seems hard)
+
+Use overloading of the run:n methods to give the following api:
+
+    def q (queue :make)
+    q 42
+    print (q)
+
+    def a (array :make 3)
+    a 0 "a"
+    a 1 "b"
+    a 2 "c"
+    print (a 0) (a 1) (a 2)
+
+    def h (hash-table :make)
+    h "foo" 42
+    print (h "foo")

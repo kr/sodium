@@ -1,0 +1,95 @@
+# This is the standard prelude for LX.
+
+def π 3.14159
+
+def (make-queue):
+    def front '()
+    def rear '()
+    def queue ():
+        (empty?):
+            is? front '()
+        (front):
+            if (queue :empty?) (error "front called on an empty queue")
+            front :car
+        (run item):
+            def new (cons item '())
+            if (queue :empty?):
+                begin :
+                    front :: new
+                    rear :: new
+                begin :
+                    rear :set-cdr! new
+                    rear :: new
+            queue .
+        (remove!):
+            def item (queue :front)
+            queue :delete!
+            item .
+        (delete!):
+            if (queue :empty?) (error "delete! called on an empty queue")
+            front :: (front :cdr)
+            queue .
+        (consume! f):
+            if (queue :empty?):
+                'ok .
+                begin :
+                    f (queue :remove!)
+                    queue :consume! f
+    queue .
+
+def (make-promise):
+    def resolved '()
+    def value '()
+    def queue (make-queue)
+
+    def promise ():
+        (wait f):
+            if resolved :
+                f .run value
+                queue f
+
+        (send msg args):
+            def pp '()
+            def p '()
+            def s '()
+            if resolved :
+                send value msg args
+                begin :
+                    pp :: (make-promise)
+                    p :: (pp :car)
+                    s :: (pp :cdr)
+                    queue : #[((send x msg args) :wait [(s x)])]
+                        fn (x) :
+                            (send x msg args) :wait (fn (y) (s y))
+                    p .
+
+    def (sink val):
+        if resolved (error "sink given a value but promise is already resolved")
+        resolved :: 1
+        value :: val
+        queue :consume! (fn (x) (x .run val))
+        #queue :consume! [(x .run val)]
+        queue :: '()
+
+    cons promise sink
+
+def (make-task rcv message args):
+    def p (make-promise)
+    def promise (p :car)
+    def sink (p :cdr)
+
+    def (resolve):
+        sink (call rcv message args)
+
+    cons promise resolve
+
+def (send rcv msg args):
+    def task '()
+    if (inspector :has-method? rcv 'send):
+        rcv :send msg args
+        begin :
+            task :: (make-task rcv msg args)
+            *tasks* (task :cdr)
+            task :car
+
+def *tasks* (make-queue)
