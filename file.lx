@@ -1,0 +1,9 @@
+
+
+def f (open "NOTES")
+
+pr f
+
+def s (f :read)
+
+pr s

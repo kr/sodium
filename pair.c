@@ -4,6 +4,7 @@
 #include "pair.h"
 #include "vm.h"
 #include "obj.h"
+#include "prim.h"
 #include "config.h"
 
 struct pair *busy_pairs, *free_pairs;
@@ -27,14 +28,14 @@ init_mem(void)
     free_index = 0;
 }
 
-#define BROKEN_HEART ((uint) 0xffffffff)
-
 #define CLIP_LEN(l) ((l)&0x00ffffff)
 #define OBJ_INFO(t,l) (((t)<<24)|CLIP_LEN(l))
 #define OBJ_TYPE(i) ((i) >> 24)
 #define OBJ_TYPE_ARRAY 0x01
 #define OBJ_TYPE_STRING 0x02
-#define ARRAY_LEN(i) ((i) & 0x00ffffff)
+#define OBJ_TYPE_BLANK 0x03
+#define OBJ_TYPE_BROKEN_HEART 0xff
+#define OBJ_LEN(i) ((i) & 0x00ffffff)
 
 inline pair
 relocate(pair p)
@@ -48,11 +49,12 @@ relocate(pair p)
     if (is_compiled_obj) p = obj2pair(p);
 
 #if GC_DEBUG_BH
-    if (p->info == BROKEN_HEART) printf("found broken heart %p -> %p\n", p,
-            car(p));
+    if (OBJ_TYPE(p->info) == OBJ_TYPE_BROKEN_HEART) {
+        printf("found broken heart %p -> %p\n", p, car(p));
+    }
 #endif
 
-    if (p->info == BROKEN_HEART) return car(p);
+    if (OBJ_TYPE(p->info) == OBJ_TYPE_BROKEN_HEART) return car(p);
 
 #if GC_DEBUG
     printf("relocating pair at %p\n", p);
@@ -68,7 +70,7 @@ relocate(pair p)
     //    case OBJ_TYPE_ARRAY:
             np = &free_pairs[free_index++];
             np->info = p->info;
-            for (p->info = ARRAY_LEN(p->info); p->info--;) {
+            for (p->info = OBJ_LEN(p->info); p->info--;) {
                 np->datums[p->info] = p->datums[p->info];
                 ++free_index;
             }
@@ -94,13 +96,13 @@ relocate(pair p)
     }
 #endif
 
-    p->info = BROKEN_HEART;
+    p->info = OBJ_INFO(OBJ_TYPE_BROKEN_HEART, OBJ_LEN(p->info));
     car(p) = is_compiled_obj ? pair2obj(np) : np;
     return car(p);
 }
 
 static datum
-gc(int alen, datum x, datum y, int slen)
+gc(int alen, datum x, datum y, int slen, int blen)
 {
     int i, live = 0;
     pair np;
@@ -126,15 +128,29 @@ gc(int alen, datum x, datum y, int slen)
         ++live;
         switch (OBJ_TYPE(np->info)) {
             case OBJ_TYPE_ARRAY:
-                for (i = ARRAY_LEN(np->info); i--;) {
+                for (i = OBJ_LEN(np->info); i--;) {
                     np->datums[i] = relocate(np->datums[i]);
                     ++scan_index;
                 }
                 break;
             case OBJ_TYPE_STRING:
-                scan_index += ARRAY_LEN(np->info);
+                scan_index += OBJ_LEN(np->info);
                 break;
         }
+    }
+
+    for (scan_index = 0; scan_index < MAX_PAIRS;) {
+        np = &busy_pairs[scan_index++];
+        switch (OBJ_TYPE(np->info)) {
+            case OBJ_TYPE_BLANK:
+                {
+                    prim dispatcher = (prim) car(np);
+                    dispatcher(np, destroy_sym, nil);
+                }
+                /*((prim) car(np))(np, destroy_sym, nil);*/
+                break;
+        }
+        scan_index += OBJ_LEN(np->info);
     }
 
     free(busy_pairs);
@@ -148,6 +164,7 @@ gc(int alen, datum x, datum y, int slen)
 #endif /*GC_STATS*/
     if (alen > -1) return make_array(alen);
     if (slen > -1) return make_string(slen);
+    if (blen > -1) return make_blank(blen);
     return cons(x, y);
 }
 
@@ -156,7 +173,7 @@ cons(datum x, datum y)
 {
     pair p;
 
-    if ((free_index + 3) >= MAX_PAIRS) return gc(-1, x, y, -1);
+    if ((free_index + 3) >= MAX_PAIRS) return gc(-1, x, y, -1, -1);
     p = &busy_pairs[free_index++];
     p->info = OBJ_INFO(OBJ_TYPE_ARRAY, 2);
     car(p) = x;
@@ -172,7 +189,7 @@ make_array(uint len)
 
     if (len < 1) return nil;
     if (len != CLIP_LEN(len)) die("make_array -- too big");
-    if ((free_index + (len + 1)) >= MAX_PAIRS) return gc(len, nil, nil, -1);
+    if ((free_index + (len + 1)) >= MAX_PAIRS) return gc(len, nil, nil, -1, -1);
     p = &busy_pairs[free_index++];
     p->info = OBJ_INFO(OBJ_TYPE_ARRAY, len);
     free_index += len;
@@ -190,11 +207,24 @@ make_string(uint len)
 
     words = max(len / 4 + ((len % 4) ? 1 : 0), 1);
 
-    if ((free_index + (words + 1)) >= MAX_PAIRS) return gc(-1, nil, nil, len);
+    if ((free_index + (words + 1)) >= MAX_PAIRS) return gc(-1, nil, nil, len, -1);
 
     p = &busy_pairs[free_index++];
     p->info = OBJ_INFO(OBJ_TYPE_STRING, words);
     free_index += words;
+    return p;
+}
+
+datum
+make_blank(uint len)
+{
+    pair p;
+
+    if ((free_index + (len + 1)) >= MAX_PAIRS) return gc(-1, nil, nil, -1, len);
+
+    p = &busy_pairs[free_index++];
+    p->info = OBJ_INFO(OBJ_TYPE_BLANK, len);
+    free_index += len;
     return p;
 }
 
@@ -226,7 +256,7 @@ datum
 array_get(datum arr, uint index)
 {
     pair p = datum2pair(arr);;
-    if (index >= ARRAY_LEN(p->info)) die("array_get -- index out of bounds");
+    if (index >= OBJ_LEN(p->info)) die("array_get -- index out of bounds");
     return acc(arr, index);
 }
 
@@ -234,7 +264,7 @@ void
 array_put(datum arr, uint index, datum val)
 {
     pair p = datum2pair(arr);;
-    if (index >= ARRAY_LEN(p->info)) die("array_put -- index out of bounds");
+    if (index >= OBJ_LEN(p->info)) die("array_put -- index out of bounds");
     acc(arr, index) = val;
 }
 
@@ -242,7 +272,7 @@ uint
 array_len(datum arr)
 {
     pair p = datum2pair(arr);;
-    return ARRAY_LEN(p->info);
+    return OBJ_LEN(p->info);
 }
 
 int
@@ -257,4 +287,11 @@ string_tag_matches(datum arr)
 {
     pair p = (pair) arr;;
     return OBJ_TYPE(p->info) == OBJ_TYPE_STRING;
+}
+
+int
+blank_tag_matches(datum arr)
+{
+    pair p = (pair) arr;;
+    return OBJ_TYPE(p->info) == OBJ_TYPE_BLANK;
 }

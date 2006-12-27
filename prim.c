@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string.h>
+#include <sys/stat.h>
 #include "gen.h"
 #include "prim.h"
 #include "obj.h"
@@ -15,6 +16,7 @@ static prim prims[MAX_PRIMS] = {
     prim_pr,
     prim_error,
     prim_call,
+    prim_open,
     prim_inspector,
 };
 
@@ -27,6 +29,7 @@ static char *prim_names[MAX_PRIMS] = {
     "pr",
     "error",
     "call",
+    "open",
     "inspector",
 };
 
@@ -70,6 +73,8 @@ apply_primitive_proc(datum proc, datum message, datum argl)
         p = prim_sym;
     } else if (addrp(proc)) {
         die("addresses bomb out");
+    } else if (blankp(proc)) {
+        p = (prim) car(proc);
     } else {
         die1("apply_primitive_proc -- unknown object", proc);
     }
@@ -218,6 +223,43 @@ prim_sym(datum rcv, datum message, datum args)
     return die1("prim_sym -- unknown message", message);
 }
 
+static size_t
+fsize(FILE *f)
+{
+    int r;
+    struct stat sbuf;
+
+    r = fstat(fileno(f), &sbuf);
+    if (r) die("fsize -- cannot stat");
+    return sbuf.st_size;
+}
+
+datum
+prim_file(datum rcv, datum msg, datum args)
+{
+    uint r, len;
+    datum str;
+    FILE *f = cdr(rcv);
+    char *s;
+
+    if (msg == read_sym) {
+        len = fsize(f);
+        str = make_string(len);
+        for (s = string_contents(str); len; len -= r) {
+            r = fread(s, sizeof(char), len, f);
+            s += r;
+        }
+        return str;
+    } else if (msg == destroy_sym) {
+        fclose(f);
+        cdr(rcv) = nil;
+        return ok_sym;
+    }
+    return die1("prim_file -- unknown message", msg);
+}
+
+/* global functions */
+
 datum
 prim_isp(datum proc, datum message, datum args)
 {
@@ -297,6 +339,8 @@ prx(datum d)
         printf("<addr %p>", d);
     } else if (!d) {
         printf("()");
+    } else if (blankp(d)) {
+        printf("<blank>");
     } else {
         printf("<unknown-object>");
     }
@@ -334,6 +378,15 @@ prim_call(datum proc, datum m, datum args)
     msg = cadr(args);
     argl = caddr(args);
     return call(rcv, msg, argl);
+}
+
+datum
+prim_open(datum rcv, datum msg, datum args)
+{
+    datum d = make_blank(2);
+    car(d) = prim_file;
+    cdr(d) = fopen(string_contents(car(args)), "r");
+    return d;
 }
 
 datum

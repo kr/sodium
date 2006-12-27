@@ -14,6 +14,7 @@ datum cons(datum x, datum y);
 datum make_array(uint len);
 datum make_string(uint len);
 datum make_string_init(const char *s);
+datum make_blank(uint len);
 
 datum array_get(datum arr, uint index);
 void array_put(datum arr, uint index, datum val);
@@ -46,6 +47,7 @@ void init_mem(void);
 
 int array_tag_matches(datum arr);
 int string_tag_matches(datum str);
+int blank_tag_matches(datum str);
 
 /*bool*/
 #define pairp(x) (in_pair_range(x) && \
@@ -55,6 +57,10 @@ int string_tag_matches(datum str);
 #define stringp(x) (in_pair_range(x) && \
                     pair_sig_matches(x) && \
                     string_tag_matches(x))
+
+#define blankp(x) (in_pair_range(x) && \
+                    pair_sig_matches(x) && \
+                    blank_tag_matches(x))
 
 #define nil ((pair)0)
 

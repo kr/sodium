@@ -30,7 +30,7 @@ int instr_sets = 0;
 
 datum equals_sym, minus_sym, plus_sym, percent_sym, run_sym, ok_sym,
       set_cdr_sym, car_sym, cdr_sym, emptyp_sym, remove_sym,
-      has_methodp_sym, get_sym, put_sym;
+      has_methodp_sym, get_sym, put_sym, destroy_sym, read_sym;
 
 #if VM_DEBUG > 0
 static char *instr_names[32] = {
@@ -590,6 +590,8 @@ main(int argc, char **argv)
     has_methodp_sym = intern("has-method?");
     get_sym = intern("get");
     put_sym = intern("put!");
+    destroy_sym = intern("destroy!");
+    read_sym = intern("read");
 
     setup_global_env(genv);
     regs[R_ENV] = genv;
