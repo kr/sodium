@@ -25,8 +25,12 @@ char *string_contents(datum str);
 // int /*bool*/ pairp(datum x);
 #define car(x) (((pair) (x))->datums[0])
 #define cdr(x) (((pair) (x))->datums[1])
+#define caar(x) car(car(x))
 #define cadr(x) car(cdr(x))
+#define cdar(x) cdr(car(x))
 #define caddr(x) car(cdr(cdr(x)))
+#define caaddr(x) car(car(cdr(cdr(x))))
+#define cdaddr(x) cdr(car(cdr(cdr(x))))
 
 #define MAX_PAIRS 1024
 

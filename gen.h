@@ -21,4 +21,7 @@ datum die1(const char *m, datum d);
 
 #define assert(b) ((b) ? 0 : die("b failed"))
 
+datum memq(datum obj, datum alist);
+datum assq(datum obj, datum alist);
+
 #endif /*GEN_H*/

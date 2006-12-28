@@ -50,10 +50,17 @@ prim_funcp(datum x)
            (((prim *)x) < &prims[MAX_PRIMS]);
 }
 
+static datum
+prim_dummy(datum rcv, datum msg, datum args)
+{
+    die("prim_dummy -- can't happen");
+    return nil;
+}
+
 datum
 apply_primitive_proc(datum proc, datum message, datum argl)
 {
-    prim p;
+    prim p = prim_dummy;
     if (!symbolp(message)) {
         die1("apply_primitive_proc -- not a symbol", message);
     }
@@ -91,6 +98,8 @@ prim_int(datum rcv, datum message, datum args)
         return int2datum(datum2int(rcv) - datum2int(car(args)));
     if (message == plus_sym)
         return int2datum(datum2int(rcv) + datum2int(car(args)));
+    if (message == percent_sym)
+        return int2datum(datum2int(rcv) % datum2int(car(args)));
     die1("prim_int -- unknown message", message);
     return nil;
 }
@@ -142,7 +151,7 @@ prim_str(datum rcv, datum message, datum args)
 
     if (message == percent_sym) {
         /* first, find a upper bound on the string size */
-        n = 1;
+        n = 1; /* one for the null terminator */
         for (f = fmt; *f; f++) {
             if (*f != '%') { n++; continue; }
             switch (*++f) {
@@ -157,6 +166,7 @@ prim_str(datum rcv, datum message, datum args)
                     n += 20;
                     break;
                 case 'r': /* repr */
+                    car(ar) = make_string_init("$$$");
                     /* fall through */
                 case 'p': /* pretty */
                     car(ar) = make_string_init("###");
@@ -193,6 +203,7 @@ prim_str(datum rcv, datum message, datum args)
                     args = cdr(args);
                     break;
                 case 'r': /* repr */
+                    car(args) = make_string_init("$$$");
                     /* fall through */
                 case 'p': /* pretty */
                     car(args) = make_string_init("###");
@@ -208,6 +219,7 @@ prim_str(datum rcv, datum message, datum args)
                     die("prim_str -- unknown formatting code");
             }
         }
+        *s = '\0';
 
         return str;
     }
@@ -245,11 +257,12 @@ prim_file(datum rcv, datum msg, datum args)
     if (!f) die("prim_file -- this file is closed");
     if (msg == read_sym) {
         len = fsize(f);
-        str = make_string(len);
+        str = make_string(len + 1);
         for (s = string_contents(str); len; len -= r) {
             r = fread(s, sizeof(char), len, f);
             s += r;
         }
+        *s = '\0';
         return str;
     } else if (msg == write_sym) {
         if (args == nil) die("prim_file:write -- not enough args");
@@ -351,7 +364,7 @@ prx(datum d)
     } else if (blankp(d)) {
         printf("<blank>");
     } else {
-        printf("<unknown-object>");
+        printf("<unknown-object %p>", d);
     }
 }
 
@@ -392,14 +405,14 @@ prim_call(datum proc, datum m, datum args)
 datum
 prim_open(datum rcv, datum msg, datum args)
 {
-    char *mode = "r";
+    char *mode = "rb";
     datum d = make_blank(2);
 
     if (args == nil) die("prim_open -- not enough args");
     car(d) = prim_file;
     if (cdr(args) != nil) {
         if (cadr(args) == write_sym) {
-            mode = "w";
+            mode = "wb";
         } else if (cadr(args) != read_sym) {
             return die1("prim_open -- unknown mode", cadr(args));
         }

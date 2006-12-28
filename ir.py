@@ -18,6 +18,8 @@ all_readonly_regs = (
 all_regs = all_writable_regs + all_readonly_regs
 all_regs_dict = dict([(str(k),i) for i,k in enumerate(all_regs)])
 
+import_names = []
+
 # snarfed from lx.py
 def self_evaluatingp(exp):
     return isinstance(exp, Integer) or isinstance(exp, String) or isinstance(exp, Decimal)
@@ -74,6 +76,7 @@ class make_ir_seq:
         labels, self.statements = self.get_labels()
         the_labels = labels
         self.emit_magic(fd)
+        self.emit_import_names(fd)
         self.emit_datums(fd, datums)
         self.emit_labels(fd, labels)
         self.emit_instructions(fd, labels, datums)
@@ -84,9 +87,17 @@ class make_ir_seq:
         fd.write("\x89LX1\x0d\n\x1a\n")
 
     @staticmethod
+    def emit_import_names(fd):
+        fd.write(encode_int(len(import_names)))
+        for d in import_names:
+            fd.write(str(d))
+            fd.write('\0')
+
+    @staticmethod
     def emit_datums(fd, datums):
         fd.write(encode_int(len(datums)))
-        for i, d in enumerate(datums):
+        #for i, d in enumerate(datums):
+        for d in datums:
             if symbolp(d):
                 fd.write('$')
                 fd.write(str(d))
@@ -282,8 +293,12 @@ def BPRIM(reg, label): return OP_RL(bprim_s, reg, label)
 
 load_imm_s = S('LOAD_IMM')
 make_array_s = S('MAKE_ARRAY')
+import_s = S('LOOKUP_MODULE')
 def LOAD_IMM(target_reg, val): return OP_RD(load_imm_s, target_reg, val)
 def MAKE_ARRAY(target_reg, len): return OP_RD(make_array_s, target_reg, len)
+def LOOKUP_MODULE(target_reg, name):
+    import_names.append(name)
+    return OP_RD(import_s, target_reg, name)
 
 # Three register instructions
 
@@ -357,6 +372,7 @@ all_ops = (
     lexical_lookup_s,
     lexical_setbang_s,
     extend_environment_s,
+    import_s,
 )
 all_ops_dict = dict([(k,i) for i,k in enumerate(all_ops)])
 

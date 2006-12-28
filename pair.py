@@ -84,7 +84,13 @@ class nilcons(cons):
         cls.__it__ = it = object.__new__(cls)
         return it
 
+    def __init__(self, ign1, ign2):
+        pass
+
     def nullp(self): return True
+
+    def car(self): raise 'nil has no car'
+    def cdr(self): raise 'nil has no cdr'
 
     def append(self, lst):
         return lst

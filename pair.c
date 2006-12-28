@@ -114,6 +114,9 @@ gc(int alen, datum x, datum y, int slen, int blen)
     stack = relocate(stack);
     tasks = relocate(tasks);
     genv = relocate(genv);
+    to_import = relocate(to_import);
+    to_start = relocate(to_start);
+    modules = relocate(modules);
     x = relocate(x);
     y = relocate(y);
     for (i = 0; i < REG_COUNT; ++i) {

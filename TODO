@@ -6,7 +6,7 @@
 [ ] square brackets for super-shorthand lambda exprs
 [ ] overloading by number of args
 [ ] var args
-[ ] modules
+[+] modules
 [ ] bootstrap
 [+] generalized array notation output: (a . b . c . d)
 [ ] generalized array notation input: '(a . b . c . d)

@@ -30,6 +30,7 @@
 #define OP_LEXICAL_LOOKUP 0x17
 #define OP_LEXICAL_SETBANG 0x18
 #define OP_EXTEND_ENVIRONMENT 0x19
+#define OP_LOOKUP_MODULE 0x1a
 
 #define REG_COUNT 10
 /*#define REG_COUNT 32*/
@@ -76,6 +77,7 @@ datum call(datum o, datum m, pair a);
 extern datum regs[REG_COUNT];
 extern pair stack;
 extern datum genv, tasks;
+extern datum to_import, to_start, modules;
 
 extern datum equals_sym, minus_sym, plus_sym, percent_sym, run_sym, ok_sym,
              set_cdr_sym, car_sym, cdr_sym, emptyp_sym, remove_sym,

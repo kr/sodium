@@ -2,6 +2,7 @@
 sources := vm.c pair.c obj.c gen.c prim.c st.c
 
 export CFLAGS := -g -pg -Wall -Werror
+#export CFLAGS := -O2 -Wall -Werror
 
 all: vm
 
@@ -15,7 +16,7 @@ all: vm
 vm: $(sources:.c=.o)
 
 clean:
-	rm -f vm *.o
+	rm -f vm *.o core
 
 distclean: clean
 	rm -f *.d *.pyc *.lxc

@@ -128,3 +128,13 @@ symbolp(datum d)
     return ((((uint) d) & BOX_MASK) == CHAR_STAR_TAG) && !compiled_objp(d);
 }
 
+const char *
+symbol2charstar(datum s)
+{
+    symbol sym;
+
+    if (!symbolp(s)) die1("symbol2charstar -- not a symbol", s);
+
+    sym = datum2symbol(s);
+    return sym->ent->chars;
+}

@@ -1,0 +1,14 @@
+def y (import c)
+
+y .run
+
+def df ():
+    (a):
+        pr "wheee d"
+        (import c)
+        (import d) :b
+
+    (b):
+        pr "alt d"
+
+df .

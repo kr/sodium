@@ -31,6 +31,7 @@ def make_method(parameters, body):
 quote_s = S('quote')
 set__s = S('set!')
 def_s = S('def')
+import_s = S('import')
 if_s = S('if')
 fn_s = S('fn')
 obj_s = S('obj')
@@ -42,6 +43,7 @@ def compile(exp, target, linkage, cenv):
     if variablep(exp): return compile_variable(exp, target, linkage, cenv)
     if tagged_list(exp, set__s): return compile_assignment(exp, target, linkage, cenv)
     if tagged_list(exp, def_s): return compile_definition(exp, target, linkage, cenv)
+    if tagged_list(exp, import_s): return compile_import(exp, target, linkage, cenv)
     if tagged_list(exp, if_s): return compile_if(exp, target, linkage, cenv)
     if tagged_list(exp, fn_s): return compile_obj(fn2obj(exp), target, linkage, cenv)
     if tagged_list(exp, obj_s): return compile_obj(exp, target, linkage, cenv)
@@ -99,6 +101,15 @@ def compile_definition(exp, target, linkage, cenv):
                     DEFINE(env_r, val_r, var),
                     LOAD_IMM(target, ok_s))))
 
+def compile_import(exp, target, linkage, cenv):
+    name = import_name(exp)
+    return end_with_linkage(linkage,
+            make_ir_seq((), (target),
+                LOOKUP_MODULE(target, name)))
+
+def import_name(exp):
+    return exp.cadr()
+
 continue_r = S('continue')
 def compile_if(exp, target, linkage, cenv):
     t_branch = make_label('true-branch')
@@ -120,6 +131,7 @@ def compile_if(exp, target, linkage, cenv):
                 after_if))
 
 def compile_sequence(seq, target, linkage, cenv):
+    if seq.nullp(): raise "value of null sequence is undefined"
     if seq.cdr().nullp(): return compile(seq.car(), target, linkage, cenv)
     return preserving((env_r, continue_r),
         compile(seq.car(), target, next_s, cenv),

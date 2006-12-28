@@ -9,13 +9,14 @@
 #include "obj.h"
 #include "prim.h"
 #include "st.h"
+#include "config.h"
 
 #define MAGIC_LEN 8
 
 datum *static_datums = (datum *)0;
 size_t static_datums_cap = 0, static_datums_fill = 0, static_datums_base;
 
-uint *label_offsets = (uint *)0, *instrs = (uint *)0;
+uint *label_offsets = (uint *)0, *instrs = (uint *)0, *main_addr = (uint *) 0;
 size_t label_count = 0, instr_count = 0;
 
 uint quit_inst[1] = {0x30000000};
@@ -27,6 +28,9 @@ datum genv, tasks;
 #define MAX_INSTR_SETS 50
 uint *instr_bases[MAX_INSTR_SETS], *instr_ends[MAX_INSTR_SETS];
 int instr_sets = 0;
+
+datum to_import = nil, to_start = nil, modules = nil;
+int modules_available = 0;
 
 datum equals_sym, minus_sym, plus_sym, percent_sym, run_sym, ok_sym,
       set_cdr_sym, car_sym, cdr_sym, emptyp_sym, remove_sym,
@@ -55,12 +59,13 @@ static char *instr_names[32] = {
     "OP_MAKE_COMPILED_OBJ",
     "OP_COMPILED_OBJECT_METHOD",
     "OP_SETBANG",
-    "unused opcode",
+    "OP_MAKE_ARRAY",
     "OP_DEFINE",
     "OP_LOOKUP",
     "OP_LEXICAL_LOOKUP",
     "OP_LEXICAL_SETBANG",
     "OP_EXTEND_ENVIRONMENT",
+    "OP_LOOKUP_MODULE",
 };
 #endif
 
@@ -181,9 +186,21 @@ load_list(FILE *f)
 }
 
 void
+load_import_names(FILE *f, uint n)
+{
+    datum s;
+    for (; n; n--) {
+        s = load_symbol(f);
+        if (assq(s, modules)) continue;
+        if (memq(s, to_import)) continue;
+        to_import = cons(s, to_import);
+    }
+}
+
+void
 load_datums(FILE *f, uint n)
 {
-    datum d;
+    datum d = nil;
     char type;
     for (; n; n--) {
         type = readc(f);
@@ -230,39 +247,42 @@ check_magic(FILE *f)
 }
 
 void
-load_file(char *name)
+link(void)
 {
-    FILE *f;
+    register uint *pc;
+    uint di, li;
 
-    f = fopen(name, "rb");
-    if (!f) bail("cannot open file");
-
-    check_magic(f);
-    static_datums_cap += read_int(f);
-    static_datums_base = static_datums_fill;
-
-    static_datums = realloc(static_datums, static_datums_cap * sizeof(datum));
-    if (!static_datums) die("cannot allocate static_datums");
-
-    load_datums(f, static_datums_cap - static_datums_base);
-
-    label_count = read_int(f);
-    free(label_offsets);
-    label_offsets = malloc(label_count * sizeof(uint));
-    if (!label_offsets) die("cannot allocate label offsets");
-
-    load_labels(f, label_count);
-
-    instr_count = read_int(f);
-    /*free(instrs);*/
-    instrs = malloc(instr_count * sizeof(uint));
-    if (!instrs) die("cannot allocate instr offsets");
-    if (instr_sets >= MAX_INSTR_SETS) die("too many instruction sets");
-    instr_bases[instr_sets] = instrs;
-    instr_ends[instr_sets] = instrs + instr_count;
-    instr_sets++;
-
-    load_instrs(f, instr_count);
+    for (pc = &instrs[0]; pc < &instrs[instr_count]; ++pc) {
+        register uint inst = *pc;
+        switch (I_OP(inst)) {
+            case OP_COMPILED_OBJECT_METHOD:
+            case OP_SETBANG:
+            case OP_DEFINE:
+            case OP_LOOKUP:
+                di = I_RRD(inst);
+                di += static_datums_base;
+                if (di > 0x1ffff) die("too many datums");
+                *pc = (inst & 0xfffe0000) | di;
+                break;
+            case OP_LOAD_IMM:
+            case OP_MAKE_ARRAY:
+            case OP_LOOKUP_MODULE:
+                di = I_RD(inst);
+                di += static_datums_base;
+                if (di > 0x3fffff) die("too many datums");
+                *pc = (inst & 0xffc00000) | di;
+                break;
+            case OP_DATUM:
+                di = I_D(inst);
+                assert(di < static_datums_cap);
+                *pc = (uint) static_datums[di + static_datums_base];
+                break;
+            case OP_ADDR:
+                li = I_L(inst);
+                *pc = (uint) &instrs[label_offsets[li]];
+                break;
+        }
+    }
 }
 
 int
@@ -358,42 +378,14 @@ extend_environment(datum env, datum argl, datum formals)
     return cons(argl, env);
 }
 
-void
-link(void)
+datum
+lookup_module(datum name)
 {
-    register uint *pc;
-    uint di, li;
+    datum p = assq(name, modules);
+    if (!p) die1("lookup_module -- module not found", name);
 
-    for (pc = &instrs[0]; pc < &instrs[instr_count]; ++pc) {
-        register uint inst = *pc;
-        switch (I_OP(inst)) {
-            case OP_COMPILED_OBJECT_METHOD:
-            case OP_SETBANG:
-            case OP_DEFINE:
-            case OP_LOOKUP:
-                di = I_RRD(inst);
-                di += static_datums_base;
-                if (di > 0x1ffff) die("too many datums");
-                *pc = (inst & 0xfffe0000) | di;
-                break;
-            case OP_LOAD_IMM:
-            case OP_MAKE_ARRAY:
-                di = I_RD(inst);
-                di += static_datums_base;
-                if (di > 0x3fffff) die("too many datums");
-                *pc = (inst & 0xffc00000) | di;
-                break;
-            case OP_DATUM:
-                di = I_D(inst);
-                assert(di < static_datums_cap);
-                *pc = (uint) static_datums[di + static_datums_base];
-                break;
-            case OP_ADDR:
-                li = I_L(inst);
-                *pc = (uint) &instrs[label_offsets[li]];
-                break;
-        }
-    }
+    if (modules_available) return cadr(p);
+    return caaddr(p);
 }
 
 void
@@ -469,8 +461,12 @@ start(uint *start_addr)
             case OP_MAKE_ARRAY:
                 ra = I_R(inst);
                 di = I_RD(inst);
-                die("hi\n");
-                /*regs[ra] = static_datums[di];*/
+                die("OP_MAKE_ARRAY -- implement me");
+                break;
+            case OP_LOOKUP_MODULE:
+                ra = I_R(inst);
+                di = I_RD(inst);
+                regs[ra] = lookup_module(static_datums[di]);
                 break;
             case OP_CONS:
                 ra = I_R(inst);
@@ -542,10 +538,78 @@ start(uint *start_addr)
                 regs[ra] = extend_environment(regs[rb], regs[rc], regs[rd]);
                 break;
             default:
+                printf("unknown op 0x%x at %p\n", I_OP(inst), pc);
                 die("unknown op");
-                //die("unknown op %d\n", I_OP(inst));
         }
     }
+}
+
+static char *
+find_file(const char *mname)
+{
+    char *name, *fmt = "%s.lxc";
+    uint len = strlen(mname);
+
+    name = malloc(sizeof(char) * (len + 5));
+    if (!name) die("out of memory allocating file name");
+
+    if (strcmp(mname + len - 4, ".lxc") == 0) fmt = "%s";
+    sprintf(name, fmt, mname);
+    return name;
+}
+
+static void
+load_file(const char *mname)
+{
+    uint import_names_cap;
+    char *name;
+    FILE *f;
+
+    name = find_file(mname);
+    f = fopen(name, "rb");
+    free(name);
+    if (!f) bail("cannot open file");
+
+    check_magic(f);
+
+    import_names_cap = read_int(f);
+    load_import_names(f, import_names_cap);
+
+    static_datums_cap += read_int(f);
+    static_datums_base = static_datums_fill;
+
+    static_datums = realloc(static_datums, static_datums_cap * sizeof(datum));
+    if (!static_datums) die("cannot allocate static_datums");
+
+    load_datums(f, static_datums_cap - static_datums_base);
+
+    label_count = read_int(f);
+    free(label_offsets);
+    label_offsets = malloc(label_count * sizeof(uint));
+    if (!label_offsets) die("cannot allocate label offsets");
+
+    load_labels(f, label_count);
+
+    instr_count = read_int(f);
+    /*free(instrs);*/
+    instrs = malloc(instr_count * sizeof(uint));
+    if (!instrs) die("cannot allocate instr offsets");
+    if (instr_sets >= MAX_INSTR_SETS) die("too many instruction sets");
+    instr_bases[instr_sets] = instrs;
+    instr_ends[instr_sets] = instrs + instr_count;
+    instr_sets++;
+
+    load_instrs(f, instr_count);
+
+    link();
+
+}
+
+static void
+start_body(uint *start_addr)
+{
+    regs[R_ENV] = genv;
+    start(start_addr);
 }
 
 datum
@@ -570,9 +634,42 @@ next_task()
     return call(tasks, remove_sym, nil);
 }
 
+static void
+process_tasks()
+{
+    while (!tasks_empty()) {
+        call(next_task(), run_sym, nil);
+    }
+}
+
+static datum
+make_promise()
+{
+    return call(lookup(genv, intern("make-promise")), run_sym, nil);
+}
+
+/* writes to regs[R_VAL] */
+static void
+resolve_promise(datum sink, datum val)
+{
+    datum argl;
+    regs[R_VAL] = sink;
+    argl = cons(val, nil);
+    call(regs[R_VAL], run_sym, argl);
+}
+
+static void
+make_modules_available()
+{
+    modules_available = 1;
+}
+
 int
 main(int argc, char **argv)
 {
+    uint *lib_addr;
+    datum x, import_name;
+
     if (argc != 2) usage();
 
     init_mem();
@@ -599,21 +696,48 @@ main(int argc, char **argv)
     close_sym = intern("close");
 
     setup_global_env(genv);
-    regs[R_ENV] = genv;
 
+    /* load and execute the standard prelude */
     load_file("prelude.lxc");
-    link();
-    start(instrs);
-
+    start_body(instrs);
     tasks = lookup(genv, intern("*tasks*"));
 
+    /* load the main file */
     load_file(argv[1]);
-    link();
-    start(instrs);
+    main_addr = instrs;
 
-    while (!tasks_empty()) {
-        call(next_task(), run_sym, nil);
+    /* load all the library files */
+    while (to_import) {
+        import_name = car(to_import);
+        x = make_promise();
+        x = cons(x, nil);
+        x = cons(nil, x);
+        x = cons(import_name, x);
+        modules = cons(x, modules);
+        to_import = cdr(to_import);
+
+        load_file(symbol2charstar(import_name));
+        x = cons(import_name, instrs);
+        to_start = cons(x, to_start);
     }
+
+    /* execute the library bodies */
+    while (to_start) {
+        import_name = caar(to_start);
+        lib_addr = cdar(to_start);
+        to_start = cdr(to_start);
+        start_body(lib_addr);
+        x = assq(import_name, modules);
+        cadr(x) = regs[R_VAL];
+        resolve_promise(cdaddr(x), regs[R_VAL]);
+    }
+
+    make_modules_available();
+    process_tasks();
+
+    /* execute the main body */
+    start_body(main_addr);
+    process_tasks();
 
     return 0;
 }
