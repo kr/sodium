@@ -191,24 +191,25 @@ def compile_application(exp, target, linkage, cenv):
                                  construct_arglist(operand_codes),
                                  compile_procedure_call(target, linkage, cenv, message)))
 
-def simple_app(exp):
-    return (exp.len() < 2 or
-            not symbolp(exp.cadr()) or
-            (exp.cadr()[0] not in (':', '.') and exp.cadr() not in PUNC))
+def message_send(exp):
+    return call_app(exp) or send_app(exp)
+    #if exp.len() < 2: return False
+    #m = exp.cadr()
+    #return symbolp(m) and (m[0] in (':', '.') or str(m) in PUNC)
 
 def call_app(exp):
-    return (exp.len() > 1 and
-            symbolp(exp.cadr()) and
-            (exp.cadr()[0] == ':' or exp.cadr() in PUNC))
+    if exp.len() < 2: return False
+    m = exp.cadr()
+    return symbolp(m) and (m[0] == ':' or str(m) in PUNC)
 
 def send_app(exp):
-    return (exp.len() > 1 and
-            symbolp(exp.cadr()) and
-            (exp.cadr()[0] == '.' or exp.cadr() in PUNC))
+    if exp.len() < 2: return False
+    m = exp.cadr()
+    return symbolp(m) and (m[0] == '.' or str(m) in PUNC)
 
 send_s = S('send')
 def exp_object(exp):
-    if simple_app(exp): return exp.car()
+    if not message_send(exp): return exp.car()
     if call_app(exp): return exp.car()
     if send_app(exp): return send_s
 
@@ -218,12 +219,12 @@ def extract_message(token):
 
 run_s = S('run')
 def exp_message(exp):
-    if simple_app(exp): return run_s
+    if not message_send(exp): return run_s
     if call_app(exp): return extract_message(exp.cadr())
     if send_app(exp): return run_s
 
 def exp_operands(exp):
-    if simple_app(exp): return exp.cdr()
+    if not message_send(exp): return exp.cdr()
     if call_app(exp): return exp.cddr()
     msg = plist(quote_s, extract_message(exp.cadr()))
     argl = cons(S('list'), exp.cddr())
@@ -460,9 +461,6 @@ def eval_sequence(exps, env):
 
 def variablep(exp):
     return symbolp(exp)
-
-def symbolp(exp):
-    return isinstance(exp, S)
 
 def definition_variable(exp):
     if symbolp(exp.cadr()): return exp.cadr()

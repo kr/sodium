@@ -242,6 +242,7 @@ prim_file(datum rcv, datum msg, datum args)
     FILE *f = cdr(rcv);
     char *s;
 
+    if (!f) die("prim_file -- this file is closed");
     if (msg == read_sym) {
         len = fsize(f);
         str = make_string(len);
@@ -250,7 +251,15 @@ prim_file(datum rcv, datum msg, datum args)
             s += r;
         }
         return str;
-    } else if (msg == destroy_sym) {
+    } else if (msg == write_sym) {
+        if (args == nil) die("prim_file:write -- not enough args");
+        s = string_contents(car(args));
+        for (len = strlen(s); len; len -= r) {
+            r = fwrite(s, sizeof(char), len, f);
+            s += r;
+        }
+        return ok_sym;
+    } else if (msg == destroy_sym || msg == close_sym) {
         fclose(f);
         cdr(rcv) = nil;
         return ok_sym;
@@ -383,9 +392,19 @@ prim_call(datum proc, datum m, datum args)
 datum
 prim_open(datum rcv, datum msg, datum args)
 {
+    char *mode = "r";
     datum d = make_blank(2);
+
+    if (args == nil) die("prim_open -- not enough args");
     car(d) = prim_file;
-    cdr(d) = fopen(string_contents(car(args)), "r");
+    if (cdr(args) != nil) {
+        if (cadr(args) == write_sym) {
+            mode = "w";
+        } else if (cadr(args) != read_sym) {
+            return die1("prim_open -- unknown mode", cadr(args));
+        }
+    }
+    cdr(d) = fopen(string_contents(car(args)), mode);
     return d;
 }
 

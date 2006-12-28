@@ -16,13 +16,21 @@ op_mod = compose(objectify, operator.mod)
 op_eq = compose(objectify, operator.eq)
 def op_smod(f, *a): return objectify(operator.mod(f, a))
 
-class S(str):
+class S(object):
     all = {}
     def __new__(clas, s):
         if s not in clas.all:
-            clas.all[s] = str.__new__(clas, s)
+            clas.all[s] = object.__new__(clas)
         return clas.all[s]
-    def __repr__(self): return self
+
+    def __init__(self, s):
+            self.s = s
+
+    def __str__(self): return self.s
+    def __repr__(self): return self.s
+
+    def __getitem__(self, k):
+        return self.s[k]
 
 class Integer(int):
     pass

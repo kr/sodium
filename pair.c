@@ -143,11 +143,7 @@ gc(int alen, datum x, datum y, int slen, int blen)
         np = &busy_pairs[scan_index++];
         switch (OBJ_TYPE(np->info)) {
             case OBJ_TYPE_BLANK:
-                {
-                    prim dispatcher = (prim) car(np);
-                    dispatcher(np, destroy_sym, nil);
-                }
-                /*((prim) car(np))(np, destroy_sym, nil);*/
+                ((prim) car(np))(np, destroy_sym, nil);
                 break;
         }
         scan_index += OBJ_LEN(np->info);
@@ -251,6 +247,8 @@ datum2pair(datum arr)
     if (!pairp(arr)) die1("datum2pair -- not an array", arr);
     return (pair) arr;
 }
+
+#define acc(x,i) (((pair)(x))->datums[(uint)(i)])
 
 datum
 array_get(datum arr, uint index)

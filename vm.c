@@ -30,7 +30,8 @@ int instr_sets = 0;
 
 datum equals_sym, minus_sym, plus_sym, percent_sym, run_sym, ok_sym,
       set_cdr_sym, car_sym, cdr_sym, emptyp_sym, remove_sym,
-      has_methodp_sym, get_sym, put_sym, destroy_sym, read_sym;
+      has_methodp_sym, get_sym, put_sym, destroy_sym, read_sym,
+      write_sym, read_sym, close_sym;
 
 #if VM_DEBUG > 0
 static char *instr_names[32] = {
@@ -347,7 +348,8 @@ lexical_setbang(datum env, uint level, uint index, datum val)
     for (;level--;) env = cdr(env);
     cell = car(env);
     for (;index--;) cell = cdr(cell);
-    return car(cell) = val;
+    car(cell) = val;
+    return ok_sym;
 }
 
 datum
@@ -592,6 +594,9 @@ main(int argc, char **argv)
     put_sym = intern("put!");
     destroy_sym = intern("destroy!");
     read_sym = intern("read");
+    write_sym = intern("write");
+    read_sym = intern("read");
+    close_sym = intern("close");
 
     setup_global_env(genv);
     regs[R_ENV] = genv;

@@ -27,7 +27,6 @@ char *string_contents(datum str);
 #define cdr(x) (((pair) (x))->datums[1])
 #define cadr(x) car(cdr(x))
 #define caddr(x) car(cdr(cdr(x)))
-#define acc(x,i) (((pair)(x))->datums[(uint)(i)])
 
 #define MAX_PAIRS 1024
 

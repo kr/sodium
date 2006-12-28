@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/sh -e
 
 ./lx1c prelude.lx
 ./lx1c "$1"

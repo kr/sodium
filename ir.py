@@ -21,8 +21,6 @@ all_regs_dict = dict([(str(k),i) for i,k in enumerate(all_regs)])
 # snarfed from lx.py
 def self_evaluatingp(exp):
     return isinstance(exp, Integer) or isinstance(exp, String) or isinstance(exp, Decimal)
-def symbolp(exp):
-    return isinstance(exp, S)
 def nullp(l): return len(l) == 0
 def car(t):
     if isinstance(t, (tuple, list)): return t[0]
@@ -30,6 +28,9 @@ def car(t):
 def cdr(t):
     if isinstance(t, (tuple, list)): return t[1:]
     return t.cdr()
+
+def symbolp(exp):
+    return isinstance(exp, S)
 
 def byte0(i): return (i >> 24) & 0xff
 def byte1(i): return (i >> 16) & 0xff
@@ -88,7 +89,7 @@ class make_ir_seq:
         for i, d in enumerate(datums):
             if symbolp(d):
                 fd.write('$')
-                fd.write(d)
+                fd.write(str(d))
                 fd.write('\0')
             elif isinstance(d, String):
                 fd.write('@')
