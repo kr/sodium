@@ -244,6 +244,18 @@ string_contents(datum str)
     return (char *) p->datums;
 }
 
+/* caller must free the string returned by this function */
+char *
+copy_string_contents(datum str)
+{
+    uint n;
+    char *s, *x = string_contents(str);
+    n = strlen(x) + 1;
+    s = malloc(sizeof(char) * n);
+    memcpy(s, x, n);
+    return s;
+}
+
 static pair
 datum2pair(datum arr)
 {

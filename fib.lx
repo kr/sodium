@@ -6,4 +6,4 @@ def (fib n):
             fib-iter (a + b) a (i - 1)
     fib-iter 1 0 n
 
-pr (fib 8)
+pr (fib 40)

@@ -22,6 +22,9 @@ uint array_len(datum arr);
 
 char *string_contents(datum str);
 
+/* caller must free the string returned by this function */
+char *copy_string_contents(datum str);
+
 // int /*bool*/ pairp(datum x);
 #define car(x) (((pair) (x))->datums[0])
 #define cdr(x) (((pair) (x))->datums[1])

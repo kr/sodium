@@ -145,9 +145,11 @@ datum
 prim_str(datum rcv, datum message, datum args)
 {
     uint n, i;
-    datum str, ar = args;
-    char *f, *s, *a, *fmt = string_contents(rcv);
+    datum str;
+    char *f, *s, *dest, *a, *fmt = copy_string_contents(rcv);
 
+
+    regs[R_VM0] = regs[R_VM1] = args;
 
     if (message == percent_sym) {
         /* first, find a upper bound on the string size */
@@ -156,32 +158,36 @@ prim_str(datum rcv, datum message, datum args)
             if (*f != '%') { n++; continue; }
             switch (*++f) {
                 case 'c':
-                    ar = cdr(ar);
+                    regs[R_VM1] = cdr(regs[R_VM1]);
                     /* fall through */
                 case '%':
                     n++;
                     break;
                 case 'd':
-                    ar = cdr(ar);
+                    regs[R_VM1] = cdr(regs[R_VM1]);
                     n += 20;
                     break;
                 case 'r': /* repr */
-                    car(ar) = make_string_init("$$$");
+                    car(regs[R_VM1]) = make_string_init("$$$");
                     /* fall through */
                 case 'p': /* pretty */
-                    car(ar) = make_string_init("###");
+                    car(regs[R_VM1]) = make_string_init("###");
                     /* fall through */
                 case 's':
-                    n += strlen(string_contents(car(ar)));
-                    ar = cdr(ar);
+                    n += strlen(string_contents(car(regs[R_VM1])));
+                    regs[R_VM1] = cdr(regs[R_VM1]);
                     break;
                 default:
+                    free(fmt);
                     die("prim_str -- unknown formatting code");
             }
         }
 
-        str = make_string(n);
-        s = string_contents(str);
+        s = dest = malloc(sizeof(char) * n);
+        if (!dest) {
+            free(fmt);
+            die("prim_str -- out of memory");
+        }
 
         /* second, format the string */
         for (f = fmt; *f; f++) {
@@ -191,36 +197,43 @@ prim_str(datum rcv, datum message, datum args)
             }
             switch (*++f) {
                 case 'c':
+                    free(s);
+                    free(fmt);
                     die("prim_str -- OOPS I have not implemented chars yet");
-                    args = cdr(args);
+                    regs[R_VM0] = cdr(regs[R_VM0]);
                     break;
                 case '%':
                     *s++ = '%';
                     break;
                 case 'd':
-                    sprintf(s, "%d", datum2int(car(args)));
+                    sprintf(s, "%d", datum2int(car(regs[R_VM0])));
                     s += strlen(s);
-                    args = cdr(args);
+                    regs[R_VM0] = cdr(regs[R_VM0]);
                     break;
                 case 'r': /* repr */
-                    car(args) = make_string_init("$$$");
+                    car(regs[R_VM0]) = make_string_init("$$$");
                     /* fall through */
                 case 'p': /* pretty */
-                    car(args) = make_string_init("###");
+                    car(regs[R_VM0]) = make_string_init("###");
                     /* fall through */
                 case 's':
-                    a = string_contents(car(args));
+                    a = string_contents(car(regs[R_VM0]));
                     i = strlen(a);
                     memcpy(s, a, i);
-                    args = cdr(args);
+                    regs[R_VM0] = cdr(regs[R_VM0]);
                     s += i;
                     break;
                 default:
+                    free(s);
+                    free(fmt);
                     die("prim_str -- unknown formatting code");
             }
         }
         *s = '\0';
 
+        str = make_string_init(dest);
+        free(dest);
+        free(fmt);
         return str;
     }
     dump_datum(rcv);
