@@ -114,3 +114,43 @@ Use overloading of the run:n methods to give the following api:
     def h (hash-table :make)
     h "foo" 42
     print (h "foo")
+
+New notes, added on 2006-12-28 around 6:15 p.m.
+
+Here is how to mix the two without sacrificing much speed:
+
+  - Each multy-arg method generates several entries meth:arity, meth:(arity+1),
+    meth:(arity+2), etc. up to meth:m where m is the arity of the largest
+    method plus one or the method expansion constant (MEC), whichever is
+    greater. MEC will initially be 10, but can be tuned for a space-time
+    tradeoff.
+  - Each fixed-arg method generates a single entry meth:arity
+  - More specific entries override less specific ones
+  - The largest variable-arity method also generates an entry meth:+
+
+  For example:
+
+    def o ():
+        (run x) x
+            => run:1
+        (run x y) (x + y)
+            => run:2
+        (run x y z . w) x
+            => run:3
+            => run:4
+            => run:6
+            => run:7
+            => run:8
+            => run:9
+            => run:10
+            => run:11
+        (run a b c d e) 42
+            => run:5
+        (run a b c d e f g h i j k l . m): 12
+            => run:12
+            => run:+
+
+    To lookup a method with MEC or fewer arguments, just lookup name:args. If
+    the lookup is for a call with more than MEC arguments, first try name:args.
+    If it doesn't exist then try name:+.
+
