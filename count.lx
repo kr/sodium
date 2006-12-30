@@ -1,0 +1,8 @@
+def n 0
+
+def (count):
+    n :: (n + 1)
+    if ((n % 100000) = 0) (pr n)
+    count
+
+count
