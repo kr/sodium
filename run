@@ -1,5 +1,4 @@
 #!/bin/sh -e
 
-./lx1c prelude.lx
 ./lx1c "$1"
 ./vm "$1"c

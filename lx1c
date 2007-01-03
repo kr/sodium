@@ -3,14 +3,15 @@
 import sys
 from getopt import getopt
 
-import pair
+from pair import cons, nil
 import reader
 import lx
 
 def read_file(n):
     return reader.read(open(n).read())
 
-opts, args = getopt(sys.argv[1:], 'co:', [
+opts, args = getopt(sys.argv[1:], 'mco:', [
+        'module',
         'generate-c',
         'output=',
         ])
@@ -18,10 +19,13 @@ opts, args = getopt(sys.argv[1:], 'co:', [
 infile = args[0]
 outfile = infile + 'c'
 gen_c = False
+module = False
 
 for opt, val in opts:
     if opt in ('--generate-c', '-c'):
         gen_c = True
+    elif opt in ('--module', '-m'):
+        module = True
     elif opt in ('--output', '-o'):
         outfile = val
 
@@ -30,9 +34,14 @@ if len(sys.argv) < 2:
     sys.exit()
 
 exps = read_file(infile)
-exp = pair.cons(lx.begin_s, exps)
+if module:
+    # ((fn () ...))
+    exp = cons(cons(lx.fn_s, cons(nil, exps)), nil)
+else:
+    # (begin ...)
+    exp = cons(lx.begin_s, exps)
 
-code = lx.compile(exp, lx.S('val'), lx.S('next'), pair.nil)
+code = lx.compile(exp, lx.S('val'), lx.S('next'), nil)
 outfd = open(outfile, 'w')
 if gen_c:
     if not outfile.endswith('.c'): raise 'bad output file name', outfile

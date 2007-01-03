@@ -1,3 +1,5 @@
+def private 42
+
 def y (import c)
 
 y .run

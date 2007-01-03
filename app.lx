@@ -6,3 +6,5 @@ compile "a.lx"
 def c (import c)
 
 c
+
+pr private
