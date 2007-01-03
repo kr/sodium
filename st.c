@@ -21,7 +21,7 @@ struct st_ent {
     char chars[];
 };
 
-static datum intern_pres(char *s, symbol sym);
+static datum intern_pres(const char *s, symbol sym);
 
 static size_t cap = 0, fill = 0, threshold = 0;
 static st_ent *symbols = 0;
@@ -64,19 +64,19 @@ grow()
 }
 
 static uint
-hash(char *s)
+hash(const char *s)
 {
     return 0;
 }
 
 datum
-intern(char *s)
+intern(const char *s)
 {
     return intern_pres(s, 0);
 }
 
 static datum
-intern_pres(char *s, symbol sym)
+intern_pres(const char *s, symbol sym)
 {
     size_t i;
     if (fill >= threshold) grow();

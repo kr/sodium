@@ -52,6 +52,15 @@ def fmt_int(i, l=4, c='\n'):
 class AssemblingError(Exception):
     pass
 
+def make_datum_c_name(n):
+    return 'datum_%d' % (n,)
+
+unique_c_name_counter = 0
+def gen_unique_c_name():
+    global unique_c_name_counter
+    unique_c_name_counter += 1
+    return 'datum_pair_%d' % (unique_c_name_counter,)
+
 the_labels = None
 class make_ir_seq:
     def __init__(self, needs, modifies, *statements):
@@ -69,12 +78,106 @@ class make_ir_seq:
             s += str(stmt) + '\n'
         return s
 
-    def assemble(self, fd):
+    def extract(self):
         global the_labels
         datums = self.get_se_datums() + self.get_symbols()
         datums = self.get_lists(datums)
         labels, self.statements = self.get_labels()
         the_labels = labels
+        return datums, labels
+
+    def gen_c(self, name, fd, hfd):
+        datums, labels = self.extract()
+
+        h_tpl = '''
+#ifndef %(name)s_h
+#define %(name)s_h
+
+/* #include <stdio.h> */
+
+/* typedef void * datum; */
+
+extern struct lxc_module lxc_module_%(name)s;
+
+#endif /*%(name)s_h*/
+        '''
+
+        print >>hfd, h_tpl % { 'name':name }
+
+        print >>fd, '#include "lxc.h"'
+        print >>fd, '#include "module-index.h"'
+        print >>fd, '#include "%s.lxc.h"' % (name,)
+
+        # import names
+        import_names_id = '((const char **) 0)'
+        if import_names:
+            import_names_id = 'import_names'
+            print >>fd
+            print >>fd, 'static const char **import_names = {'
+            for import_name in import_names:
+                print >>fd, '    "%s",' % (import_name,)
+            print >>fd, '};'
+
+        # datums
+        print >>fd
+        sdts = ''
+        datum_names = []
+        for i, d in enumerate(datums):
+            c_name = make_datum_c_name(i)
+            datum_names.append(c_name)
+
+            if symbolp(d):
+                sdts += '$'
+                print >>fd, '#define %s "%s"' % (c_name, str(d))
+            elif isinstance(d, String):
+                sdts += '@'
+                print >>fd, '#define %s "%s"' % (c_name, str(d))
+            elif self_evaluatingp(d):
+                sdts += '#'
+                print >>fd, '#define %s %d' % (c_name,
+                        pseudo_box(int(d)))
+            else: # it is a list
+                sdts += '('
+                self.emit_c_pair(fd, tuple(reversed(d)), c_name)
+
+        print >>fd, 'static uint static_datum_entries[] = {'
+        for datum_name in datum_names:
+            print >>fd, '    (uint) %s,' % (datum_name,)
+        print >>fd, '};'
+
+        # labels
+        print >>fd, 'static uint label_offsets[] = {'
+        for s, i in labels:
+            print >>fd, '    %d,' % (i,)
+            #fd.write(fmt_int(i, 4, ' '))
+        print >>fd, '};'
+
+        # instrs
+        print >>fd, 'static uint instrs[] = {'
+        for s in self.statements:
+            if symbolp(s): continue
+            i = s.encode(fd, labels, datums)
+            print >>fd, '    0x%x,' % (i,)
+        print >>fd, '};'
+
+        print >>fd
+        print >>fd, 'struct lxc_module lxc_module_%s = {' % (name,)
+        print >>fd, '    "%s",' % (name,)
+        print >>fd, '    %s,' % (import_names_id,)
+        print >>fd, '    %d,' % (len(import_names),)
+        print >>fd, '    {'
+        print >>fd, '        "%s",' % (sdts,)
+        print >>fd, '        static_datum_entries,'
+        print >>fd, '    },'
+        print >>fd, '    %d,' % (len(datums),)
+        print >>fd, '    instrs,'
+        print >>fd, '    %d,' % (len(self.statements),)
+        print >>fd, '    label_offsets,'
+        print >>fd, '};'
+
+    def assemble(self, fd):
+        datums, labels = self.extract()
+
         self.emit_magic(fd)
         self.emit_import_names(fd)
         self.emit_datums(fd, datums)
@@ -92,6 +195,17 @@ class make_ir_seq:
         for d in import_names:
             fd.write(str(d))
             fd.write('\0')
+
+    def emit_c_pair(self, fd, p, c_name):
+        if len(p):
+            next_c_name = gen_unique_c_name()
+            self.emit_c_pair(fd, p[1:], next_c_name)
+            item_name = make_datum_c_name(p[0])
+            print >>fd, 'static struct spair %s_s = { (uint) %s, (uint) %s };' % (c_name,
+                    item_name, next_c_name)
+            print >>fd, '#define %s &%s_s' % (c_name, c_name)
+        else:
+            print >>fd, '#define %s 0' % (c_name,)
 
     @staticmethod
     def emit_datums(fd, datums):
@@ -401,9 +515,13 @@ class OP(object):
     def __repr__(self):
         return self.op
 
-    def emit(self, fd, labels, datums):
+    def encode(self, fd, labels, datums):
         body = self.get_body(labels, datums)
         inst = pad(32, (5, self.opcode), body)
+        return inst
+
+    def emit(self, fd, labels, datums):
+        inst = self.encode(fd, labels, datums)
         fd.write(encode_int(inst))
 
     def se_datums(self):

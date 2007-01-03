@@ -1,6 +1,8 @@
 #!/usr/bin/env python2.4
 
 import sys
+from getopt import getopt
+
 import pair
 import reader
 import lx
@@ -8,15 +10,34 @@ import lx
 def read_file(n):
     return reader.read(open(n).read())
 
+opts, args = getopt(sys.argv[1:], 'co:', [
+        'generate-c',
+        'output=',
+        ])
+
+infile = args[0]
+outfile = infile + 'c'
+gen_c = False
+
+for opt, val in opts:
+    if opt in ('--generate-c', '-c'):
+        gen_c = True
+    elif opt in ('--output', '-o'):
+        outfile = val
+
 if len(sys.argv) < 2:
     print 'please give me a flie'
     sys.exit()
 
-infile = sys.argv[1]
-outfile = infile + 'c'
-
-exps = read_file(sys.argv[1])
+exps = read_file(infile)
 exp = pair.cons(lx.begin_s, exps)
 
 code = lx.compile(exp, lx.S('val'), lx.S('next'), pair.nil)
-code.assemble(open(outfile, 'w'))
+outfd = open(outfile, 'w')
+if gen_c:
+    if not outfile.endswith('.c'): raise 'bad output file name', outfile
+    outhfile = outfile[:-2] + '.h'
+    outhfd = open(outhfile, 'w')
+    code.gen_c(infile.replace('.lx', ''), outfd, outhfd)
+else:
+    code.assemble(outfd)

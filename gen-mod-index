@@ -1,0 +1,45 @@
+#!/usr/bin/env python
+
+
+import sys
+from getopt import getopt
+from re import match
+
+def tr(s, old, new):
+    for a,b in zip(old, new):
+        s = s.replace(a, b)
+    return s
+
+opts, modules = getopt(sys.argv[1:], 'o:', [
+        'output=',
+        ])
+
+outfile = 'index.c'
+
+for opt, val in opts:
+    if opt in ('--output', '-o'):
+        outfile = val
+
+if not outfile.endswith('.c'):
+    outfile = outfile + '.c'
+
+count = len(modules)
+
+outfd = open(outfile, 'w')
+
+print >>outfd, '#include "lxc.h"'
+print >>outfd, '#include "module-index.h"'
+for module in modules:
+    print >>outfd, '#include "%s.lxc.h"' % (module,)
+
+print >>outfd
+
+print >>outfd, 'int lxc_modules_count = %d;' % (count,)
+
+print >>outfd, 'lxc_module lxc_modules[%d] = {' % (count,)
+for module in modules:
+    module = tr(module, '/-', '__')
+    if match('.*[^-_/A-Za-z0-9]', module): raise 'bad module name', module
+    print >>outfd, '    &lxc_module_%s,' % (module,)
+print >>outfd, '};'
+

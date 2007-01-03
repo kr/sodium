@@ -9,21 +9,19 @@
 #include "obj.h"
 #include "prim.h"
 #include "st.h"
+#include "lxc.h"
 #include "config.h"
+#include "module-index.h"
 
 #define MAGIC_LEN 8
 
 datum *static_datums = (datum *)0;
 size_t static_datums_cap = 0, static_datums_fill = 0, static_datums_base;
 
-uint *label_offsets = (uint *)0, *instrs = (uint *)0, *main_addr = (uint *) 0;
-size_t label_count = 0, instr_count = 0;
-
 uint quit_inst[1] = {0x30000000};
 
-datum regs[REG_COUNT];
+datum genv, tasks, regs[REG_COUNT];
 pair stack = nil;
-datum genv, tasks;
 
 #define MAX_INSTR_SETS 50
 uint *instr_bases[MAX_INSTR_SETS], *instr_ends[MAX_INSTR_SETS];
@@ -83,14 +81,14 @@ bail(const char *m)
     exit(1);
 }
 
-void
+static void
 insert_datum(datum d)
 {
     if (static_datums_fill >= static_datums_cap) die("too many static datums");
     static_datums[static_datums_fill++] = d;
 }
 
-uint
+static uint
 read_int(FILE *f)
 {
     uint n, r;
@@ -102,7 +100,7 @@ read_int(FILE *f)
     return ntohl(n);
 }
 
-datum
+static datum
 load_int(FILE *f)
 {
     uint n;
@@ -110,14 +108,27 @@ load_int(FILE *f)
     return (datum) n; /* n is pseudo-boxed already */
 }
 
-datum
+static datum
+init_int(uint value)
+{
+    return (datum) value;
+}
+
+static datum
 load_bigint(FILE *f)
 {
     die("this is a long integer... teach me how to handle those");
     return nil;
 }
 
-char *
+static datum
+init_bigint(uint value)
+{
+    die("this is a long integer... teach me how to handle those");
+    return nil;
+}
+
+static char *
 read_string(FILE *f, size_t n)
 {
     size_t r;
@@ -131,13 +142,21 @@ read_string(FILE *f, size_t n)
     return s;
 }
 
-datum
+static datum
 load_string(FILE *f)
 {
     size_t n;
     char *s;
     n = read_int(f);
     s = read_string(f, n);
+    return make_string_init(s);
+}
+
+static datum
+init_string(uint value)
+{
+    char *s = (char *) value;
+
     return make_string_init(s);
 }
 
@@ -150,7 +169,7 @@ readc(FILE *f)
     return (char)c;
 }
 
-datum
+static datum
 load_symbol(FILE *f)
 {
     int l = 1;
@@ -169,7 +188,14 @@ load_symbol(FILE *f)
     return sym;
 }
 
-datum
+static datum
+init_symbol(uint value)
+{
+    const char *s = (const char *) value;
+    return intern(s);
+}
+
+static datum
 load_list(FILE *f)
 {
     int i = 0;
@@ -185,7 +211,22 @@ load_list(FILE *f)
     return l;
 }
 
-void
+static datum
+init_list(uint value)
+{
+    spair p = (spair) value;
+    pair l = nil;
+    datum x;
+
+    while (p) {
+        x = (datum) p->car;
+        p = (datum) p->cdr;
+        l = cons(x, nil);
+    }
+    return l;
+}
+
+static void
 load_import_names(FILE *f, uint n)
 {
     datum s;
@@ -197,7 +238,20 @@ load_import_names(FILE *f, uint n)
     }
 }
 
-void
+static void
+init_import_names(const char **import_names, uint n)
+{
+    datum s;
+    for (;n;) {
+        n--;
+        s = intern(import_names[n]);
+        if (assq(s, modules)) continue;
+        if (memq(s, to_import)) continue;
+        to_import = cons(s, to_import);
+    }
+}
+
+static void
 load_datums(FILE *f, uint n)
 {
     datum d = nil;
@@ -218,21 +272,43 @@ load_datums(FILE *f, uint n)
     }
 }
 
-void
-load_labels(FILE *f, uint n)
+static void
+init_datums(static_datums_info static_datums, uint n)
 {
     uint i;
+    datum d = nil;
+
     for (i = 0; i < n; i++) {
-        label_offsets[i] = read_int(f);
+        switch (static_datums->types[i]) {
+            case '#': d = init_int(static_datums->entries[i]); break;
+            case '!': d = init_bigint(static_datums->entries[i]); break;
+            case '@': d = init_string(static_datums->entries[i]); break;
+            case '$': d = init_symbol(static_datums->entries[i]); break;
+            case '(': d = init_list(static_datums->entries[i]); break;
+            default:
+                fprintf(stderr, "unknown datum signifier '%c'\n",
+                        static_datums->types[i]);
+                die("unknown datum signifier");
+        }
+        insert_datum(d);
     }
 }
 
-void
-load_instrs(FILE *f, uint n)
+static void
+load_labels(FILE *f, uint n, uint *lab_offsets)
 {
     uint i;
     for (i = 0; i < n; i++) {
-        instrs[i] = read_int(f);
+        lab_offsets[i] = read_int(f);
+    }
+}
+
+static void
+load_instrs(FILE *f, uint n, uint *insts)
+{
+    uint i;
+    for (i = 0; i < n; i++) {
+        insts[i] = read_int(f);
     }
 }
 
@@ -247,12 +323,12 @@ check_magic(FILE *f)
 }
 
 void
-link(void)
+link(uint *insts, uint inst_count, uint *lab_offsets)
 {
     register uint *pc;
     uint di, li;
 
-    for (pc = &instrs[0]; pc < &instrs[instr_count]; ++pc) {
+    for (pc = &insts[0]; pc < &insts[inst_count]; ++pc) {
         register uint inst = *pc;
         switch (I_OP(inst)) {
             case OP_COMPILED_OBJECT_METHOD:
@@ -279,7 +355,7 @@ link(void)
                 break;
             case OP_ADDR:
                 li = I_L(inst);
-                *pc = (uint) &instrs[label_offsets[li]];
+                *pc = (uint) &insts[lab_offsets[li]];
                 break;
         }
     }
@@ -545,7 +621,7 @@ start(uint *start_addr)
 }
 
 static char *
-find_file(const char *mname)
+find_module_file(const char *mname)
 {
     char *name, *fmt = "%s.lxc";
     uint len = strlen(mname);
@@ -558,22 +634,22 @@ find_file(const char *mname)
     return name;
 }
 
-static void
-load_file(const char *mname)
+static uint *
+load_module_file(const char *name)
 {
-    uint import_names_cap;
-    char *name;
+    uint *insts, *label_offsets;
+    uint import_names_count;
+    uint label_count = 0;
+    size_t instr_count = 0;
     FILE *f;
 
-    name = find_file(mname);
     f = fopen(name, "rb");
-    free(name);
     if (!f) bail("cannot open file");
 
     check_magic(f);
 
-    import_names_cap = read_int(f);
-    load_import_names(f, import_names_cap);
+    import_names_count = read_int(f);
+    load_import_names(f, import_names_count);
 
     static_datums_cap += read_int(f);
     static_datums_base = static_datums_fill;
@@ -584,25 +660,66 @@ load_file(const char *mname)
     load_datums(f, static_datums_cap - static_datums_base);
 
     label_count = read_int(f);
-    free(label_offsets);
     label_offsets = malloc(label_count * sizeof(uint));
     if (!label_offsets) die("cannot allocate label offsets");
 
-    load_labels(f, label_count);
+    load_labels(f, label_count, label_offsets);
 
     instr_count = read_int(f);
-    /*free(instrs);*/
-    instrs = malloc(instr_count * sizeof(uint));
-    if (!instrs) die("cannot allocate instr offsets");
+    insts = malloc(instr_count * sizeof(uint));
+    if (!insts) die("cannot allocate instr offsets");
     if (instr_sets >= MAX_INSTR_SETS) die("too many instruction sets");
-    instr_bases[instr_sets] = instrs;
-    instr_ends[instr_sets] = instrs + instr_count;
+    instr_bases[instr_sets] = insts;
+    instr_ends[instr_sets] = insts + instr_count;
     instr_sets++;
 
-    load_instrs(f, instr_count);
+    load_instrs(f, instr_count, insts);
 
-    link();
+    link(insts, instr_count, label_offsets);
+    free(label_offsets);
 
+    return insts;
+}
+
+static uint *
+load_lxc_module(lxc_module mod)
+{
+    init_import_names(mod->import_names, mod->import_names_count);
+
+    static_datums_cap += mod->static_datums_count;
+    static_datums_base = static_datums_fill;
+
+    static_datums = realloc(static_datums, static_datums_cap * sizeof(datum));
+    if (!static_datums) die("cannot allocate static_datums");
+    init_datums(&mod->static_datums, static_datums_cap - static_datums_base);
+
+    if (instr_sets >= MAX_INSTR_SETS) die("too many instruction sets");
+    instr_bases[instr_sets] = mod->instrs;
+    instr_ends[instr_sets] = mod->instrs + mod->instrs_count;
+    instr_sets++;
+
+    link(mod->instrs, mod->instrs_count, mod->label_offsets);
+
+    return mod->instrs;
+}
+
+static uint *
+load_module(const char *mname)
+{
+    int i;
+    uint *insts;
+    char *name;
+
+    for (i = 0; i < lxc_modules_count; i++) {
+        if (strcmp(lxc_modules[i]->name, mname) == 0) {
+            return load_lxc_module(lxc_modules[i]);
+        }
+    }
+
+    name = find_module_file(mname);
+    insts = load_module_file(name);
+    free(name);
+    return insts;
 }
 
 static void
@@ -667,7 +784,7 @@ make_modules_available()
 int
 main(int argc, char **argv)
 {
-    uint *lib_addr;
+    uint *lib_addr, *insts, *main_addr;
     datum x, import_name;
 
     if (argc != 2) usage();
@@ -698,13 +815,11 @@ main(int argc, char **argv)
     setup_global_env(genv);
 
     /* load and execute the standard prelude */
-    load_file("prelude.lxc");
-    start_body(instrs);
+    start_body(load_module("prelude"));
     tasks = lookup(genv, intern("*tasks*"));
 
     /* load the main file */
-    load_file(argv[1]);
-    main_addr = instrs;
+    main_addr = load_module_file(argv[1]);
 
     /* load all the library files */
     while (to_import) {
@@ -716,8 +831,8 @@ main(int argc, char **argv)
         modules = cons(x, modules);
         to_import = cdr(to_import);
 
-        load_file(symbol2charstar(import_name));
-        x = cons(import_name, instrs);
+        insts = load_module(symbol2charstar(import_name));
+        x = cons(import_name, insts);
         to_start = cons(x, to_start);
     }
 
