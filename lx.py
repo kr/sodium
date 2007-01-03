@@ -605,7 +605,7 @@ def get_task():
     return tasks.pop(0)
 
 
-PUNC = '+-*/%='
+PUNC = '+-*/%=<>'
 
 global_env = Environment.make(**{
     'true':True,

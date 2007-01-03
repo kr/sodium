@@ -94,6 +94,8 @@ prim_int(datum rcv, datum message, datum args)
     /* TODO check that arithmetic result doesn't overflow */
     /* TODO check that arithmetic result isn't a broken heart tag */
     if (message == equals_sym) return (datum) (rcv == car(args));
+    if (message == lt_sym) return (datum) (rcv < car(args));
+    if (message == gt_sym) return (datum) (rcv > car(args));
     if (message == minus_sym)
         return int2datum(datum2int(rcv) - datum2int(car(args)));
     if (message == plus_sym)

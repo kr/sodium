@@ -4,6 +4,7 @@ sources := $(cmodules) module-index.c $(modules:.lx=.lxc.c)
 
 export CFLAGS := -g -pg -Wall -Werror
 #export CFLAGS := -O2 -Wall -Werror
+export LDFLAGS := -pg
 
 all: vm
 

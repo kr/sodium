@@ -33,7 +33,7 @@ int modules_available = 0;
 datum equals_sym, minus_sym, plus_sym, percent_sym, run_sym, ok_sym,
       set_cdr_sym, car_sym, cdr_sym, emptyp_sym, remove_sym,
       has_methodp_sym, get_sym, put_sym, destroy_sym, read_sym,
-      write_sym, read_sym, close_sym;
+      write_sym, read_sym, close_sym, lt_sym, gt_sym;
 
 #if VM_DEBUG > 0
 static char *instr_names[32] = {
@@ -811,6 +811,8 @@ main(int argc, char **argv)
     write_sym = intern("write");
     read_sym = intern("read");
     close_sym = intern("close");
+    gt_sym = intern(">");
+    lt_sym = intern("<");
 
     setup_global_env(genv);
 
