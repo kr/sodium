@@ -25,7 +25,7 @@ module-index.c: $(modules)
 	./lx1c -c -o $@ $<
 
 clean:
-	rm -f vm *.o core
+	rm -f vm *.o core gmon.out
 
 distclean: clean
 	rm -f *.d *.pyc *.lxc
