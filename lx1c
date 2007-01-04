@@ -47,6 +47,6 @@ if gen_c:
     if not outfile.endswith('.c'): raise 'bad output file name', outfile
     outhfile = outfile[:-2] + '.h'
     outhfd = open(outhfile, 'w')
-    code.gen_c(infile.replace('.lx', ''), outfd, outhfd)
+    code.gen_c(infile.replace('.lx', ''), outfd, outhfd, outhfile)
 else:
     code.assemble(outfd)
