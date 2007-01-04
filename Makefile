@@ -19,13 +19,13 @@ all: vm
 vm: $(sources:.c=.o)
 
 module-index.c: $(modules)
-	./gen-mod-index -o $@ $(modules:.lx=)
+	./gen-mod-index --output=$@ $(modules:.lx=)
 
 prelude.c prelude.h: prelude.lx
-	./lx1c -c -o $@ $<
+	./lx1c --generate-c --output=$@ $<
 
 %.lxc.c %.lxc.h: %.lx
-	./lx1c -m -c -o $@ $<
+	./lx1c --module --generate-c --output=$@ $<
 
 clean:
 	rm -f vm *.o core gmon.out
