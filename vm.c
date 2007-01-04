@@ -781,6 +781,39 @@ make_modules_available()
     modules_available = 1;
 }
 
+static datum
+make_module_entry(datum name)
+{
+    datum x;
+
+    x = make_promise();
+    x = cons(x, nil);
+    x = cons(nil, x);
+    x = cons(name, x);
+    return x;
+}
+
+static void
+resolve_module(datum entry, datum val)
+{
+    cadr(entry) = val;
+    resolve_promise(cdaddr(entry), val);
+}
+
+static datum
+load_builtin(char *name, datum modules)
+{
+    datum x;
+
+    start_body(load_module(name));
+    stack = cons(regs[R_VAL], stack);
+    x = make_module_entry(intern(name));
+    regs[R_VAL] = car(stack);
+    stack = cdr(stack);
+    resolve_module(x, regs[R_VAL]);
+    return cons(x, modules);
+}
+
 int
 main(int argc, char **argv)
 {
@@ -818,7 +851,12 @@ main(int argc, char **argv)
 
     /* load and execute the standard prelude */
     start_body(load_module("prelude"));
+
+    /* must do this lookup before loading any other modules, because they might
+     * use it */
     tasks = lookup(genv, intern("*tasks*"));
+
+    modules = load_builtin("sample-module", modules);
 
     /* load the main file */
     main_addr = load_module_file(argv[1]);
@@ -826,10 +864,8 @@ main(int argc, char **argv)
     /* load all the library files */
     while (to_import) {
         import_name = car(to_import);
-        x = make_promise();
-        x = cons(x, nil);
-        x = cons(nil, x);
-        x = cons(import_name, x);
+        x = make_module_entry(import_name);
+
         modules = cons(x, modules);
         to_import = cdr(to_import);
 
@@ -845,8 +881,7 @@ main(int argc, char **argv)
         to_start = cdr(to_start);
         start_body(lib_addr);
         x = assq(import_name, modules);
-        cadr(x) = regs[R_VAL];
-        resolve_promise(cdaddr(x), regs[R_VAL]);
+        resolve_module(x, regs[R_VAL]);
     }
 
     make_modules_available();

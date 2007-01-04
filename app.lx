@@ -7,4 +7,6 @@ def c (import c)
 
 c
 
+pr (import sample-module)
+
 pr private

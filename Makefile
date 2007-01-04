@@ -1,4 +1,4 @@
-modules := # prelude.lx
+modules := sample-module.lx
 cmodules := vm.c pair.c obj.c gen.c prim.c st.c
 sources := $(cmodules) module-index.c prelude.c $(modules:.lx=.lxc.c)
 
