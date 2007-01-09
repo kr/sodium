@@ -20,7 +20,7 @@
 #define OP_BPRIM 0x0d
 #define OP_LOAD_IMM 0x0e
 #define OP_CONS 0x0f
-#define OP_APPLY_PRIMITIVE_PROC 0x10
+#define OP_APPLY_PRIM_METH 0x10
 #define OP_MAKE_COMPILED_OBJ 0x11
 #define OP_COMPILED_OBJECT_METHOD 0x12
 #define OP_SETBANG 0x13
@@ -32,19 +32,19 @@
 #define OP_EXTEND_ENVIRONMENT 0x19
 #define OP_LOOKUP_MODULE 0x1a
 
-#define REG_COUNT 10
+#define REG_COUNT 11
 /*#define REG_COUNT 32*/
 #define R_NIL 0
-#define R_ENV 1
+#define R_GLOBAL 1
 #define R_PROC 2
 #define R_VAL 3
 #define R_ARGL 4
-/* ... */
 #define R_CONTINUE 5
-#define R_TMP 6
-#define R_GLOBAL 7
-#define R_VM0 8
-#define R_VM1 9
+#define R_ADDR 6
+#define R_ENV 7
+#define R_TMP 8
+#define R_VM0 9
+#define R_VM1 10
 
 #define I_OP(i) (((i) >> 27) & 0x1f)
 #define I_D(i) ((i) & 0x7ffffff)

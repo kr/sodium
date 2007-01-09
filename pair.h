@@ -25,6 +25,12 @@ char *string_contents(datum str);
 /* caller must free the string returned by this function */
 char *copy_string_contents(datum str);
 
+#define checked_car(x) array_get((x),0)
+#define checked_cdr(x) array_get((x),1)
+#define checked_cadr(x) checked_car(checked_cdr(x))
+#define checked_cddr(x) checked_cdr(checked_cdr(x))
+#define checked_caddr(x) checked_car(checked_cddr(x))
+
 // int /*bool*/ pairp(datum x);
 #define car(x) (((pair) (x))->datums[0])
 #define cdr(x) (((pair) (x))->datums[1])

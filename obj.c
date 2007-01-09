@@ -3,6 +3,7 @@
 #include "obj.h"
 #include "pair.h"
 #include "st.h"
+#include "prim.h"
 
 #include "vm.h"
 
@@ -24,12 +25,14 @@ compiled_obj_env(datum obj)
 }
 
 uint *
-complied_object_method(datum obj, datum name)
+compiled_obj_method(datum obj, datum name)
 {
     int n;
     datum *table;
 
-    if (!compiled_objp(obj)) die1("compiled_obj_method -- bad object", obj);
+    if (!compiled_objp(obj)) {
+        return (uint *) get_primitive_method(obj, name);
+    }
 
     table = (datum *) cdr(obj2pair(obj));
 
@@ -37,11 +40,11 @@ complied_object_method(datum obj, datum name)
     for (; n--; table += 2) {
         if (*table == name) return (uint *) *(table + 1);
     }
-    return die1("complied_object_method -- no such method", name);
+    return die1("compiled_obj_method -- no such method", name);
 }
 
 int
-complied_object_has_method(datum obj, datum name)
+compiled_obj_has_method(datum obj, datum name)
 {
     int n;
     datum *table;

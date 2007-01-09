@@ -16,7 +16,7 @@ datum make_compiled_obj(datum env, uint *table);
 #define compiled_objp(x) (in_pair_range(x) && obj_sig_matches(x))
 
 datum compiled_obj_env(datum obj);
-uint *complied_object_method(datum obj, datum name);
-int complied_object_has_method(datum obj, datum name);
+uint *compiled_obj_method(datum obj, datum name);
+int compiled_obj_has_method(datum obj, datum name);
 
 #endif /*obj_h*/

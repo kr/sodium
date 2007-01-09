@@ -1,21 +1,22 @@
 from typ import S, Integer, String, Decimal
 #from util import traced
 
-all_writable_regs = (
+all_readonly_regs = (
     S('nil'),
-    S('env'),
+    S('global'),
+)
+
+all_writable_regs = (
     S('proc'),
     S('val'),
     S('argl'),
     S('continue'),
+    S('addr'),
+    S('env'),
     S('tmp'),
 )
 
-all_readonly_regs = (
-    S('global'),
-)
-
-all_regs = all_writable_regs + all_readonly_regs
+all_regs = all_readonly_regs + all_writable_regs
 all_regs_dict = dict([(str(k),i) for i,k in enumerate(all_regs)])
 
 import_names = []
@@ -457,11 +458,11 @@ def LEXICAL_SETBANG(val_reg, addr):
 # Three register, one list instructions
 
 extend_environment_s = S('EXTEND_ENVIRONMENT')
-apply_primitive_procedure_s = S('APPLY_PRIMITIVE_PROC')
+apply_prim_meth_s = S('APPLY_PRIM_METH')
 def EXTEND_ENVIRONMENT(target_reg, env_reg, argl_reg, formals_r):
     return OP_RRRR(extend_environment_s, target_reg, env_reg, argl_reg, formals_r)
-def APPLY_PRIMITIVE_PROC(target_reg, proc_reg, mess_reg, argl_reg):
-    return OP_RRRR(apply_primitive_procedure_s, target_reg, proc_reg, mess_reg, argl_reg)
+def APPLY_PRIM_METH(target_reg, proc_reg, mess_reg, argl_reg):
+    return OP_RRRR(apply_prim_meth_s, target_reg, proc_reg, mess_reg, argl_reg)
 
 all_ops = (
     nop_s,
@@ -480,7 +481,7 @@ all_ops = (
     bprim_s,
     load_imm_s,
     cons_s,
-    apply_primitive_procedure_s,
+    apply_prim_meth_s,
     make_compiled_obj_s,
     compiled_object_method_s,
     set__s,

@@ -3,11 +3,13 @@
 
 #include "gen.h"
 
-void setup_global_env(datum env);
-datum apply_primitive_proc(datum proc, datum msg, datum argl);
-int prim_funcp(datum x);
+typedef datum(*prim_meth)(datum, datum);
+typedef prim_meth(*prim)(datum, datum);
 
-typedef datum(*prim)(datum, datum, datum);
+void setup_global_env(datum env);
+prim_meth get_primitive_method(datum proc, datum message);
+datum apply_prim_meth(prim_meth meth, datum proc, datum argl);
+int prim_funcp(datum x);
 
 void pr(datum d);
 
@@ -16,22 +18,11 @@ void pr(datum d);
 /*extern prim prims[MAX_PRIMS];
 extern char *prim_names[MAX_PRIMS];*/
 
-datum prim_int(datum rcv, datum msg, datum args);
-datum prim_pair(datum rcv, datum msg, datum args);
-datum prim_nil(datum rcv, datum msg, datum args);
-datum prim_str(datum rcv, datum msg, datum args);
-datum prim_sym(datum rcv, datum msg, datum args);
-datum prim_file(datum rcv, datum msg, datum args);
-
-datum prim_isp(datum rcv, datum msg, datum args);
-datum prim_cons(datum rcv, datum msg, datum args);
-datum prim_make_array(datum rcv, datum msg, datum args);
-datum prim_list(datum rcv, datum msg, datum args);
-datum prim_rep(datum rcv, datum msg, datum args);
-datum prim_pr(datum rcv, datum msg, datum args);
-datum prim_error(datum rcv, datum msg, datum args);
-datum prim_call(datum rcv, datum msg, datum args);
-datum prim_open(datum rcv, datum msg, datum args);
-datum prim_inspector(datum rcv, datum msg, datum args);
+prim_meth prim_int(datum rcv, datum msg);
+prim_meth prim_pair(datum rcv, datum msg);
+prim_meth prim_nil(datum rcv, datum msg);
+prim_meth prim_str(datum rcv, datum msg);
+prim_meth prim_sym(datum rcv, datum msg);
+prim_meth prim_file(datum rcv, datum msg);
 
 #endif /*prim_h*/

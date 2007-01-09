@@ -7,6 +7,17 @@
 #include "st.h"
 #include "vm.h"
 
+static prim_meth prim_isp(datum rcv, datum msg);
+static prim_meth prim_cons(datum rcv, datum msg);
+static prim_meth prim_make_array(datum rcv, datum msg);
+static prim_meth prim_list(datum rcv, datum msg);
+static prim_meth prim_rep(datum rcv, datum msg);
+static prim_meth prim_pr(datum rcv, datum msg);
+static prim_meth prim_error(datum rcv, datum msg);
+static prim_meth prim_call(datum rcv, datum msg);
+static prim_meth prim_open(datum rcv, datum msg);
+static prim_meth prim_inspector(datum rcv, datum msg);
+
 static prim prims[MAX_PRIMS] = {
     prim_isp,
     prim_cons,
@@ -50,26 +61,26 @@ prim_funcp(datum x)
            (((prim *)x) < &prims[MAX_PRIMS]);
 }
 
-static datum
-prim_dummy(datum rcv, datum msg, datum args)
+static prim_meth
+prim_dummy(datum rcv, datum msg)
 {
     die("prim_dummy -- can't happen");
-    return nil;
+    return (prim_meth) nil;
 }
 
-datum
-apply_primitive_proc(datum proc, datum message, datum argl)
+prim_meth
+get_primitive_method(datum proc, datum message)
 {
     prim p = prim_dummy;
     if (!symbolp(message)) {
-        die1("apply_primitive_proc -- not a symbol", message);
+        die1("get_primitive_method -- not a symbol", message);
     }
     if (prim_funcp(proc)) {
         p = *(prim *) proc;
     } else if (intp(proc)) {
         p = prim_int;
     } else if (compiled_objp(proc)) {
-        die1("apply_primitive_proc -- not a primitive", proc);
+        die1("get_primitive_method -- not a primitive", proc);
     } else if (pairp(proc)) {
         p = prim_pair;
     } else if (stringp(proc)) {
@@ -83,68 +94,127 @@ apply_primitive_proc(datum proc, datum message, datum argl)
     } else if (blankp(proc)) {
         p = (prim) car(proc);
     } else {
-        die1("apply_primitive_proc -- unknown object", proc);
+        die1("get_primitive_method -- unknown object", proc);
     }
-    return p(proc, message, argl);
+    return p(proc, message);
 }
 
 datum
-prim_int(datum rcv, datum message, datum args)
+apply_prim_meth(prim_meth meth, datum proc, datum argl)
+{
+    return meth(proc, argl);
+}
+
+static datum
+prim_int_equals(datum rcv, datum args)
+{
+    return (datum) (rcv == car(args));
+}
+
+static datum
+prim_int_lt(datum rcv, datum args)
+{
+    return (datum) (rcv < car(args));
+}
+
+static datum
+prim_int_gt(datum rcv, datum args)
+{
+    return (datum) (rcv > car(args));
+}
+
+static datum
+prim_int_minus(datum rcv, datum args)
+{
+    return int2datum(datum2int(rcv) - datum2int(car(args)));
+}
+
+static datum
+prim_int_plus(datum rcv, datum args)
+{
+    return int2datum(datum2int(rcv) + datum2int(car(args)));
+}
+
+static datum
+prim_int_percent(datum rcv, datum args)
+{
+    return int2datum(datum2int(rcv) % datum2int(car(args)));
+}
+
+prim_meth
+prim_int(datum rcv, datum message)
 {
     /* TODO check that arithmetic result doesn't overflow */
     /* TODO check that arithmetic result isn't a broken heart tag */
-    if (message == equals_sym) return (datum) (rcv == car(args));
-    if (message == lt_sym) return (datum) (rcv < car(args));
-    if (message == gt_sym) return (datum) (rcv > car(args));
-    if (message == minus_sym)
-        return int2datum(datum2int(rcv) - datum2int(car(args)));
-    if (message == plus_sym)
-        return int2datum(datum2int(rcv) + datum2int(car(args)));
-    if (message == percent_sym)
-        return int2datum(datum2int(rcv) % datum2int(car(args)));
-    die1("prim_int -- unknown message", message);
-    return nil;
+    if (message == equals_sym) return prim_int_equals;
+    if (message == lt_sym) return prim_int_lt;
+    if (message == gt_sym) return prim_int_gt;
+    if (message == minus_sym) return prim_int_minus;
+    if (message == plus_sym) return prim_int_plus;
+    if (message == percent_sym) return prim_int_percent;
+    return (prim_meth) die1("prim_int -- unknown message", message);
 }
 
-datum
-prim_pair(datum rcv, datum message, datum args)
+static datum
+prim_pair_set_cdr(datum rcv, datum args)
+{
+    pair p = rcv;
+    cdr(p) = car(args);
+    return ok_sym;
+}
+
+static datum
+prim_pair_car(datum rcv, datum args)
+{
+    pair p = rcv;
+    return car(p);
+}
+
+static datum
+prim_pair_cdr(datum rcv, datum args)
+{
+    pair p = rcv;
+    return cdr(p);
+}
+
+static datum
+prim_pair_get(datum rcv, datum args)
 {
     int i;
-    pair p = rcv;
-    if (message == set_cdr_sym) {
-        cdr(p) = car(args);
-        return ok_sym;
-    }
-    if (message == car_sym) return car(p);
-    if (message == cdr_sym) return cdr(p);
-    if (message == get_sym) {
-        if (!intp(car(args))) die1("prim_pair -- not an int", car(args));
-        i = datum2int(car(args));
-        return array_get(rcv, i);
-    }
-    if (message == put_sym) {
-        if (!intp(car(args))) die1("prim_pair -- not an int", car(args));
-        i = datum2int(car(args));
-        array_put(rcv, i, cadr(args));
-        return ok_sym;
-    }
-    die1("prim_pair -- unknown message", message);
-    return nil;
+    if (!intp(car(args))) die1("prim_pair -- not an int", car(args));
+    i = datum2int(car(args));
+    return array_get(rcv, i);
 }
 
-datum
-prim_nil(datum proc, datum message, datum args)
+static datum
+prim_pair_put(datum rcv, datum args)
 {
-    /*if (message == car_sym) return car(p);
-    if (message == cdr_sym) return cdr(p);*/
-    die1("prim_nil -- unknown message", message);
-    return nil;
+    int i;
+    if (!intp(car(args))) die1("prim_pair -- not an int", car(args));
+    i = datum2int(car(args));
+    array_put(rcv, i, cadr(args));
+    return ok_sym;
 }
 
-#define MAX_BUF 1024
+prim_meth
+prim_pair(datum rcv, datum message)
+{
+    if (message == set_cdr_sym) return prim_pair_set_cdr;
+    if (message == car_sym) return prim_pair_car;
+    if (message == cdr_sym) return prim_pair_cdr;
+    if (message == get_sym) return prim_pair_get;
+    if (message == put_sym) return prim_pair_put;
+    return (prim_meth) die1("prim_pair -- unknown message", message);
+}
 
-datum
-prim_str(datum rcv, datum message, datum args)
+prim_meth
+prim_nil(datum proc, datum message)
+{
+    return (prim_meth) die1("prim_nil -- unknown message", message);
+}
+
+static datum
+prim_str_percent(datum rcv, datum args)
 {
     uint n, i;
     datum str;
@@ -153,101 +223,105 @@ prim_str(datum rcv, datum message, datum args)
 
     regs[R_VM0] = regs[R_VM1] = args;
 
-    if (message == percent_sym) {
-        /* first, find a upper bound on the string size */
-        n = 1; /* one for the null terminator */
-        for (f = fmt; *f; f++) {
-            if (*f != '%') { n++; continue; }
-            switch (*++f) {
-                case 'c':
-                    regs[R_VM1] = cdr(regs[R_VM1]);
-                    /* fall through */
-                case '%':
-                    n++;
-                    break;
-                case 'd':
-                    regs[R_VM1] = cdr(regs[R_VM1]);
-                    n += 20;
-                    break;
-                case 'r': /* repr */
-                    car(regs[R_VM1]) = make_string_init("$$$");
-                    /* fall through */
-                case 'p': /* pretty */
-                    car(regs[R_VM1]) = make_string_init("###");
-                    /* fall through */
-                case 's':
-                    n += strlen(string_contents(car(regs[R_VM1])));
-                    regs[R_VM1] = cdr(regs[R_VM1]);
-                    break;
-                default:
-                    free(fmt);
-                    die("prim_str -- unknown formatting code");
-            }
+    /* first, find a upper bound on the string size */
+    n = 1; /* one for the null terminator */
+    for (f = fmt; *f; f++) {
+        if (*f != '%') { n++; continue; }
+        switch (*++f) {
+            case 'c':
+                regs[R_VM1] = cdr(regs[R_VM1]);
+                /* fall through */
+            case '%':
+                n++;
+                break;
+            case 'd':
+                regs[R_VM1] = cdr(regs[R_VM1]);
+                n += 20;
+                break;
+            case 'r': /* repr */
+                car(regs[R_VM1]) = make_string_init("$$$");
+                /* fall through */
+            case 'p': /* pretty */
+                car(regs[R_VM1]) = make_string_init("###");
+                /* fall through */
+            case 's':
+                n += strlen(string_contents(car(regs[R_VM1])));
+                regs[R_VM1] = cdr(regs[R_VM1]);
+                break;
+            default:
+                free(fmt);
+                die("prim_str -- unknown formatting code");
         }
-
-        s = dest = malloc(sizeof(char) * n);
-        if (!dest) {
-            free(fmt);
-            die("prim_str -- out of memory");
-        }
-
-        /* second, format the string */
-        for (f = fmt; *f; f++) {
-            if (*f != '%') {
-                *s++ = *f;
-                continue;
-            }
-            switch (*++f) {
-                case 'c':
-                    free(s);
-                    free(fmt);
-                    die("prim_str -- OOPS I have not implemented chars yet");
-                    regs[R_VM0] = cdr(regs[R_VM0]);
-                    break;
-                case '%':
-                    *s++ = '%';
-                    break;
-                case 'd':
-                    sprintf(s, "%d", datum2int(car(regs[R_VM0])));
-                    s += strlen(s);
-                    regs[R_VM0] = cdr(regs[R_VM0]);
-                    break;
-                case 'r': /* repr */
-                    car(regs[R_VM0]) = make_string_init("$$$");
-                    /* fall through */
-                case 'p': /* pretty */
-                    car(regs[R_VM0]) = make_string_init("###");
-                    /* fall through */
-                case 's':
-                    a = string_contents(car(regs[R_VM0]));
-                    i = strlen(a);
-                    memcpy(s, a, i);
-                    regs[R_VM0] = cdr(regs[R_VM0]);
-                    s += i;
-                    break;
-                default:
-                    free(s);
-                    free(fmt);
-                    die("prim_str -- unknown formatting code");
-            }
-        }
-        *s = '\0';
-
-        str = make_string_init(dest);
-        free(dest);
-        free(fmt);
-        return str;
     }
-    dump_datum(rcv);
-    return die1("prim_str -- unknown message", message);
+
+    s = dest = malloc(sizeof(char) * n);
+    if (!dest) {
+        free(fmt);
+        die("prim_str -- out of memory");
+    }
+
+    /* second, format the string */
+    for (f = fmt; *f; f++) {
+        if (*f != '%') {
+            *s++ = *f;
+            continue;
+        }
+        switch (*++f) {
+            case 'c':
+                free(s);
+                free(fmt);
+                die("prim_str -- OOPS I have not implemented chars yet");
+                regs[R_VM0] = cdr(regs[R_VM0]);
+                break;
+            case '%':
+                *s++ = '%';
+                break;
+            case 'd':
+                sprintf(s, "%d", datum2int(car(regs[R_VM0])));
+                s += strlen(s);
+                regs[R_VM0] = cdr(regs[R_VM0]);
+                break;
+            case 'r': /* repr */
+                car(regs[R_VM0]) = make_string_init("$$$");
+                /* fall through */
+            case 'p': /* pretty */
+                car(regs[R_VM0]) = make_string_init("###");
+                /* fall through */
+            case 's':
+                a = string_contents(car(regs[R_VM0]));
+                i = strlen(a);
+                memcpy(s, a, i);
+                regs[R_VM0] = cdr(regs[R_VM0]);
+                s += i;
+                break;
+            default:
+                free(s);
+                free(fmt);
+                die("prim_str -- unknown formatting code");
+        }
+    }
+    *s = '\0';
+
+    str = make_string_init(dest);
+    free(dest);
+    free(fmt);
+    return str;
 }
 
-datum
-prim_sym(datum rcv, datum message, datum args)
+prim_meth
+prim_str(datum rcv, datum message)
+{
+    if (message == percent_sym) return prim_str_percent;
+    dump_datum(rcv);
+    return (prim_meth) die1("prim_str -- unknown message", message);
+}
+
+prim_meth
+prim_sym(datum rcv, datum message)
 {
     /*char *s = (char *) rcv;*/
     dump_datum(rcv);
-    return die1("prim_sym -- unknown message", message);
+    return (prim_meth) die1("prim_sym -- unknown message", message);
 }
 
 static size_t
@@ -261,8 +335,8 @@ fsize(FILE *f)
     return sbuf.st_size;
 }
 
-datum
-prim_file(datum rcv, datum msg, datum args)
+static datum
+prim_file_read(datum rcv, datum args)
 {
     uint r, len;
     datum str;
@@ -270,69 +344,121 @@ prim_file(datum rcv, datum msg, datum args)
     char *s;
 
     if (!f) die("prim_file -- this file is closed");
-    if (msg == read_sym) {
-        len = fsize(f);
-        str = make_string(len + 1);
-        for (s = string_contents(str); len; len -= r) {
-            r = fread(s, sizeof(char), len, f);
-            s += r;
-        }
-        *s = '\0';
-        return str;
-    } else if (msg == write_sym) {
-        if (args == nil) die("prim_file:write -- not enough args");
-        s = string_contents(car(args));
-        for (len = strlen(s); len; len -= r) {
-            r = fwrite(s, sizeof(char), len, f);
-            s += r;
-        }
-        return ok_sym;
-    } else if (msg == destroy_sym || msg == close_sym) {
-        fclose(f);
-        cdr(rcv) = nil;
-        return ok_sym;
+    len = fsize(f);
+    str = make_string(len + 1);
+    for (s = string_contents(str); len; len -= r) {
+        r = fread(s, sizeof(char), len, f);
+        s += r;
     }
+    *s = '\0';
+    return str;
+}
+
+static datum
+prim_file_write(datum rcv, datum args)
+{
+    uint r, len;
+    FILE *f = cdr(rcv);
+    char *s;
+
+    if (!f) die("prim_file -- this file is closed");
+    if (args == nil) die("prim_file:write -- not enough args");
+    s = string_contents(car(args));
+    for (len = strlen(s); len; len -= r) {
+        r = fwrite(s, sizeof(char), len, f);
+        s += r;
+    }
+    return ok_sym;
+}
+
+static datum
+prim_file_close(datum rcv, datum args)
+{
+    FILE *f = cdr(rcv);
+
+    if (!f) die("prim_file -- this file is closed");
+    fclose(f);
+    cdr(rcv) = nil;
+    return ok_sym;
+}
+
+prim_meth
+prim_file(datum rcv, datum msg)
+{
+    if (msg == read_sym) return prim_file_read;
+    if (msg == write_sym) return prim_file_write;
+    if (msg == close_sym) return prim_file_close;
+    if (msg == destroy_sym) return prim_file_close;
     return die1("prim_file -- unknown message", msg);
 }
 
 /* global functions */
 
-datum
-prim_isp(datum proc, datum message, datum args)
+static datum
+prim_isp_run(datum proc, datum args)
 {
-    if (message == run_sym) return (datum) (car(args) == cadr(args));
-    return die1("prim_isp -- unknown message", message);
+    return (datum) (car(args) == cadr(args));
 }
 
-datum
-prim_cons(datum proc, datum message, datum args)
+prim_meth
+prim_isp(datum proc, datum message)
 {
-    if (message == run_sym) return cons(car(args), cadr(args));
-    return die1("prim_cons -- unknown message", message);
+    if (message == run_sym) return prim_isp_run;
+    return (prim_meth) die1("prim_isp -- unknown message", message);
 }
 
-datum
-prim_make_array(datum proc, datum message, datum args)
+static datum
+prim_cons_run(datum proc, datum args)
 {
-    if (message == run_sym) {
-        if (!intp(car(args))) die1("prim_make_array -- not an int", car(args));
-        return make_array(datum2int(car(args)));
-    }
-    return die1("prim_make_array -- unknown message", message);
+    return cons(car(args), cadr(args));
 }
 
-datum
-prim_list(datum proc, datum message, datum args)
+prim_meth
+prim_cons(datum proc, datum message)
 {
-    if (message == run_sym) return args;
-    return die1("prim_list -- unknown message", message);
+    if (message == run_sym) return prim_cons_run;
+    return (prim_meth) die1("prim_cons -- unknown message", message);
 }
 
-datum
-prim_rep(datum proc, datum message, datum args)
+static datum
+prim_make_array_run(datum proc, datum args)
+{
+    if (!intp(car(args))) die1("prim_make_array -- not an int", car(args));
+    return make_array(datum2int(car(args)));
+}
+
+prim_meth
+prim_make_array(datum proc, datum message)
+{
+    if (message == run_sym) return prim_make_array_run;
+    return (prim_meth) die1("prim_make_array -- unknown message", message);
+}
+
+static datum
+prim_list_run(datum proc, datum args)
+{
+    return args;
+}
+
+prim_meth
+prim_list(datum proc, datum message)
+{
+    if (message == run_sym) return prim_list_run;
+    return (prim_meth) die1("prim_list -- unknown message", message);
+}
+
+static datum
+prim_rep_run(datum proc, datum args)
 {
     printf("TODO implement me -- prim_rep\n");
     return nil;
+}
+
+prim_meth
+prim_rep(datum proc, datum message)
+{
+    if (message == run_sym) return prim_rep_run;
+    return (prim_meth) die1("prim_rep -- unknown message", message);
 }
 
 static void prx(datum d);
@@ -390,35 +516,54 @@ pr(datum d)
     printf("\n");
 }
 
-datum
-prim_pr(datum proc, datum message, datum args)
+static datum
+prim_pr_run(datum proc, datum args)
 {
     if (args == nil) die("cannot print nothing");
-    if (message != run_sym) die("no such method");
     pr(car(args));
+    return ok_sym;
+}
+
+prim_meth
+prim_pr(datum proc, datum message)
+{
+    if (message == run_sym) return prim_pr_run;
+    return (prim_meth) die1("prim_pr -- unknown message", message);
+}
+
+static datum
+prim_error_run(datum proc, datum args)
+{
+    printf("TODO implement me -- prim_error\n");
     return nil;
 }
 
-datum
-prim_error(datum proc, datum message, datum args)
+prim_meth
+prim_error(datum proc, datum message)
 {
-    printf("TODO implement me -- prim_error\n");
-    return (datum) 0;
+    if (message == run_sym) return prim_error_run;
+    return (prim_meth) die1("prim_error -- unknown message", message);
 }
 
-datum
-prim_call(datum proc, datum m, datum args)
+static datum
+prim_call_run(datum proc, datum args)
 {
     datum rcv, msg, argl;
-    if (m != run_sym) return die1("prim_call -- unknown message", m);
-    rcv = car(args);
-    msg = cadr(args);
-    argl = caddr(args);
+    rcv = checked_car(args);
+    msg = checked_cadr(args);
+    argl = checked_caddr(args);
     return call(rcv, msg, argl);
 }
 
-datum
-prim_open(datum rcv, datum msg, datum args)
+prim_meth
+prim_call(datum proc, datum m)
+{
+    if (m == run_sym) return prim_call_run;
+    return (prim_meth) die1("prim_call -- unknown message", m);
+}
+
+static datum
+prim_open_run(datum rcv, datum args)
 {
     char *mode = "rb";
     datum d = make_blank(2);
@@ -436,12 +581,22 @@ prim_open(datum rcv, datum msg, datum args)
     return d;
 }
 
-datum
-prim_inspector(datum proc, datum m, datum args)
+prim_meth
+prim_open(datum rcv, datum msg)
 {
-    if (m == has_methodp_sym) {
-        return (datum) complied_object_has_method(car(args), cadr(args));
-    }
-    return die1("prim_call -- unknown message", m);
+    if (msg == run_sym) return prim_open_run;
+    return (prim_meth) die1("prim_open -- unknown message", msg);
 }
 
+static datum
+prim_inspector_run(datum proc, datum args)
+{
+    return (datum) compiled_obj_has_method(car(args), cadr(args));
+}
+
+prim_meth
+prim_inspector(datum proc, datum m)
+{
+    if (m == has_methodp_sym) return prim_inspector_run;
+    return (prim_meth) die1("prim_call -- unknown message", m);
+}

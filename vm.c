@@ -53,7 +53,7 @@ static char *instr_names[32] = {
     "OP_BPRIM",
     "OP_LOAD_IMM",
     "OP_CONS",
-    "OP_APPLY_PRIMITIVE_PROC",
+    "OP_APPLY_PRIM_METH",
     "OP_MAKE_COMPILED_OBJ",
     "OP_COMPILED_OBJECT_METHOD",
     "OP_SETBANG",
@@ -527,7 +527,8 @@ start(uint *start_addr)
             case OP_BPRIM:
                 ra = I_R(inst);
                 tmp = (uint *) *++pc;
-                if (!compiled_objp(regs[ra])) pc = tmp - 1;
+                //if (!compiled_objp(regs[ra])) pc = tmp - 1;
+                if (!addrp(regs[ra])) pc = tmp - 1;
                 break;
             case OP_LOAD_IMM:
                 ra = I_R(inst);
@@ -550,12 +551,12 @@ start(uint *start_addr)
                 rc = I_RRR(inst);
                 regs[ra] = cons(regs[rb], regs[rc]);
                 break;
-            case OP_APPLY_PRIMITIVE_PROC:
+            case OP_APPLY_PRIM_METH:
                 ra = I_R(inst);
                 rb = I_RR(inst);
                 rc = I_RRR(inst);
                 rd = I_RRRR(inst);
-                regs[ra] = apply_primitive_proc(regs[rb], regs[rc], regs[rd]);
+                regs[ra] = apply_prim_meth((prim_meth) regs[rb], regs[rc], regs[rd]);
                 break;
             case OP_MAKE_COMPILED_OBJ:
                 ra = I_R(inst);
@@ -568,7 +569,7 @@ start(uint *start_addr)
                 rb = I_RR(inst);
                 di = I_RRD(inst);
                 d = static_datums[di];
-                regs[ra] = (datum) complied_object_method(regs[rb], d);
+                regs[ra] = (datum) compiled_obj_method(regs[rb], d);
                 break;
             case OP_SETBANG:
                 ra = I_R(inst);
@@ -735,7 +736,7 @@ call(datum o, datum m, pair a)
     regs[R_PROC] = o;
     regs[R_ARGL] = a;
     regs[R_CONTINUE] = quit_inst;
-    start(complied_object_method(o, m));
+    start(compiled_obj_method(o, m));
     return regs[R_VAL];
 }
 

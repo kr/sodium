@@ -146,7 +146,7 @@ gc(int alen, datum x, datum y, int slen, int blen)
         np = &busy_pairs[scan_index++];
         switch (OBJ_TYPE(np->info)) {
             case OBJ_TYPE_BLANK:
-                ((prim) car(np))(np, destroy_sym, nil);
+                (((prim) car(np))(np, destroy_sym))(np, nil);
                 break;
         }
         scan_index += OBJ_LEN(np->info);

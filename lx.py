@@ -262,6 +262,7 @@ def code_to_get_rest_args(operand_codes):
     return preserving((env_r,), code_for_next_arg,
             code_to_get_rest_args(operand_codes.cdr()))
 
+addr_r = S('addr')
 primitive_procedure_s = S('primitive-procedure')
 def compile_procedure_call(target, linkage, cenv, message):
   primitive_branch = make_label('primitive-branch')
@@ -271,8 +272,9 @@ def compile_procedure_call(target, linkage, cenv, message):
   compiled_linkage = linkage
   if linkage is next_s: compiled_linkage = after_call
   return \
-  append_ir_seqs(make_ir_seq((proc_r,), (),
-                      BPRIM(proc_r, primitive_branch)),
+  append_ir_seqs(make_ir_seq((proc_r,), (addr_r,),
+                      COMPILED_OBJECT_METHOD(addr_r, proc_r, message),
+                      BPRIM(addr_r, primitive_branch)),
                  parallel_ir_seqs(
                      append_ir_seqs(
                          compiled_branch,
@@ -280,31 +282,27 @@ def compile_procedure_call(target, linkage, cenv, message):
                      append_ir_seqs(
                          primitive_branch,
                          end_with_linkage(linkage,
-                             make_ir_seq((proc_r, argl_r), (target, tmp_r),
-                               LOAD_IMM(tmp_r, message),
-                               APPLY_PRIMITIVE_PROC(target, proc_r, tmp_r, argl_r))))),
+                             make_ir_seq((addr_r, proc_r, argl_r), (target,),
+                               APPLY_PRIM_METH(target, addr_r, proc_r, argl_r))))),
                  after_call)
 
 def compile_meth_invoc(target, linkage, cenv, message):
     if target is val_r:
         if linkage is return_s:
-            return make_ir_seq((proc_r, continue_r), all_writable_regs,
-                    COMPILED_OBJECT_METHOD(val_r, proc_r, message),
-                    GOTO_REG(val_r))
+            return make_ir_seq((addr_r, continue_r), all_writable_regs,
+                    GOTO_REG(addr_r))
         else:
-            return make_ir_seq((proc_r,), all_writable_regs,
+            return make_ir_seq((addr_r,), all_writable_regs,
                     LOAD_ADDR(continue_r, linkage),
-                    COMPILED_OBJECT_METHOD(val_r, proc_r, message),
-                    GOTO_REG(val_r))
+                    GOTO_REG(addr_r))
     else:
         if linkage is return_s:
             raise RuntimeError, ('return linkage, target not val -- COMPILE %s' % target)
         else:
             proc_return = make_label('proc_return')
-            return make_ir_seq((proc_r,), all_writable_regs,
+            return make_ir_seq((addr_r,), all_writable_regs,
                 LOAD_ADDR(continue_r, proc_return),
-                COMPILED_OBJECT_METHOD(val_r, proc_r, message),
-                GOTO_REG(val_r),
+                GOTO_REG(addr_r),
                 proc_return,
                 MOV(target, val_r),
                 GOTO_LABEL(linkage))
