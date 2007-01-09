@@ -126,12 +126,14 @@ prim_int_gt(datum rcv, datum args)
 static datum
 prim_int_minus(datum rcv, datum args)
 {
+    /* TODO check that arithmetic result doesn't overflow */
     return int2datum(datum2int(rcv) - datum2int(car(args)));
 }
 
 static datum
 prim_int_plus(datum rcv, datum args)
 {
+    /* TODO check that arithmetic result doesn't overflow */
     return int2datum(datum2int(rcv) + datum2int(car(args)));
 }
 
@@ -144,8 +146,6 @@ prim_int_percent(datum rcv, datum args)
 prim_meth
 prim_int(datum rcv, datum message)
 {
-    /* TODO check that arithmetic result doesn't overflow */
-    /* TODO check that arithmetic result isn't a broken heart tag */
     if (message == equals_sym) return prim_int_equals;
     if (message == lt_sym) return prim_int_lt;
     if (message == gt_sym) return prim_int_gt;
