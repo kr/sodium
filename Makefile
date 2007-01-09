@@ -1,6 +1,7 @@
-modules := sample-module.lx
-cmodules := vm.c pair.c obj.c gen.c prim.c st.c
-sources := $(cmodules) module-index.c prelude.c $(modules:.lx=.lxc.c)
+lxmodules := sample-module.lx
+lxcmodules := #re.c
+cmodules := vm.c pair.c obj.c gen.c prim.c st.c $(lxcmodules)
+sources := $(cmodules) module-index.c prelude.c $(lxmodules:.lx=.lxc.c)
 
 export CFLAGS := -g -pg -Wall -Werror
 #export CFLAGS := -O2 -Wall -Werror
@@ -18,8 +19,8 @@ all: vm
 
 vm: $(sources:.c=.o)
 
-module-index.c: $(modules)
-	./gen-mod-index --output=$@ $(modules:.lx=)
+module-index.c: $(lxmodules)
+	./gen-mod-index --output=$@ $(lxmodules:.lx=) -- $(lxcmodules:.c=)
 
 prelude.c prelude.h: prelude.lx
 	./lx1c --generate-c --output=$@ $<

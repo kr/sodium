@@ -10,7 +10,7 @@ def tr(s, old, new):
         s = s.replace(a, b)
     return s
 
-opts, modules = getopt(sys.argv[1:], 'o:', [
+opts, args = getopt(sys.argv[1:], 'o:', [
         'output=',
         ])
 
@@ -23,7 +23,18 @@ for opt, val in opts:
 if not outfile.endswith('.c'):
     outfile = outfile + '.c'
 
-count = len(modules) + 1
+lxmodules = []
+lxcmodules = None
+for arg in args:
+    if lxcmodules is None:
+        if arg == '--':
+            lxcmodules = []
+        else:
+            lxmodules.append(arg)
+    else:
+        lxcmodules.append(arg)
+
+count = len(lxcmodules) + len(lxmodules) + 1
 
 outfd = open(outfile, 'w')
 
@@ -32,7 +43,9 @@ print >>outfd
 print >>outfd, '#include "lxc.h"'
 print >>outfd, '#include "module-index.h"'
 print >>outfd, '#include "prelude.h"'
-for module in modules:
+for module in lxcmodules:
+    print >>outfd, '#include "%s.h"' % (module,)
+for module in lxmodules:
     print >>outfd, '#include "%s.lxc.h"' % (module,)
 
 print >>outfd
@@ -41,7 +54,11 @@ print >>outfd, 'int lxc_modules_count = %d;' % (count,)
 
 print >>outfd, 'lxc_module lxc_modules[%d] = {' % (count,)
 print >>outfd, '    &lxc_module_prelude,'
-for module in modules:
+for module in lxcmodules:
+    module = tr(module, '/-', '__')
+    if match('.*[^-_/A-Za-z0-9]', module): raise 'bad module name', module
+    print >>outfd, '    &lxc_module_%s,' % (module,)
+for module in lxmodules:
     module = tr(module, '/-', '__')
     if match('.*[^-_/A-Za-z0-9]', module): raise 'bad module name', module
     print >>outfd, '    &lxc_module_%s,' % (module,)
