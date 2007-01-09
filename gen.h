@@ -11,7 +11,6 @@ typedef void * datum;
 #define intp(x) (((uint) (x)) & INT_TAG)
 
 int truep(datum d);
-void dump_datum(datum d);
 
 void die(const char *m);
 datum die1(const char *m, datum d);

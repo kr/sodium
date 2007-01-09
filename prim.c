@@ -312,7 +312,7 @@ prim_meth
 prim_str(datum rcv, datum message)
 {
     if (message == percent_sym) return prim_str_percent;
-    dump_datum(rcv);
+    pr(rcv);
     return (prim_meth) die1("prim_str -- unknown message", message);
 }
 
@@ -320,7 +320,7 @@ prim_meth
 prim_sym(datum rcv, datum message)
 {
     /*char *s = (char *) rcv;*/
-    dump_datum(rcv);
+    pr(rcv);
     return (prim_meth) die1("prim_sym -- unknown message", message);
 }
 

@@ -13,40 +13,6 @@ truep(datum d)
     return !!d;
 }
 
-static void
-dump_datum_helper(datum d, int s)
-{
-    int i;
-    for (i = 0; i < s; i++) printf("    ");
-    printf("dumping datum %p: ", d);
-    if (((uint) d) == 0xffffffff) {
-        printf("BROKEN HEART");
-    } else if (intp(d)) {
-        printf("int\n  %d", datum2int(d));
-    } else if (pairp(d)) {
-        printf("pair:\n");
-        dump_datum_helper(car(d), s + 1);
-        dump_datum_helper(cdr(d), s + 1);
-    } else if (compiled_objp(d)) {
-        printf("<compiled obj>");
-    } else if (symbolp(d)) {
-        dump_symbol(d);
-    } else if (prim_funcp(d)) {
-        printf("<func %p>", d);
-    } else if (!d) {
-        printf("nil");
-    } else {
-        printf("<unknown>");
-    }
-    printf("\n");
-}
-
-void
-dump_datum(datum d)
-{
-    dump_datum_helper(d, 0);
-}
-
 void
 die(const char *m)
 {
