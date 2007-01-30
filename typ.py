@@ -54,6 +54,14 @@ setattr(String, '-', op_sub)
 setattr(String, '%', op_smod)
 setattr(String, '=', op_eq)
 
+
+class InlineMethEntry(object):
+    def __init__(self, name):
+        self.name = str(name)
+    def __str__(self):
+        return self.name
+
+
 def pair2tuple(pair):
     return pair.car(), pair.cdr()
 

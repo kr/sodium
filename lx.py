@@ -146,7 +146,8 @@ def compile_obj(exp, target, linkage, cenv):
     m_body_code = empty_instruction_seq()
     for meth in exp_methods(exp):
         name = meth_name(meth)
-        entry = make_label('method-entry')
+        #entry = make_label('method-entry')
+        entry = make_meth_entry(meth)
         m_tabl_code = tack_on_ir_seq(m_tabl_code,
                                      make_ir_seq((), (),
                                         DATUM(name),
@@ -168,7 +169,16 @@ def compile_obj(exp, target, linkage, cenv):
 def exp_methods(exp):
     return exp.cddr()
 
+def is_inline_meth(meth):
+    return tagged_list(meth, S('inline'))
+
+def make_meth_entry(meth):
+    if is_inline_meth(meth):
+        return InlineMethEntry(make_label('inline_meth_entry'))
+    return make_label('method-entry')
+
 def meth_name(meth):
+    if is_inline_meth(meth): return meth.caddr()
     return meth.caar()
 
 def meth_params(meth):
@@ -182,6 +192,7 @@ argl_r = S('argl')
 return_s = S('return')
 tmp_r = S('tmp')
 def compile_meth_body(meth, meth_entry, cenv):
+    if is_inline_meth(meth): return compile_inline_meth_body(meth, meth_entry)
     formals = meth_params(meth)
     body = scan_out_defines(meth_body(meth))
     cenv = cons(formals, cenv)
@@ -192,6 +203,18 @@ def compile_meth_body(meth, meth_entry, cenv):
             LOAD_IMM(tmp_r, formals),
             EXTEND_ENVIRONMENT(env_r, env_r, argl_r, tmp_r)),
         compile_sequence(body, val_r, return_s, cenv))
+
+def compile_inline_meth_body(meth, entry):
+    c_def = '''static datum
+%(name)s(datum rcv, datum args)
+{
+%(body)s
+}
+'''
+    c_def %= { 'name':str(entry), 'body':meth.cadddr() }
+    seq = empty_instruction_seq()
+    seq.add_c_defs(c_def)
+    return seq
 
 def compile_application(exp, target, linkage, cenv):
     proc_code = compile(exp_object(exp), proc_r, next_s, cenv)

@@ -350,7 +350,7 @@ link(uint *insts, uint inst_count, uint *lab_offsets)
                 break;
             case OP_DATUM:
                 di = I_D(inst);
-                assert(di < static_datums_cap);
+                assert((di + static_datums_base) < static_datums_cap);
                 *pc = (uint) static_datums[di + static_datums_base];
                 break;
             case OP_ADDR:

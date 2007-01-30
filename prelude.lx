@@ -1,7 +1,5 @@
 # This is the standard prelude for LX.
 
-def π 3.14159
-
 def (make-queue):
     def front '()
     def rear '()

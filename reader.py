@@ -142,8 +142,9 @@ atom : NAME
      | INT
      | DEC
      | STR
+     | FOREIGN
         '''
-        type, lexeme = self.xmatch(T.INT, T.DEC, T.NAME, T.STR)
+        type, lexeme = self.xmatch(T.INT, T.DEC, T.NAME, T.STR, T.FOREIGN)
         if type == T.INT:
             return lx.Integer(lexeme)
         if type == T.NAME:
@@ -152,6 +153,8 @@ atom : NAME
             return lx.String(lexeme[1:-1])
         if type == T.DEC:
             return lx.Decimal(lexeme)
+        if type == T.FOREIGN:
+            return lexeme[4:-4]
 
     def __mole(self, *follow):
         return self.__mole_tail(self.__expr(), *follow).reverse()

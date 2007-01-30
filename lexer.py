@@ -64,7 +64,7 @@ def scan(s):
     return INVALID, ''
 
 def compile_res(**R):
-    for k in R.iterkeys(): R[k] = re.compile(R[k])
+    for k in R.iterkeys(): R[k] = re.compile(R[k], re.DOTALL)
     return R
 
 def name(t): return t
@@ -88,11 +88,13 @@ QUOTE   = 'QUOTE'
 STR     = 'STR'
 SPACE   = 'SPACE'
 EOL     = 'EOL'
+FOREIGN = 'FOREIGN'
 
-scan_order = (DEC, INT, SMESS, IMESS, NAME, ASSIGN, DOT, DOTS, LPAR, RPAR, QUOTE, STR, EOL, SPACE)
+scan_order = (FOREIGN, DEC, INT, SMESS, IMESS, NAME, ASSIGN, DOT, DOTS, LPAR, RPAR, QUOTE, STR, EOL, SPACE)
 
 # special chars are . : ( ) '
 rules = compile_res(
+    FOREIGN= r'<<<<.*?>>>>',
     DEC    = r'-?[0-9]+\.[0-9]*',
     INT    = r'-?[0-9]+',
     SMESS  = r"\.[^()'" + '"' + "\s#:\.][^()'" + '"' + "\s#]*",
@@ -105,7 +107,12 @@ rules = compile_res(
     RPAR   = r'\)',
     QUOTE  = r"'",
     STR    = r'"[^"]*"',
-    EOL    = r' *(:?#.*)?\n',
+    EOL    = r' *(:?#[^\n]*)?\n',
     SPACE  = r' +',
 )
 
+if __name__ == '__main__':
+  import sys
+  s = open(sys.argv[1]).read()
+  for type, lexeme, loc in lex(s):
+      print type, lexeme

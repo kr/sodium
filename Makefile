@@ -1,5 +1,5 @@
-lxmodules := sample-module.lx
-lxcmodules := #re.c
+lxmodules := sample-module.lx re.lx
+lxcmodules := file.c #re.c
 cmodules := vm.c pair.c obj.c gen.c prim.c st.c $(lxcmodules)
 sources := $(cmodules) module-index.c prelude.c $(lxmodules:.lx=.lxc.c)
 

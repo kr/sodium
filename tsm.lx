@@ -1,1 +1,5 @@
-pr (import sample-module)
+def x (import re)
+
+pr (x :thirty-four)
+pr (x :other-thirty-four)
+pr (x :ninety-one)
