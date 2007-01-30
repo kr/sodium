@@ -10,3 +10,4 @@
 [ ] bootstrap
 [+] generalized array notation output: (a . b . c . d)
 [ ] generalized array notation input: '(a . b . c . d)
+[ ] make the compiler also emit real C-code (not just packaged byte codes)
