@@ -1,11 +1,11 @@
 lxmodules := sample-module.lx re.lx
-lxcmodules := file.c #re.c
+lxcmodules := #re.c
 cmodules := vm.c pair.c obj.c gen.c prim.c st.c $(lxcmodules)
 sources := $(cmodules) module-index.c prelude.c $(lxmodules:.lx=.lxc.c)
 
 export CFLAGS := -g -pg -Wall -Werror
 #export CFLAGS := -O2 -Wall -Werror
-export LDFLAGS := -pg
+export LDFLAGS := -pg -lpcre
 
 all: vm
 

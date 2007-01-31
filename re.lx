@@ -1,0 +1,93 @@
+inline C <<<<
+
+#include <string.h>
+#include <pcre.h>
+
+#define OVECCOUNT 30
+
+int ovector[OVECCOUNT];
+
+>>>>
+
+def re ():
+  inline C dotall <<<<
+    return int2datum(PCRE_DOTALL);
+  >>>>
+
+  (run pat) (re :make pat (re :dotall))
+
+  (make pat opts):
+    def r ():
+      (run subj) (r :match subj (r :runopts))
+      (find subj) (r :match subj (r :findopts))
+
+      inline C runopts <<<<
+        return int2datum(PCRE_ANCHORED);
+      >>>>
+
+      inline C findopts <<<<
+        return int2datum(0);
+      >>>>
+
+      inline C match <<<<
+        char *subj, *res;
+        int rc, subj_len, res_len, opts;
+        pcre *re = (pcre *) obj2pair(rcv)->datums[2];
+
+        if (args == nil) die("r:match -- not enough args");
+        subj = string_contents(car(args));
+        subj_len = strlen(subj);
+        args = cdr(args);
+
+        if (args == nil) die("r:match -- not enough args");
+        opts = datum2int(car(args));
+        args = cdr(args);
+
+        if (args != nil) die("r:match -- too many args");
+
+        rc = pcre_exec(re, NULL, subj, subj_len, 0, opts, ovector, OVECCOUNT);
+
+        if (rc < 0) return nil;
+        if (rc == 0) return nil;
+
+        res = subj + ovector[0];
+        res_len = ovector[1] - ovector[0];
+        return make_string_init_len(res, res_len);
+      >>>>
+
+      inline C destroy <<<<
+        free(obj2pair(rcv)->datums[2]);
+        return ok_sym;
+      >>>>
+
+      inline C prepare <<<<
+        pcre *re;
+        const char *error;
+        char *pattern;
+        int erroffset, opts;
+        datum d;
+
+        regs[R_VM0] = rcv;
+        regs[R_VM1] = args;
+        d = make_blank(3);
+        args = regs[R_VM1];
+        rcv = regs[R_VM0];
+
+        if (args != nil) die("r:prepare -- too many args");
+
+        pattern = string_contents(%(pat)s);
+        opts = datum2int(%(opts)s);
+        re = pcre_compile(pattern, opts, &error, &erroffset, NULL);
+        if (re == NULL) return nil;
+
+        car(d) = car(obj2pair(rcv));
+        cdr(d) = cdr(obj2pair(rcv));
+        ((pair) d)->datums[2] = (datum) re;
+        return pair2obj(d);
+      >>>>
+
+    r :: (r :prepare)
+    pr r
+    r .
+
+re .

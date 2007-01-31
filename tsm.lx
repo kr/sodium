@@ -1,5 +1,11 @@
 def x (import re)
 
-pr (x :thirty-four)
-pr (x :other-thirty-four)
-pr (x :ninety-one)
+def p (x "boo")
+
+pr (p "boo-boo")
+pr (p "fee-fee")
+
+pr "----"
+
+pr (p "fee-boo")
+pr (p :find "fee-boo")

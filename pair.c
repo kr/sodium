@@ -228,11 +228,18 @@ make_blank(uint len)
 }
 
 datum
+make_string_init_len(const char *s, int len)
+{
+    datum d = make_string(len + 1);
+    strcpy(string_contents(d), s);
+    string_contents(d)[len] = '\0';
+    return d;
+}
+
+datum
 make_string_init(const char *s)
 {
-    datum d = make_string(strlen(s) + 1);
-    strcpy(string_contents(d), s);
-    return d;
+    return make_string_init_len(s, strlen(s));
 }
 
 char *

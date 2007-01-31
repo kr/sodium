@@ -14,6 +14,7 @@ datum cons(datum x, datum y);
 datum make_array(uint len);
 datum make_string(uint len);
 datum make_string_init(const char *s);
+datum make_string_init_len(const char *s, int len);
 datum make_blank(uint len);
 
 datum array_get(datum arr, uint index);
