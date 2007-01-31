@@ -1,13 +1,20 @@
 [+] garbage collect strings
 [+] garbage collect vectors
+[+] generalized array notation output: (a . b . c . d)
+[+] modules
 [ ] Make input "x:y" or "x.y" lex as 2 tokens
-[ ] (x y z) :: 3-list
-[ ] redesign punctuation messages
+[ ] change single-expr stmt form from "ex ." to ". ex"
 [ ] square brackets for super-shorthand lambda exprs
+[ ] (x y z) :: 3-list
 [ ] overloading by number of args
 [ ] var args
-[+] modules
+
 [ ] bootstrap
-[+] generalized array notation output: (a . b . c . d)
-[ ] generalized array notation input: '(a . b . c . d)
+[ ] embed the compiler to form one do-it-all binary
+[ ] repl
+[ ] private methods
+[ ] allow chaining of indentation tokens "f : g : EOL INDENT ... DEDENT"
 [ ] make the compiler also emit real C-code (not just packaged byte codes)
+[ ] generalized array notation input: '(a . b . c . d)
+
+[ ] redesign punctuation messages
