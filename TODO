@@ -8,6 +8,7 @@
 [ ] (x y z) :: 3-list
 [ ] overloading by number of args
 [ ] var args
+[ ] fix handling of unassigned variables
 
 [ ] bootstrap
 [ ] embed the compiler to form one do-it-all binary
