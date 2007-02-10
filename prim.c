@@ -10,29 +10,17 @@
 static prim_meth prim_isp(datum rcv, datum msg);
 static prim_meth prim_cons(datum rcv, datum msg);
 static prim_meth prim_make_array(datum rcv, datum msg);
-static prim_meth prim_list(datum rcv, datum msg);
-static prim_meth prim_rep(datum rcv, datum msg);
-static prim_meth prim_pr(datum rcv, datum msg);
-static prim_meth prim_error(datum rcv, datum msg);
 
 static prim prims[MAX_PRIMS] = {
     prim_isp,
     prim_cons,
     prim_make_array,
-    prim_list,
-    prim_rep,
-    prim_pr,
-    prim_error,
 };
 
 static char *prim_names[MAX_PRIMS] = {
     "is?",
     "cons",
     "make-array",
-    "list",
-    "rep",
-    "pr",
-    "error",
 };
 
 void
@@ -357,33 +345,6 @@ prim_make_array(datum proc, datum message)
     return (prim_meth) die1("prim_make_array -- unknown message", message);
 }
 
-static datum
-prim_list_run(datum proc, datum args)
-{
-    return args;
-}
-
-prim_meth
-prim_list(datum proc, datum message)
-{
-    if (message == run_sym) return prim_list_run;
-    return (prim_meth) die1("prim_list -- unknown message", message);
-}
-
-static datum
-prim_rep_run(datum proc, datum args)
-{
-    printf("TODO implement me -- prim_rep\n");
-    return nil;
-}
-
-prim_meth
-prim_rep(datum proc, datum message)
-{
-    if (message == run_sym) return prim_rep_run;
-    return (prim_meth) die1("prim_rep -- unknown message", message);
-}
-
 static void prx(datum d);
 
 static void
@@ -437,33 +398,4 @@ pr(datum d)
 {
     prx(d);
     printf("\n");
-}
-
-static datum
-prim_pr_run(datum proc, datum args)
-{
-    if (args == nil) die("cannot print nothing");
-    pr(car(args));
-    return ok_sym;
-}
-
-prim_meth
-prim_pr(datum proc, datum message)
-{
-    if (message == run_sym) return prim_pr_run;
-    return (prim_meth) die1("prim_pr -- unknown message", message);
-}
-
-static datum
-prim_error_run(datum proc, datum args)
-{
-    printf("TODO implement me -- prim_error\n");
-    return nil;
-}
-
-prim_meth
-prim_error(datum proc, datum message)
-{
-    if (message == run_sym) return prim_error_run;
-    return (prim_meth) die1("prim_error -- unknown message", message);
 }

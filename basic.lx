@@ -1,12 +1,17 @@
 
+inline C <<<<
+#include "prim.h"
+>>>>
+
+
 obj ():
-  (inspector):
+  (inspect-func):
     obj ():
       inline C has-method? <<<<
         return (datum) compiled_obj_has_method(car(args), cadr(args));
       >>>>
 
-  (call):
+  (call-func):
     obj ():
       inline C run <<<<
         datum obj, msg, argl;
@@ -14,6 +19,27 @@ obj ():
         msg = checked_cadr(args);
         argl = checked_caddr(args);
         return call(obj, msg, argl);
+      >>>>
+
+  (error-func):
+    obj ():
+      inline C run <<<<
+        die("TODO implement me -- prim_error\n");
+        return nil;
+      >>>>
+
+  (pr-func):
+    obj ():
+      inline C run <<<<
+        if (args == nil) die("cannot print nothing");
+        pr(car(args));
+        return ok_sym;
+      >>>>
+
+  (list-func):
+    obj ():
+      inline C run <<<<
+        return args;
       >>>>
 
 

@@ -1,0 +1,5 @@
+pr "hello"
+
+error "oops"
+
+pr "bad"

@@ -3,8 +3,11 @@
 def π 3.14159
 
 def open (import file)
-def call ((import basic) :call)
-def inspect ((import basic) :inspector)
+def call ((import basic) :call-func)
+def error ((import basic) :error-func)
+def inspect ((import basic) :inspect-func)
+def list ((import basic) :list-func)
+def pr ((import basic) :pr-func)
 
 def (make-queue):
     def front '()
