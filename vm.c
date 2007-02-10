@@ -871,8 +871,6 @@ main(int argc, char **argv)
      * use it */
     tasks = lookup(genv, intern("*tasks*"));
 
-    /*modules = load_builtin("sample-module", modules);*/
-
     /* load the main file */
     main_addr = load_module_file(argv[1]);
 
