@@ -1,14 +1,14 @@
 def private 42
 
-def y (import c)
+def y (import ad-hoc-tests/c)
 
 y .run
 
 def df ():
     (a):
         pr "wheee d"
-        (import c)
-        (import d) :b
+        (import ad-hoc-tests/c)
+        (import ad-hoc-tests/d) :b
 
     (b):
         pr "alt d"

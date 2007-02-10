@@ -3,7 +3,7 @@ def compile (import compiler)
 
 compile "a.lx"
 
-def c (import c)
+def c (import ad-hoc-tests/c)
 
 c
 

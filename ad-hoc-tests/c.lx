@@ -1,4 +1,4 @@
-def x (import d)
+def x (import ad-hoc-tests/d)
 
 x .a
 
