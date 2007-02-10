@@ -1,4 +1,4 @@
-lxmodules := re.lx file.lx basic.lx #inspection.lx call.lx
+lxmodules := re.lx file.lx
 lxcmodules := #re.c
 cmodules := vm.c pair.c obj.c gen.c prim.c st.c $(lxcmodules)
 sources := $(cmodules) module-index.c prelude.c $(lxmodules:.lx=.lxc.c)

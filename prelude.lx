@@ -1,13 +1,44 @@
 # This is the standard prelude for LX.
 
+inline C <<<<
+#include "prim.h"
+>>>>
+
 def π 3.14159
 
 def open (import file)
-def call ((import basic) :call-func)
-def error ((import basic) :error-func)
-def inspect ((import basic) :inspect-func)
-def list ((import basic) :list-func)
-def pr ((import basic) :pr-func)
+
+def call ():
+  inline C run <<<<
+    datum obj, msg, argl;
+    obj = checked_car(args);
+    msg = checked_cadr(args);
+    argl = checked_caddr(args);
+    return call(obj, msg, argl);
+  >>>>
+
+def error ():
+  inline C run <<<<
+    die("TODO implement me -- prim_error\n");
+    return nil;
+  >>>>
+
+def inspect ():
+  inline C has-method? <<<<
+    return (datum) compiled_obj_has_method(car(args), cadr(args));
+  >>>>
+
+def list ():
+  inline C run <<<<
+    return args;
+  >>>>
+
+def pr ():
+  inline C run <<<<
+    if (args == nil) die("cannot print nothing");
+    pr(car(args));
+    return ok_sym;
+  >>>>
 
 def (make-queue):
     def front '()
