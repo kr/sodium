@@ -460,7 +460,7 @@ lookup_module(datum name)
     datum p = assq(name, modules);
     if (!p) die1("lookup_module -- module not found", name);
 
-    if (modules_available) return cadr(p);
+    if (modules_available || !caddr(p)) return cadr(p);
     return caaddr(p);
 }
 
@@ -794,6 +794,17 @@ make_module_entry(datum name)
     return x;
 }
 
+static datum
+make_resolved_module_entry(datum name, datum obj)
+{
+    datum x;
+
+    x = cons(nil, nil);
+    x = cons(obj, x);
+    x = cons(name, x);
+    return x;
+}
+
 static void
 resolve_module(datum entry, datum val)
 {
@@ -807,11 +818,7 @@ load_builtin(char *name, datum modules)
     datum x;
 
     start_body(load_module(name));
-    stack = cons(regs[R_VAL], stack);
-    x = make_module_entry(intern(name));
-    regs[R_VAL] = car(stack);
-    stack = cdr(stack);
-    resolve_module(x, regs[R_VAL]);
+    x = make_resolved_module_entry(intern(name), regs[R_VAL]);
     return cons(x, modules);
 }
 
@@ -850,6 +857,11 @@ main(int argc, char **argv)
 
     setup_global_env(genv);
 
+    /* load the very basic builtin modules */
+    /* modules = load_builtin("int", modules); */
+    /* modules = load_builtin("str", modules); */
+    modules = load_builtin("file", modules);
+
     /* load and execute the standard prelude */
     start_body(load_module("prelude"));
 
@@ -857,7 +869,7 @@ main(int argc, char **argv)
      * use it */
     tasks = lookup(genv, intern("*tasks*"));
 
-    modules = load_builtin("sample-module", modules);
+    /*modules = load_builtin("sample-module", modules);*/
 
     /* load the main file */
     main_addr = load_module_file(argv[1]);

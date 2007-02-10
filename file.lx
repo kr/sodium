@@ -1,45 +1,96 @@
+inline C <<<<
+#include <string.h>
+#include <stdio.h>
+#include <sys/stat.h>
 
+static size_t
+fsize(FILE *f)
+{
+    int r;
+    struct stat sbuf;
 
-def f (open "a.lx" 'read)
+    r = fstat(fileno(f), &sbuf);
+    if (r) die("fsize -- cannot stat");
+    return sbuf.st_size;
+}
 
-pr f
+>>>>
 
-def s (f :read)
+def file ():
+  (run name mode):
+    def f ():
+      inline C read <<<<
+        uint r, len;
+        datum str;
+        FILE *f = (FILE *) obj2pair(rcv)->datums[2];
+        char *s;
 
-pr s
+        if (!f) die("f:read -- this file is closed");
+        len = fsize(f);
+        str = make_string(len + 1);
+        for (s = string_contents(str); len; len -= r) {
+            r = fread(s, sizeof(char), len, f);
+            // TODO error checking with feof() and ferror()
+            s += r;
+        }
+        *s = '\0';
+        return str;
+      >>>>
 
+      inline C write <<<<
+        uint r, len;
+        FILE *f = obj2pair(rcv)->datums[2];
+        char *s;
 
+        if (!f) die("f:write -- this file is closed");
+        if (args == nil) die("f:write -- not enough args");
+        s = string_contents(car(args));
+        for (len = strlen(s); len; len -= r) {
+            r = fwrite(s, sizeof(char), len, f);
+            // TODO error checking with feof() and ferror()
+            s += r;
+        }
+        return ok_sym;
+      >>>>
 
+      inline C close <<<<
+        FILE *f = obj2pair(rcv)->datums[2];
 
+        if (f) {
+            fclose(f);
+            obj2pair(rcv)->datums[2] = nil;
+        }
+        return ok_sym;
+      >>>>
 
-def f (open "run")
+      (destroy) (f :close)
 
-pr f
+      inline C prepare <<<<
+        char *mode = "rb";
+        datum d;
 
-def s (f :read)
+        if (args != nil) die("f:prepare -- too many args");
 
-pr s
+        // Get mode
+        if (%(mode)s == write_sym) {
+            mode = "wb";
+        } else if (%(mode)s != read_sym) {
+            return die1("f:prepare -- unknown mode", %(mode)s);
+        }
 
+        regs[R_VM0] = rcv;
+        regs[R_VM1] = args;
+        d = make_blank(3);
+        args = regs[R_VM1];
+        rcv = regs[R_VM0];
 
+        car(d) = car(obj2pair(rcv));
+        cdr(d) = cdr(obj2pair(rcv));
+        ((pair) d)->datums[2] = fopen(string_contents(%(name)s), mode);
+        return pair2obj(d);
+      >>>>
 
+    f :: (f :prepare)
+    f .
 
-
-def f (open "foo" 'write)
-
-pr f
-
-f :write "hello\n"
-
-f :close
-
-
-
-
-
-def f (open "foo")
-
-pr f
-
-def s (f :read)
-
-pr s
+file .

@@ -13,7 +13,7 @@ int prim_funcp(datum x);
 
 void pr(datum d);
 
-#define MAX_PRIMS 10
+#define MAX_PRIMS 9
 
 /*extern prim prims[MAX_PRIMS];
 extern char *prim_names[MAX_PRIMS];*/
@@ -23,6 +23,5 @@ prim_meth prim_pair(datum rcv, datum msg);
 prim_meth prim_nil(datum rcv, datum msg);
 prim_meth prim_str(datum rcv, datum msg);
 prim_meth prim_sym(datum rcv, datum msg);
-prim_meth prim_file(datum rcv, datum msg);
 
 #endif /*prim_h*/

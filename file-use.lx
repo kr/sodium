@@ -1,0 +1,44 @@
+
+def f (open "a.lx" 'read)
+
+pr f
+
+def s (f :read)
+
+pr s
+
+
+
+#def f (open "run")
+def f (open "run" 'read)
+
+pr f
+
+def s (f :read)
+
+pr s
+
+
+
+
+
+def f (open "foo" 'write)
+
+pr f
+
+f :write "hello\n"
+
+f :close
+
+
+
+
+
+#def f (open "foo")
+def f (open "foo" 'read)
+
+pr f
+
+def s (f :read)
+
+pr s

@@ -15,7 +15,6 @@ static prim_meth prim_rep(datum rcv, datum msg);
 static prim_meth prim_pr(datum rcv, datum msg);
 static prim_meth prim_error(datum rcv, datum msg);
 static prim_meth prim_call(datum rcv, datum msg);
-static prim_meth prim_open(datum rcv, datum msg);
 static prim_meth prim_inspector(datum rcv, datum msg);
 
 static prim prims[MAX_PRIMS] = {
@@ -27,7 +26,6 @@ static prim prims[MAX_PRIMS] = {
     prim_pr,
     prim_error,
     prim_call,
-    prim_open,
     prim_inspector,
 };
 
@@ -40,7 +38,6 @@ static char *prim_names[MAX_PRIMS] = {
     "pr",
     "error",
     "call",
-    "open",
     "inspector",
 };
 
@@ -324,74 +321,6 @@ prim_sym(datum rcv, datum message)
     return (prim_meth) die1("prim_sym -- unknown message", message);
 }
 
-static size_t
-fsize(FILE *f)
-{
-    int r;
-    struct stat sbuf;
-
-    r = fstat(fileno(f), &sbuf);
-    if (r) die("fsize -- cannot stat");
-    return sbuf.st_size;
-}
-
-static datum
-prim_file_read(datum rcv, datum args)
-{
-    uint r, len;
-    datum str;
-    FILE *f = cdr(rcv);
-    char *s;
-
-    if (!f) die("prim_file -- this file is closed");
-    len = fsize(f);
-    str = make_string(len + 1);
-    for (s = string_contents(str); len; len -= r) {
-        r = fread(s, sizeof(char), len, f);
-        s += r;
-    }
-    *s = '\0';
-    return str;
-}
-
-static datum
-prim_file_write(datum rcv, datum args)
-{
-    uint r, len;
-    FILE *f = cdr(rcv);
-    char *s;
-
-    if (!f) die("prim_file -- this file is closed");
-    if (args == nil) die("prim_file:write -- not enough args");
-    s = string_contents(car(args));
-    for (len = strlen(s); len; len -= r) {
-        r = fwrite(s, sizeof(char), len, f);
-        s += r;
-    }
-    return ok_sym;
-}
-
-static datum
-prim_file_close(datum rcv, datum args)
-{
-    FILE *f = cdr(rcv);
-
-    if (!f) die("prim_file -- this file is closed");
-    fclose(f);
-    cdr(rcv) = nil;
-    return ok_sym;
-}
-
-prim_meth
-prim_file(datum rcv, datum msg)
-{
-    if (msg == read_sym) return prim_file_read;
-    if (msg == write_sym) return prim_file_write;
-    if (msg == close_sym) return prim_file_close;
-    if (msg == destroy_sym) return prim_file_close;
-    return die1("prim_file -- unknown message", msg);
-}
-
 /* global functions */
 
 static datum
@@ -560,32 +489,6 @@ prim_call(datum proc, datum m)
 {
     if (m == run_sym) return prim_call_run;
     return (prim_meth) die1("prim_call -- unknown message", m);
-}
-
-static datum
-prim_open_run(datum rcv, datum args)
-{
-    char *mode = "rb";
-    datum d = make_blank(2);
-
-    if (args == nil) die("prim_open -- not enough args");
-    car(d) = prim_file;
-    if (cdr(args) != nil) {
-        if (cadr(args) == write_sym) {
-            mode = "wb";
-        } else if (cadr(args) != read_sym) {
-            return die1("prim_open -- unknown mode", cadr(args));
-        }
-    }
-    cdr(d) = fopen(string_contents(car(args)), mode);
-    return d;
-}
-
-prim_meth
-prim_open(datum rcv, datum msg)
-{
-    if (msg == run_sym) return prim_open_run;
-    return (prim_meth) die1("prim_open -- unknown message", msg);
 }
 
 static datum

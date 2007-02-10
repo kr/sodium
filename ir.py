@@ -132,7 +132,7 @@ extern struct lxc_module lxc_module_%(name)s;
         if import_names:
             import_names_id = 'import_names'
             print >>fd
-            print >>fd, 'static const char **import_names = {'
+            print >>fd, 'static const char *import_names[] = {'
             for import_name in import_names:
                 print >>fd, '    "%s",' % (import_name,)
             print >>fd, '};'

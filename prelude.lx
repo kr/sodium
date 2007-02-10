@@ -2,6 +2,8 @@
 
 def π 3.14159
 
+def open (import file)
+
 def (make-queue):
     def front '()
     def rear '()
