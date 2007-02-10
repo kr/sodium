@@ -13,7 +13,7 @@ int prim_funcp(datum x);
 
 void pr(datum d);
 
-#define MAX_PRIMS 8
+#define MAX_PRIMS 7
 
 /*extern prim prims[MAX_PRIMS];
 extern char *prim_names[MAX_PRIMS];*/

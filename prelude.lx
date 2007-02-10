@@ -3,6 +3,7 @@
 def π 3.14159
 
 def open (import file)
+def call (import call)
 def inspect (import inspection)
 
 def (make-queue):

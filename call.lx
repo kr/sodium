@@ -1,0 +1,11 @@
+
+def call ():
+  inline C run <<<<
+    datum obj, msg, argl;
+    obj = checked_car(args);
+    msg = checked_cadr(args);
+    argl = checked_caddr(args);
+    return call(obj, msg, argl);
+  >>>>
+
+call .

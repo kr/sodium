@@ -14,7 +14,6 @@ static prim_meth prim_list(datum rcv, datum msg);
 static prim_meth prim_rep(datum rcv, datum msg);
 static prim_meth prim_pr(datum rcv, datum msg);
 static prim_meth prim_error(datum rcv, datum msg);
-static prim_meth prim_call(datum rcv, datum msg);
 
 static prim prims[MAX_PRIMS] = {
     prim_isp,
@@ -24,7 +23,6 @@ static prim prims[MAX_PRIMS] = {
     prim_rep,
     prim_pr,
     prim_error,
-    prim_call,
 };
 
 static char *prim_names[MAX_PRIMS] = {
@@ -35,7 +33,6 @@ static char *prim_names[MAX_PRIMS] = {
     "rep",
     "pr",
     "error",
-    "call",
 };
 
 void
@@ -469,21 +466,4 @@ prim_error(datum proc, datum message)
 {
     if (message == run_sym) return prim_error_run;
     return (prim_meth) die1("prim_error -- unknown message", message);
-}
-
-static datum
-prim_call_run(datum proc, datum args)
-{
-    datum rcv, msg, argl;
-    rcv = checked_car(args);
-    msg = checked_cadr(args);
-    argl = checked_caddr(args);
-    return call(rcv, msg, argl);
-}
-
-prim_meth
-prim_call(datum proc, datum m)
-{
-    if (m == run_sym) return prim_call_run;
-    return (prim_meth) die1("prim_call -- unknown message", m);
 }
