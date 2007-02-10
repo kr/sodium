@@ -860,9 +860,8 @@ main(int argc, char **argv)
     /* load the very basic builtin modules */
     /* modules = load_builtin("int", modules); */
     /* modules = load_builtin("str", modules); */
+    modules = load_builtin("basic", modules);
     modules = load_builtin("file", modules);
-    modules = load_builtin("call", modules);
-    modules = load_builtin("inspection", modules);
 
     /* load and execute the standard prelude */
     start_body(load_module("prelude"));
