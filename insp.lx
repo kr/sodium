@@ -1,0 +1,6 @@
+
+def o ():
+  (a) 3
+
+pr (inspect :has-method? o 'a)
+pr (inspect :has-method? o 'b)

@@ -3,6 +3,7 @@
 def π 3.14159
 
 def open (import file)
+def inspect (import inspection)
 
 def (make-queue):
     def front '()
@@ -87,7 +88,7 @@ def (make-task rcv message args):
 
 def (send rcv msg args):
     def task '()
-    if (inspector :has-method? rcv 'send):
+    if (inspect :has-method? rcv 'send):
         rcv :send msg args
         begin :
             task :: (make-task rcv msg args)

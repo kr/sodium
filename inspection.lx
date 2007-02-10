@@ -1,0 +1,7 @@
+
+def inspection ():
+  inline C has-method? <<<<
+    return (datum) compiled_obj_has_method(car(args), cadr(args));
+  >>>>
+
+inspection .

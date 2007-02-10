@@ -15,7 +15,6 @@ static prim_meth prim_rep(datum rcv, datum msg);
 static prim_meth prim_pr(datum rcv, datum msg);
 static prim_meth prim_error(datum rcv, datum msg);
 static prim_meth prim_call(datum rcv, datum msg);
-static prim_meth prim_inspector(datum rcv, datum msg);
 
 static prim prims[MAX_PRIMS] = {
     prim_isp,
@@ -26,7 +25,6 @@ static prim prims[MAX_PRIMS] = {
     prim_pr,
     prim_error,
     prim_call,
-    prim_inspector,
 };
 
 static char *prim_names[MAX_PRIMS] = {
@@ -38,7 +36,6 @@ static char *prim_names[MAX_PRIMS] = {
     "pr",
     "error",
     "call",
-    "inspector",
 };
 
 void
@@ -488,18 +485,5 @@ prim_meth
 prim_call(datum proc, datum m)
 {
     if (m == run_sym) return prim_call_run;
-    return (prim_meth) die1("prim_call -- unknown message", m);
-}
-
-static datum
-prim_inspector_run(datum proc, datum args)
-{
-    return (datum) compiled_obj_has_method(car(args), cadr(args));
-}
-
-prim_meth
-prim_inspector(datum proc, datum m)
-{
-    if (m == has_methodp_sym) return prim_inspector_run;
     return (prim_meth) die1("prim_call -- unknown message", m);
 }
