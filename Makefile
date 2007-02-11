@@ -1,10 +1,10 @@
 lxmodules := re.lx file.lx
-lxcmodules := #re.c
-cmodules := vm.c pair.c obj.c gen.c prim.c st.c $(lxcmodules)
+cmodules := vm.c pair.c obj.c gen.c prim.c st.c
 sources := $(cmodules) module-index.c prelude.c $(lxmodules:.lx=.lxc.c)
 
 export CFLAGS := -g -pg -Wall -Werror
 #export CFLAGS := -O2 -Wall -Werror
+
 export LDFLAGS := -pg -lpcre
 
 all: vm
@@ -20,7 +20,7 @@ all: vm
 vm: $(sources:.c=.o)
 
 module-index.c: $(lxmodules)
-	./gen-mod-index --output=$@ $(lxmodules:.lx=) -- $(lxcmodules:.c=)
+	./gen-mod-index --output=$@ $(lxmodules:.lx=)
 
 prelude.c prelude.h: prelude.lx
 	./lx1c --generate-c --output=$@ $<
