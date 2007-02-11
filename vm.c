@@ -858,6 +858,7 @@ main(int argc, char **argv)
     /* load the very basic builtin modules */
     start_body(load_module("int"));
     start_body(load_module("str"));
+    start_body(load_module("pair"));
 
     modules = load_builtin("file", modules);
 

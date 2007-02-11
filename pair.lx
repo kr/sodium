@@ -1,0 +1,51 @@
+
+def pair ():
+  inline C set-cdr! <<<<
+    pair p = rcv;
+
+    if (args == nil) die("pair:set-cdr! -- not enough args");
+    cdr(p) = car(args);
+    return ok_sym;
+  >>>>
+
+  inline C car <<<<
+    if (args != nil) die("pair:car -- too many args");
+    return car(rcv);
+  >>>>
+
+  inline C cdr <<<<
+    if (args != nil) die("pair:cdr -- too many args");
+    return cdr(rcv);
+  >>>>
+
+  inline C get <<<<
+    int i;
+
+    if (args == nil) die("pair:get -- not enough args");
+    if (!intp(car(args))) die1("pair:get -- not an int", car(args));
+
+    i = datum2int(car(args));
+    return array_get(rcv, i);
+  >>>>
+
+  inline C put! <<<<
+    int i;
+
+    if (args == nil) die("pair:put! -- not enough args");
+    if (!intp(car(args))) die1("pair:put! -- not an int", car(args));
+
+    i = datum2int(car(args));
+    array_put(rcv, i, cadr(args));
+    return ok_sym;
+  >>>>
+
+def install-pair ():
+  inline C run <<<<
+    if (args == nil) die("install-pair -- not enough args");
+    pair_surrogate = car(args);
+    return ok_sym;
+  >>>>
+
+install-pair pair
+
+'() .

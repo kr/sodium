@@ -23,8 +23,6 @@ get_primitive_method(datum proc, datum message)
     }
     if (compiled_objp(proc)) {
         die1("get_primitive_method -- not a primitive", proc);
-    } else if (pairp(proc)) {
-        p = prim_pair;
     } else if (proc == nil) {
         p = prim_nil;
     } else if (symbolp(proc)) {
@@ -43,58 +41,6 @@ datum
 apply_prim_meth(prim_meth meth, datum proc, datum argl)
 {
     return meth(proc, argl);
-}
-
-static datum
-prim_pair_set_cdr(datum rcv, datum args)
-{
-    pair p = rcv;
-    cdr(p) = car(args);
-    return ok_sym;
-}
-
-static datum
-prim_pair_car(datum rcv, datum args)
-{
-    pair p = rcv;
-    return car(p);
-}
-
-static datum
-prim_pair_cdr(datum rcv, datum args)
-{
-    pair p = rcv;
-    return cdr(p);
-}
-
-static datum
-prim_pair_get(datum rcv, datum args)
-{
-    int i;
-    if (!intp(car(args))) die1("prim_pair -- not an int", car(args));
-    i = datum2int(car(args));
-    return array_get(rcv, i);
-}
-
-static datum
-prim_pair_put(datum rcv, datum args)
-{
-    int i;
-    if (!intp(car(args))) die1("prim_pair -- not an int", car(args));
-    i = datum2int(car(args));
-    array_put(rcv, i, cadr(args));
-    return ok_sym;
-}
-
-prim_meth
-prim_pair(datum rcv, datum message)
-{
-    if (message == set_cdr_sym) return prim_pair_set_cdr;
-    if (message == car_sym) return prim_pair_car;
-    if (message == cdr_sym) return prim_pair_cdr;
-    if (message == get_sym) return prim_pair_get;
-    if (message == put_sym) return prim_pair_put;
-    return (prim_meth) die1("prim_pair -- unknown message", message);
 }
 
 prim_meth
