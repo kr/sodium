@@ -5,6 +5,8 @@
 #include "gen.h"
 #include "pair.h"
 
+extern datum int_surrogate, str_surrogate;
+
 datum make_compiled_obj(datum env, uint *table);
 
 #define OBJ_TAG 0x2

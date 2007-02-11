@@ -855,11 +855,10 @@ main(int argc, char **argv)
     gt_sym = intern(">");
     lt_sym = intern("<");
 
-    setup_global_env(genv);
-
     /* load the very basic builtin modules */
-    /* modules = load_builtin("int", modules); */
-    /* modules = load_builtin("str", modules); */
+    start_body(load_module("int"));
+    start_body(load_module("str"));
+
     modules = load_builtin("file", modules);
 
     /* load and execute the standard prelude */

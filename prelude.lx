@@ -28,14 +28,35 @@ def inspect ():
     return (datum) compiled_obj_has_method(car(args), cadr(args));
   >>>>
 
+def is? ():
+  inline C run <<<<
+    if (args == nil) die("is? -- not enough args");
+    if (cdr(args) == nil) die("is? -- not enough args");
+    return (datum) (car(args) == cadr(args));
+  >>>>
+
+def cons ():
+  inline C run <<<<
+    if (args == nil) die("cons -- not enough args");
+    if (cdr(args) == nil) die("cons -- not enough args");
+    return cons(car(args), cadr(args));
+  >>>>
+
 def list ():
   inline C run <<<<
     return args;
   >>>>
 
+def make-array ():
+  inline C run <<<<
+    if (args == nil) die("make-array -- not enough args");
+    if (!intp(car(args))) die1("make-array -- not an int", car(args));
+    return make_array(datum2int(car(args)));
+  >>>>
+
 def pr ():
   inline C run <<<<
-    if (args == nil) die("cannot print nothing");
+    if (args == nil) die("pr -- not enough args");
     pr(car(args));
     return ok_sym;
   >>>>

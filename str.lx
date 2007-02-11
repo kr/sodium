@@ -1,0 +1,266 @@
+
+inline C <<<<
+
+#include <string.h>
+
+#include "prim.h"
+
+static datum percent_star_sym;
+
+>>>>
+
+def str ():
+  # inline C / <<<<
+  #   /* concatenate */
+  #   datum new_str;
+  #   char *s1, *s2, *s;
+
+  #   printf("in concatenate\n");
+  #   if (args == nil) die("str:/ -- not enough args");
+  #   if (cdr(args) == nil) die("str:/ -- not enough args");
+
+  #   s1 = string_contents(car(args));
+  #   s2 = string_contents(cadr(args));
+  #   new_str = make_string(strlen(s1) + strlen(s2));
+  #   s = string_contents(new_str);
+
+  #   return new_str;
+  # >>>>
+
+  # inline C run <<<<
+  #   /* index a single char */
+  #   int i;
+  #   char s[2];
+
+  #   printf("in char_at\n");
+  #   if (args == nil) die("str -- not enough args");
+  #   if (!intp(car(args))) die("str -- expected int");
+  #   i = datum2int(car(args));
+  #   s[0] = string_contents(rcv)[i];
+  #   s[1] = '\0';
+  #   return make_string_init(s);
+  # >>>>
+
+  # inline C length <<<<
+  #   printf("in length\n");
+  #   if (args != nil) die("str:length -- too many args");
+  #   printf("rcv is\n");
+  #   pr(rcv);
+  #   return int2datum(strlen(string_contents(rcv)));
+  # >>>>
+
+  # inline C = <<<<
+  #   char *s1, *s2;
+  #   int i, l1, l2;
+
+  #   printf("in =\n");
+  #   if (args == nil) die("str:= -- not enough args");
+  #   if (cdr(args) != nil) die("str:= -- too many args");
+
+  #   printf("rcv is\n");
+  #   pr(rcv);
+
+  #   printf("car(args) is\n");
+  #   pr(car(args));
+
+  #   if (!stringp(car(args))) return nil;
+  #   s1 = string_contents(rcv);
+  #   s2 = string_contents(car(args));
+
+  #   l1 = strlen(s1);
+  #   l2 = strlen(s2);
+  #   printf("l1 = %%d l2 = %%d\n", l1, l2);
+  #   if (l1 != l2) return nil;
+
+  #   for (i = 0; i < l1; i++) {
+  #       printf("checking %%d, or %%c != %%c\n", i, s1[i], s2[i]);
+  #       if (s1[i] != s2[i]) return nil;
+  #   }
+  #   printf("they match\n");
+  #   return int2datum(1);
+  # >>>>
+
+  # inline C substring <<<<
+  #   char *s;
+  #   int start, end, len;
+
+  #   if (args == nil) die("str:substring -- not enough args");
+  #   if (cdr(args) == nil) die("str:substring -- not enough args");
+  #   if (cddr(args) != nil) die("str:substring -- too many args");
+
+  #   s = string_contents(rcv);
+  #   len = strlen(s);
+
+  #   start = datum2int(car(args));
+  #   if (start < 0) start = 0;
+
+  #   end = datum2int(cadr(args));
+  #   if (end > len) end = len;
+
+  #   {
+  #       int i, j;
+  #       char new[end - start + 1];
+  #       for (i = 0, j = start; j < end; i++, j++) {
+  #           new[i] = s[j];
+  #       }
+  #       new[i] = '\0';
+  #       return make_string_init(new);
+  #   }
+  # >>>>
+
+  # (tail n) (str :substring n (str :length))
+  # (head n) (str :substring 0 n)
+
+  # (starts-with sub):
+  #   pr "in starts-with"
+  #   (str :head (sub :length)) = sub
+
+  # (find-from n sub):
+  #   pr "in find-from"
+  #   def x '()
+  #   def (helper s i):
+  #     def c (s :starts-with sub)
+  #     pr "c is"
+  #     pr c
+  #     if c :
+  #       i .
+  #       helper (s :tail 1) (i + 1)
+  #   x :: (helper (str :tail n) n)
+  #   pr "found"
+  #   pr x
+  #   x .
+
+  # (find sub):
+  #   pr "in find"
+  #   str :find-from 0 sub
+
+  # (%* a):
+  #   pr "in %*"
+  #   def i (str :find "%")
+  #   if (not i):
+  #     str .
+  #     if ((str 0) = "%"):
+  #       (format (str 1) (a :car)) / ((str :tail 2) %* (a :cdr))
+  #       (str :head i) / ((str :tail i) %* a)
+
+  # inline C % <<<<
+  #   datum a;
+
+  #   puts("in %%");
+  #   regs[R_VM1] = rcv;
+  #   a = cons(args, nil);
+  #   rcv = regs[R_VM1];
+  #   return call(rcv, percent_star_sym, a);
+  # >>>>
+
+  inline C % <<<<
+    uint n, i;
+    datum str;
+    char *f, *s, *dest, *a, *fmt = copy_string_contents(rcv);
+
+
+    regs[R_VM0] = regs[R_VM1] = args;
+
+    /* first, find a upper bound on the string size */
+    n = 1; /* one for the null terminator */
+    for (f = fmt; *f; f++) {
+        if (*f != '%%') { n++; continue; }
+        switch (*++f) {
+            case 'c':
+                regs[R_VM1] = cdr(regs[R_VM1]);
+                /* fall through */
+            case '%%':
+                n++;
+                break;
+            case 'd':
+                regs[R_VM1] = cdr(regs[R_VM1]);
+                n += 20;
+                break;
+            case 'r': /* repr */
+                car(regs[R_VM1]) = make_string_init("$$$");
+                /* fall through */
+            case 'p': /* pretty */
+                car(regs[R_VM1]) = make_string_init("###");
+                /* fall through */
+            case 's':
+                n += strlen(string_contents(car(regs[R_VM1])));
+                regs[R_VM1] = cdr(regs[R_VM1]);
+                break;
+            default:
+                free(fmt);
+                die("prim_str -- unknown formatting code");
+        }
+    }
+
+    s = dest = malloc(sizeof(char) * n);
+    if (!dest) {
+        free(fmt);
+        die("prim_str -- out of memory");
+    }
+
+    /* second, format the string */
+    for (f = fmt; *f; f++) {
+        if (*f != '%%') {
+            *s++ = *f;
+            continue;
+        }
+        switch (*++f) {
+            case 'c':
+                free(s);
+                free(fmt);
+                die("prim_str -- OOPS I have not implemented chars yet");
+                regs[R_VM0] = cdr(regs[R_VM0]);
+                break;
+            case '%%':
+                *s++ = '%%';
+                break;
+            case 'd':
+                sprintf(s, "%%d", datum2int(car(regs[R_VM0])));
+                s += strlen(s);
+                regs[R_VM0] = cdr(regs[R_VM0]);
+                break;
+            case 'r': /* repr */
+                car(regs[R_VM0]) = make_string_init("$$$");
+                /* fall through */
+            case 'p': /* pretty */
+                car(regs[R_VM0]) = make_string_init("###");
+                /* fall through */
+            case 's':
+                a = string_contents(car(regs[R_VM0]));
+                i = strlen(a);
+                memcpy(s, a, i);
+                regs[R_VM0] = cdr(regs[R_VM0]);
+                s += i;
+                break;
+            default:
+                free(s);
+                free(fmt);
+                die("prim_str -- unknown formatting code");
+        }
+    }
+    *s = '\0';
+
+    str = make_string_init(dest);
+    free(dest);
+    free(fmt);
+    return str;
+  >>>>
+
+def intern-syms ():
+  inline C run <<<<
+    percent_star_sym = intern("%%*");
+    return ok_sym;
+  >>>>
+
+def install-str ():
+  inline C run <<<<
+    if (args == nil) die("install-str -- not enough args");
+    str_surrogate = car(args);
+    return ok_sym;
+  >>>>
+
+
+intern-syms
+install-str str
+
+'() .

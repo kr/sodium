@@ -7,6 +7,8 @@
 
 #include "vm.h"
 
+datum int_surrogate, str_surrogate;
+
 datum
 make_compiled_obj(datum env, uint *table)
 {
@@ -14,10 +16,24 @@ make_compiled_obj(datum env, uint *table)
     return pair2obj(p);
 }
 
+static datum
+get_primitive_surrogate(datum obj)
+{
+    if (intp(obj)) return int_surrogate;
+    if (stringp(obj)) return str_surrogate;
+    return nil;
+}
+
 datum
 compiled_obj_env(datum obj)
 {
     pair p;
+    datum surrogate;
+
+    if ((surrogate = get_primitive_surrogate(obj))) {
+        datum frame = cons(obj, nil);
+        return cons(frame, genv);
+    }
 
     if (!compiled_objp(obj)) die1("not a compiled object", obj);
     p = obj2pair(obj);
@@ -29,6 +45,11 @@ compiled_obj_method(datum obj, datum name)
 {
     int n;
     datum *table;
+    datum surrogate;
+
+    if ((surrogate = get_primitive_surrogate(obj))) {
+        return compiled_obj_method(surrogate, name);
+    }
 
     if (!compiled_objp(obj)) {
         return (uint *) get_primitive_method(obj, name);

@@ -1,0 +1,44 @@
+
+def int ():
+  inline C = <<<<
+    if (args == nil) die("int:= -- not enough args");
+    return (datum) (rcv == car(args));
+  >>>>
+
+  inline C < <<<<
+    if (args == nil) die("int:< -- not enough args");
+    return (datum) (rcv < car(args));
+  >>>>
+
+  inline C > <<<<
+    if (args == nil) die("int:> -- not enough args");
+    return (datum) (rcv > car(args));
+  >>>>
+
+  inline C - <<<<
+    if (args == nil) die("int:> -- not enough args");
+    /* TODO check that arithmetic result doesn't overflow */
+    return int2datum(datum2int(rcv) - datum2int(car(args)));
+  >>>>
+
+  inline C + <<<<
+    if (args == nil) die("int:> -- not enough args");
+    /* TODO check that arithmetic result doesn't overflow */
+    return int2datum(datum2int(rcv) + datum2int(car(args)));
+  >>>>
+
+  inline C % <<<<
+    if (args == nil) die("int:> -- not enough args");
+    return int2datum(datum2int(rcv) %% datum2int(car(args)));
+  >>>>
+
+def install-int ():
+  inline C run <<<<
+    if (args == nil) die("install-int -- not enough args");
+    int_surrogate = car(args);
+    return ok_sym;
+  >>>>
+
+install-int int
+
+'() .

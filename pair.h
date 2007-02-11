@@ -38,6 +38,7 @@ char *copy_string_contents(datum str);
 #define caar(x) car(car(x))
 #define cadr(x) car(cdr(x))
 #define cdar(x) cdr(car(x))
+#define cddr(x) cdr(cdr(x))
 #define caddr(x) car(cdr(cdr(x)))
 #define caaddr(x) car(car(cdr(cdr(x))))
 #define cdaddr(x) cdr(car(cdr(cdr(x))))

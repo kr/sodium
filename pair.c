@@ -117,6 +117,8 @@ gc(int alen, datum x, datum y, int slen, int blen)
     to_import = relocate(to_import);
     to_start = relocate(to_start);
     modules = relocate(modules);
+    int_surrogate = relocate(int_surrogate);
+    str_surrogate = relocate(str_surrogate);
     x = relocate(x);
     y = relocate(y);
     for (i = 0; i < REG_COUNT; ++i) {

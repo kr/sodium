@@ -7,39 +7,6 @@
 #include "st.h"
 #include "vm.h"
 
-static prim_meth prim_isp(datum rcv, datum msg);
-static prim_meth prim_cons(datum rcv, datum msg);
-static prim_meth prim_make_array(datum rcv, datum msg);
-
-static prim prims[MAX_PRIMS] = {
-    prim_isp,
-    prim_cons,
-    prim_make_array,
-};
-
-static char *prim_names[MAX_PRIMS] = {
-    "is?",
-    "cons",
-    "make-array",
-};
-
-void
-setup_global_env(datum env)
-{
-    int i;
-
-    for (i = 0; i < MAX_PRIMS; i++) {
-        define(env, &prims[i], intern(prim_names[i]));
-    }
-}
-
-int
-prim_funcp(datum x)
-{
-    return (((prim *)x) >= prims) &&
-           (((prim *)x) < &prims[MAX_PRIMS]);
-}
-
 static prim_meth
 prim_dummy(datum rcv, datum msg)
 {
@@ -54,16 +21,10 @@ get_primitive_method(datum proc, datum message)
     if (!symbolp(message)) {
         die1("get_primitive_method -- not a symbol", message);
     }
-    if (prim_funcp(proc)) {
-        p = *(prim *) proc;
-    } else if (intp(proc)) {
-        p = prim_int;
-    } else if (compiled_objp(proc)) {
+    if (compiled_objp(proc)) {
         die1("get_primitive_method -- not a primitive", proc);
     } else if (pairp(proc)) {
         p = prim_pair;
-    } else if (stringp(proc)) {
-        p = prim_str;
     } else if (proc == nil) {
         p = prim_nil;
     } else if (symbolp(proc)) {
@@ -82,56 +43,6 @@ datum
 apply_prim_meth(prim_meth meth, datum proc, datum argl)
 {
     return meth(proc, argl);
-}
-
-static datum
-prim_int_equals(datum rcv, datum args)
-{
-    return (datum) (rcv == car(args));
-}
-
-static datum
-prim_int_lt(datum rcv, datum args)
-{
-    return (datum) (rcv < car(args));
-}
-
-static datum
-prim_int_gt(datum rcv, datum args)
-{
-    return (datum) (rcv > car(args));
-}
-
-static datum
-prim_int_minus(datum rcv, datum args)
-{
-    /* TODO check that arithmetic result doesn't overflow */
-    return int2datum(datum2int(rcv) - datum2int(car(args)));
-}
-
-static datum
-prim_int_plus(datum rcv, datum args)
-{
-    /* TODO check that arithmetic result doesn't overflow */
-    return int2datum(datum2int(rcv) + datum2int(car(args)));
-}
-
-static datum
-prim_int_percent(datum rcv, datum args)
-{
-    return int2datum(datum2int(rcv) % datum2int(car(args)));
-}
-
-prim_meth
-prim_int(datum rcv, datum message)
-{
-    if (message == equals_sym) return prim_int_equals;
-    if (message == lt_sym) return prim_int_lt;
-    if (message == gt_sym) return prim_int_gt;
-    if (message == minus_sym) return prim_int_minus;
-    if (message == plus_sym) return prim_int_plus;
-    if (message == percent_sym) return prim_int_percent;
-    return (prim_meth) die1("prim_int -- unknown message", message);
 }
 
 static datum
@@ -192,109 +103,6 @@ prim_nil(datum proc, datum message)
     return (prim_meth) die1("prim_nil -- unknown message", message);
 }
 
-static datum
-prim_str_percent(datum rcv, datum args)
-{
-    uint n, i;
-    datum str;
-    char *f, *s, *dest, *a, *fmt = copy_string_contents(rcv);
-
-
-    regs[R_VM0] = regs[R_VM1] = args;
-
-    /* first, find a upper bound on the string size */
-    n = 1; /* one for the null terminator */
-    for (f = fmt; *f; f++) {
-        if (*f != '%') { n++; continue; }
-        switch (*++f) {
-            case 'c':
-                regs[R_VM1] = cdr(regs[R_VM1]);
-                /* fall through */
-            case '%':
-                n++;
-                break;
-            case 'd':
-                regs[R_VM1] = cdr(regs[R_VM1]);
-                n += 20;
-                break;
-            case 'r': /* repr */
-                car(regs[R_VM1]) = make_string_init("$$$");
-                /* fall through */
-            case 'p': /* pretty */
-                car(regs[R_VM1]) = make_string_init("###");
-                /* fall through */
-            case 's':
-                n += strlen(string_contents(car(regs[R_VM1])));
-                regs[R_VM1] = cdr(regs[R_VM1]);
-                break;
-            default:
-                free(fmt);
-                die("prim_str -- unknown formatting code");
-        }
-    }
-
-    s = dest = malloc(sizeof(char) * n);
-    if (!dest) {
-        free(fmt);
-        die("prim_str -- out of memory");
-    }
-
-    /* second, format the string */
-    for (f = fmt; *f; f++) {
-        if (*f != '%') {
-            *s++ = *f;
-            continue;
-        }
-        switch (*++f) {
-            case 'c':
-                free(s);
-                free(fmt);
-                die("prim_str -- OOPS I have not implemented chars yet");
-                regs[R_VM0] = cdr(regs[R_VM0]);
-                break;
-            case '%':
-                *s++ = '%';
-                break;
-            case 'd':
-                sprintf(s, "%d", datum2int(car(regs[R_VM0])));
-                s += strlen(s);
-                regs[R_VM0] = cdr(regs[R_VM0]);
-                break;
-            case 'r': /* repr */
-                car(regs[R_VM0]) = make_string_init("$$$");
-                /* fall through */
-            case 'p': /* pretty */
-                car(regs[R_VM0]) = make_string_init("###");
-                /* fall through */
-            case 's':
-                a = string_contents(car(regs[R_VM0]));
-                i = strlen(a);
-                memcpy(s, a, i);
-                regs[R_VM0] = cdr(regs[R_VM0]);
-                s += i;
-                break;
-            default:
-                free(s);
-                free(fmt);
-                die("prim_str -- unknown formatting code");
-        }
-    }
-    *s = '\0';
-
-    str = make_string_init(dest);
-    free(dest);
-    free(fmt);
-    return str;
-}
-
-prim_meth
-prim_str(datum rcv, datum message)
-{
-    if (message == percent_sym) return prim_str_percent;
-    pr(rcv);
-    return (prim_meth) die1("prim_str -- unknown message", message);
-}
-
 prim_meth
 prim_sym(datum rcv, datum message)
 {
@@ -304,46 +112,6 @@ prim_sym(datum rcv, datum message)
 }
 
 /* global functions */
-
-static datum
-prim_isp_run(datum proc, datum args)
-{
-    return (datum) (car(args) == cadr(args));
-}
-
-prim_meth
-prim_isp(datum proc, datum message)
-{
-    if (message == run_sym) return prim_isp_run;
-    return (prim_meth) die1("prim_isp -- unknown message", message);
-}
-
-static datum
-prim_cons_run(datum proc, datum args)
-{
-    return cons(car(args), cadr(args));
-}
-
-prim_meth
-prim_cons(datum proc, datum message)
-{
-    if (message == run_sym) return prim_cons_run;
-    return (prim_meth) die1("prim_cons -- unknown message", message);
-}
-
-static datum
-prim_make_array_run(datum proc, datum args)
-{
-    if (!intp(car(args))) die1("prim_make_array -- not an int", car(args));
-    return make_array(datum2int(car(args)));
-}
-
-prim_meth
-prim_make_array(datum proc, datum message)
-{
-    if (message == run_sym) return prim_make_array_run;
-    return (prim_meth) die1("prim_make_array -- unknown message", message);
-}
 
 static void prx(datum d);
 
@@ -380,8 +148,6 @@ prx(datum d)
         printf("<obj %p>", d);
     } else if (symbolp(d)) {
         pr_symbol(d);
-    } else if (prim_funcp(d)) {
-        printf("<prim %p>", d);
     } else if (addrp(d)) {
         printf("<addr %p>", d);
     } else if (!d) {
