@@ -3,6 +3,8 @@ inline C <<<<
 #include <stdio.h>
 #include <sys/stat.h>
 
+static datum read_sym, write_sym;
+
 static size_t
 fsize(FILE *f)
 {
@@ -15,6 +17,13 @@ fsize(FILE *f)
 }
 
 >>>>
+
+def intern-syms ():
+  inline C run <<<<
+    read_sym = intern("read");
+    write_sym = intern("write");
+    return ok_sym;
+  >>>>
 
 def file ():
   (run name mode):
@@ -93,4 +102,5 @@ def file ():
     f :: (f :prepare)
     f .
 
+intern-syms
 file .

@@ -1,5 +1,5 @@
 
-def f (open "a.lx" 'read)
+def f (open "config.h" 'read)
 
 pr f
 

@@ -30,10 +30,7 @@ int instr_sets = 0;
 datum to_import = nil, to_start = nil, modules = nil;
 int modules_available = 0;
 
-datum equals_sym, minus_sym, plus_sym, percent_sym, run_sym, ok_sym,
-      set_cdr_sym, car_sym, cdr_sym, emptyp_sym, remove_sym,
-      has_methodp_sym, get_sym, put_sym, destroy_sym, read_sym,
-      write_sym, read_sym, close_sym, lt_sym, gt_sym;
+datum run_sym, ok_sym, emptyp_sym, remove_sym, destroy_sym;
 
 #if VM_DEBUG > 0
 static char *instr_names[32] = {
@@ -833,27 +830,11 @@ main(int argc, char **argv)
     init_mem();
     genv = cons(nil, nil);
 
-    equals_sym = intern("=");
-    minus_sym = intern("-");
-    plus_sym = intern("+");
-    percent_sym = intern("%");
     run_sym = intern("run");
     ok_sym = intern("ok");
-    set_cdr_sym = intern("set-cdr!");
-    car_sym = intern("car");
-    cdr_sym = intern("cdr");
     emptyp_sym = intern("empty?");
     remove_sym = intern("remove!");
-    has_methodp_sym = intern("has-method?");
-    get_sym = intern("get");
-    put_sym = intern("put!");
     destroy_sym = intern("destroy!");
-    read_sym = intern("read");
-    write_sym = intern("write");
-    read_sym = intern("read");
-    close_sym = intern("close");
-    gt_sym = intern(">");
-    lt_sym = intern("<");
 
     /* load the very basic builtin modules */
     start_body(load_module("int"));
