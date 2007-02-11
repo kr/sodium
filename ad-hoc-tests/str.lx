@@ -1,0 +1,52 @@
+def x "hello, "
+def y "world"
+def z "world"
+
+pr "hello, world"
+pr (x / y)
+pr ""
+
+pr "()"
+pr (x = y)
+pr ""
+
+pr "1"
+pr (y = z)
+pr ""
+
+pr "()"
+pr (y = "there")
+pr ""
+
+pr "ell"
+pr (x :substring 1 4)
+pr ""
+
+pr "7"
+pr (x :length)
+pr ""
+
+pr "r"
+pr (y 2)
+pr ""
+
+pr "hel"
+pr (x :head 3)
+pr ""
+
+pr "rld"
+pr (y :tail 2)
+pr ""
+
+pr "()"
+pr (x :starts-with "foo")
+pr ""
+
+pr "1"
+pr (x :starts-with "hel")
+pr ""
+
+pr "3"
+pr (x :find "lo")
+pr ""
+
