@@ -1,4 +1,4 @@
-lxmodules := int.lx str.lx pair.lx re.lx file.lx
+lxmodules := int.lx str.lx pair.lx nil.lx re.lx file.lx
 cmodules := vm.c pair.c obj.c gen.c prim.c st.c
 sources := $(cmodules) module-index.c prelude.c $(lxmodules:.lx=.lxc.c)
 

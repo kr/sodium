@@ -7,7 +7,7 @@
 
 #include "vm.h"
 
-datum int_surrogate, str_surrogate, pair_surrogate;
+datum int_surrogate, str_surrogate, pair_surrogate, nil_surrogate;
 
 datum
 make_compiled_obj(datum env, uint *table)
@@ -22,6 +22,7 @@ get_primitive_surrogate(datum obj)
     if (intp(obj)) return int_surrogate;
     if (stringp(obj)) return str_surrogate;
     if (pairp(obj)) return pair_surrogate;
+    if (obj == nil) return nil_surrogate;
     return nil;
 }
 

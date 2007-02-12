@@ -642,7 +642,10 @@ load_module_file(const char *name)
     FILE *f;
 
     f = fopen(name, "rb");
-    if (!f) bail("cannot open file");
+    if (!f) {
+        fprintf(stderr, "cannot open file %s\n", name);
+        bail("cannot open file");
+    }
 
     check_magic(f);
 
@@ -840,6 +843,7 @@ main(int argc, char **argv)
     start_body(load_module("int"));
     start_body(load_module("str"));
     start_body(load_module("pair"));
+    start_body(load_module("nil"));
 
     modules = load_builtin("file", modules);
 

@@ -1,0 +1,5 @@
+def x '()
+
+pr (x :to_s)
+
+pr (x :car)

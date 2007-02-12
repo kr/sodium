@@ -120,6 +120,7 @@ gc(int alen, datum x, datum y, int slen, int blen)
     int_surrogate = relocate(int_surrogate);
     str_surrogate = relocate(str_surrogate);
     pair_surrogate = relocate(pair_surrogate);
+    nil_surrogate = relocate(nil_surrogate);
     x = relocate(x);
     y = relocate(y);
     for (i = 0; i < REG_COUNT; ++i) {

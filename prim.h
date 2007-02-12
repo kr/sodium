@@ -12,7 +12,6 @@ datum apply_prim_meth(prim_meth meth, datum proc, datum argl);
 void pr(datum d);
 
 prim_meth prim_pair(datum rcv, datum msg);
-prim_meth prim_nil(datum rcv, datum msg);
 prim_meth prim_sym(datum rcv, datum msg);
 
 #endif /*prim_h*/

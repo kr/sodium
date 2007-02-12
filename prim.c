@@ -23,8 +23,6 @@ get_primitive_method(datum proc, datum message)
     }
     if (compiled_objp(proc)) {
         die1("get_primitive_method -- not a primitive", proc);
-    } else if (proc == nil) {
-        p = prim_nil;
     } else if (symbolp(proc)) {
         p = prim_sym;
     } else if (addrp(proc)) {
@@ -41,12 +39,6 @@ datum
 apply_prim_meth(prim_meth meth, datum proc, datum argl)
 {
     return meth(proc, argl);
-}
-
-prim_meth
-prim_nil(datum proc, datum message)
-{
-    return (prim_meth) die1("prim_nil -- unknown message", message);
 }
 
 prim_meth
