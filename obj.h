@@ -5,7 +5,8 @@
 #include "gen.h"
 #include "pair.h"
 
-extern datum int_surrogate, str_surrogate, pair_surrogate, nil_surrogate;
+extern datum int_surrogate, str_surrogate, pair_surrogate, nil_surrogate,
+             symbol_surrogate;
 
 datum make_compiled_obj(datum env, uint *table);
 

@@ -844,6 +844,7 @@ main(int argc, char **argv)
     start_body(load_module("str"));
     start_body(load_module("pair"));
     start_body(load_module("nil"));
+    start_body(load_module("symbol"));
 
     modules = load_builtin("file", modules);
 
