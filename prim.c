@@ -7,38 +7,6 @@
 #include "st.h"
 #include "vm.h"
 
-static prim_meth
-prim_dummy(datum rcv, datum msg)
-{
-    die("prim_dummy -- can't happen");
-    return (prim_meth) nil;
-}
-
-prim_meth
-get_primitive_method(datum proc, datum message)
-{
-    prim p = prim_dummy;
-    if (!symbolp(message)) {
-        die1("get_primitive_method -- not a symbol", message);
-    }
-    if (compiled_objp(proc)) {
-        die1("get_primitive_method -- not a primitive", proc);
-    } else if (addrp(proc)) {
-        die("addresses bomb out");
-    } else if (blankp(proc)) {
-        p = (prim) car(proc);
-    } else {
-        die1("get_primitive_method -- unknown object", proc);
-    }
-    return p(proc, message);
-}
-
-datum
-apply_prim_meth(prim_meth meth, datum proc, datum argl)
-{
-    return meth(proc, argl);
-}
-
 /* global functions */
 
 static void prx(datum d);
@@ -64,26 +32,28 @@ pr_bare(datum d, char *sp)
 static void
 prx(datum d)
 {
-    if (intp(d)) {
+    if (!d) {
+        printf("()");
+    } else if (intp(d)) {
         printf("%d", datum2int(d));
+    } else if (addrp(d)) {
+        printf("<addr %p>", d);
     } else if (pairp(d)) {
         printf("(");
         pr_bare(d, "");
         printf(")");
     } else if (stringp(d)) {
         printf("%s", string_contents(d));
-    } else if (compiled_objp(d)) {
+    } else if (objp(d)) {
         printf("<obj %p>", d);
     } else if (symbolp(d)) {
         pr_symbol(d);
-    } else if (addrp(d)) {
-        printf("<addr %p>", d);
-    } else if (!d) {
-        printf("()");
-    } else if (blankp(d)) {
-        printf("<blank>");
+    } else if (broken_heartp(d)) {
+        printf("<broken heart %p>:\n", car(d));
+        prx(car(d));
     } else {
         printf("<unknown-object %p>", d);
+        dump_obj(d);
     }
 }
 

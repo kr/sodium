@@ -31,7 +31,7 @@ def file ():
       inline C read <<<<
         uint r, len;
         datum str;
-        FILE *f = (FILE *) obj2pair(rcv)->datums[2];
+        FILE *f = (FILE *) ((pair) rcv)->datums[2];
         char *s;
 
         if (!f) die("f:read -- this file is closed");
@@ -48,7 +48,7 @@ def file ():
 
       inline C write <<<<
         uint r, len;
-        FILE *f = obj2pair(rcv)->datums[2];
+        FILE *f = ((pair) rcv)->datums[2];
         char *s;
 
         if (!f) die("f:write -- this file is closed");
@@ -63,16 +63,16 @@ def file ():
       >>>>
 
       inline C close <<<<
-        FILE *f = obj2pair(rcv)->datums[2];
+        FILE *f = ((pair) rcv)->datums[2];
 
         if (f) {
             fclose(f);
-            obj2pair(rcv)->datums[2] = nil;
+            ((pair) rcv)->datums[2] = nil;
         }
         return ok_sym;
       >>>>
 
-      (destroy) (f :close)
+      (destroy!) (f :close)
 
       inline C prepare <<<<
         char *mode = "rb";
@@ -89,14 +89,15 @@ def file ():
 
         regs[R_VM0] = rcv;
         regs[R_VM1] = args;
-        d = make_blank(3);
+        d = make_obj(3);
+        printf("made a blank object\n");
         args = regs[R_VM1];
         rcv = regs[R_VM0];
 
-        car(d) = car(obj2pair(rcv));
-        cdr(d) = cdr(obj2pair(rcv));
         ((pair) d)->datums[2] = fopen(string_contents(%(name)s), mode);
-        return pair2obj(d);
+        car(d) = car(rcv);
+        cdr(d) = cdr(rcv);
+        return d;
       >>>>
 
     f :: (f :prepare)

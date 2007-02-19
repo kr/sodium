@@ -524,7 +524,7 @@ start(uint *start_addr)
             case OP_BPRIM:
                 ra = I_R(inst);
                 tmp = (uint *) *++pc;
-                //if (!compiled_objp(regs[ra])) pc = tmp - 1;
+                //if (!objp(regs[ra])) pc = tmp - 1;
                 if (!addrp(regs[ra])) pc = tmp - 1;
                 break;
             case OP_LOAD_IMM:
@@ -553,7 +553,8 @@ start(uint *start_addr)
                 rb = I_RR(inst);
                 rc = I_RRR(inst);
                 rd = I_RRRR(inst);
-                regs[ra] = apply_prim_meth((prim_meth) regs[rb], regs[rc], regs[rd]);
+                /*regs[ra] = apply_prim_meth((prim_meth) regs[rb], regs[rc], regs[rd]);*/
+                regs[ra] = ((prim_meth) regs[rb])(regs[rc], regs[rd]);
                 break;
             case OP_MAKE_COMPILED_OBJ:
                 ra = I_R(inst);
@@ -736,8 +737,13 @@ call(datum o, datum m, pair a)
     regs[R_PROC] = o;
     regs[R_ARGL] = a;
     regs[R_CONTINUE] = quit_inst;
-    start(compiled_obj_method(o, m));
-    return regs[R_VAL];
+    regs[R_VM0] = compiled_obj_method(o, m);
+    if (addrp(regs[R_VM0])) {
+        start(compiled_obj_method(o, m));
+        return regs[R_VAL];
+    } else {
+        return ((prim_meth) regs[R_VM0])(o, a);
+    }
 }
 
 static int

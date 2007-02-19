@@ -2,7 +2,7 @@
 [+] garbage collect vectors
 [+] generalized array notation output: (a . b . c . d)
 [+] modules
-[ ] convert stuff from prim.c into mixed LX/C modules where possible
+[+] convert stuff from prim.c into mixed LX/C modules where possible
 [ ] flesh out int methods
 [ ] flesh out str methods
 [ ] flesh out other primitive type methods

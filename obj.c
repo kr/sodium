@@ -10,28 +10,21 @@
 datum int_surrogate, str_surrogate, pair_surrogate, nil_surrogate,
       symbol_surrogate;
 
-datum
-make_compiled_obj(datum env, uint *table)
-{
-    pair p = cons(env, (datum) table);
-    return pair2obj(p);
-}
-
 static datum
 get_primitive_surrogate(datum obj)
 {
+    if (obj == nil) return nil_surrogate;
     if (intp(obj)) return int_surrogate;
+    if (symbolp(obj)) return symbol_surrogate;
+
     if (stringp(obj)) return str_surrogate;
     if (pairp(obj)) return pair_surrogate;
-    if (obj == nil) return nil_surrogate;
-    if (symbolp(obj)) return symbol_surrogate;
     return nil;
 }
 
 datum
 compiled_obj_env(datum obj)
 {
-    pair p;
     datum surrogate;
 
     if ((surrogate = get_primitive_surrogate(obj))) {
@@ -39,9 +32,8 @@ compiled_obj_env(datum obj)
         return cons(frame, genv);
     }
 
-    if (!compiled_objp(obj)) die1("not a compiled object", obj);
-    p = obj2pair(obj);
-    return car(p);
+    if (!objp(obj)) die1("not a compiled object", obj);
+    return car(obj);
 }
 
 uint *
@@ -55,11 +47,7 @@ compiled_obj_method(datum obj, datum name)
         return compiled_obj_method(surrogate, name);
     }
 
-    if (!compiled_objp(obj)) {
-        return (uint *) get_primitive_method(obj, name);
-    }
-
-    table = (datum *) cdr(obj2pair(obj));
+    table = (datum *) cdr(obj);
 
     n = datum2int(*(table++));
     for (; n--; table += 2) {
@@ -73,10 +61,15 @@ compiled_obj_has_method(datum obj, datum name)
 {
     int n;
     datum *table;
+    datum surrogate;
 
-    if (!compiled_objp(obj)) die1("compiled_obj_has_method -- bad object", obj);
+    if ((surrogate = get_primitive_surrogate(obj))) {
+        return compiled_obj_has_method(surrogate, name);
+    }
 
-    table = (datum *) cdr(obj2pair(obj));
+    if (!objp(obj)) die1("compiled_obj_has_method -- bad object", obj);
+
+    table = (datum *) cdr(obj);
 
     n = datum2int(*(table++));
     for (; n--; table += 2) {

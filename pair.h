@@ -15,7 +15,9 @@ datum make_array(uint len);
 datum make_string(uint len);
 datum make_string_init(const char *s);
 datum make_string_init_len(const char *s, int len);
-datum make_blank(uint len);
+datum make_obj(uint len);
+datum make_compiled_obj(datum env, uint *table);
+
 
 datum array_get(datum arr, uint index);
 void array_put(datum arr, uint index, datum val);
@@ -45,37 +47,34 @@ char *copy_string_contents(datum str);
 
 #define MAX_PAIRS 1024
 
-extern struct pair *busy_pairs;
+extern struct pair *busy_pairs, *old_pairs;
 
 void init_mem(void);
 
 /*bool*/
-#define in_pair_range(x) ((((pair)(x)) >= busy_pairs) && \
-                          (((pair)(x)) < &busy_pairs[MAX_PAIRS]))
-
-#define BOX_MASK 0x3
-#define PAIR_TAG 0x0
+#define in_busy_pair_range(x) ((((pair)(x)) >= busy_pairs) && \
+                               (((pair)(x)) < &busy_pairs[MAX_PAIRS]))
+#define in_old_pair_range(x) (old_pairs && (((pair)(x)) >= old_pairs) && \
+                              (((pair)(x)) < &old_pairs[MAX_PAIRS]))
+#define in_pair_range(x) (in_busy_pair_range(x) || in_old_pair_range(x))
 
 /*bool*/
-#define pair_sig_matches(x) ((((unsigned int)(x)) & BOX_MASK) == PAIR_TAG)
-
 int array_tag_matches(datum arr);
 int string_tag_matches(datum str);
-int blank_tag_matches(datum str);
+int obj_tag_matches(datum o);
+int broken_heart_tag_matches(datum bh);
 
 /*bool*/
-#define pairp(x) (in_pair_range(x) && \
-                  pair_sig_matches(x) && \
-                  array_tag_matches(x))
+#define pairp(x) (in_pair_range(x) && array_tag_matches(x))
 
-#define stringp(x) (in_pair_range(x) && \
-                    pair_sig_matches(x) && \
-                    string_tag_matches(x))
+#define stringp(x) (in_pair_range(x) && string_tag_matches(x))
 
-#define blankp(x) (in_pair_range(x) && \
-                    pair_sig_matches(x) && \
-                    blank_tag_matches(x))
+#define objp(x) (in_pair_range(x) && obj_tag_matches(x))
+
+#define broken_heartp(x) (in_old_pair_range(x) && broken_heart_tag_matches(x))
 
 #define nil ((pair)0)
+
+void dump_obj(datum o);
 
 #endif /*PAIR_H*/

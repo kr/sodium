@@ -125,7 +125,7 @@ pr_symbol(void *s)
 int
 symbolp(datum d)
 {
-    return ((((uint) d) & BOX_MASK) == CHAR_STAR_TAG) && !compiled_objp(d);
+    return ((((uint) d) & 0x3) == CHAR_STAR_TAG);
 }
 
 const char *

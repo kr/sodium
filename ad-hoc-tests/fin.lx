@@ -1,0 +1,9 @@
+
+def (f x):
+  obj () ((destroy!) (pr x))
+
+f "Three"
+
+def (x) (x)
+
+x

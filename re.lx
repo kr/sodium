@@ -32,7 +32,7 @@ def re ():
       inline C match <<<<
         char *subj, *res;
         int rc, subj_len, res_len, opts;
-        pcre *re = (pcre *) obj2pair(rcv)->datums[2];
+        pcre *re = (pcre *) ((pair) rcv)->datums[2];
 
         if (args == nil) die("r:match -- not enough args");
         subj = string_contents(car(args));
@@ -55,8 +55,8 @@ def re ():
         return make_string_init_len(res, res_len);
       >>>>
 
-      inline C destroy <<<<
-        free(obj2pair(rcv)->datums[2]);
+      inline C destroy! <<<<
+        free(((pair) rcv)->datums[2]);
         return ok_sym;
       >>>>
 
@@ -69,7 +69,7 @@ def re ():
 
         regs[R_VM0] = rcv;
         regs[R_VM1] = args;
-        d = make_blank(3);
+        d = make_obj(3);
         args = regs[R_VM1];
         rcv = regs[R_VM0];
 
@@ -80,10 +80,10 @@ def re ():
         re = pcre_compile(pattern, opts, &error, &erroffset, NULL);
         if (re == NULL) return nil;
 
-        car(d) = car(obj2pair(rcv));
-        cdr(d) = cdr(obj2pair(rcv));
+        car(d) = car(rcv);
+        cdr(d) = cdr(rcv);
         ((pair) d)->datums[2] = (datum) re;
-        return pair2obj(d);
+        return d;
       >>>>
 
     r :: (r :prepare)
