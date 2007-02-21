@@ -1,36 +1,87 @@
 
+inline C <<<<
+#define MAX_LX_INT (0x3fffffff)
+#define MIN_LX_INT (-0x40000000)
+
+#define bigint(x) (printf("%ld\n", (x)), die1("no bigints yet", nil))
+>>>>
+
 def int ():
-  inline C = <<<<
-    if (args == nil) die("int:= -- not enough args");
-    return (datum) (rcv == car(args));
+  inline C cmp <<<<
+    register long a, b;
+
+    if (args == nil) die("int:cmp -- not enough args");
+    a = datum2int(rcv);
+    b = datum2int(car(args));
+    return (a < b) ? int2datum(-1) : (a > b) ? int2datum(1) : int2datum(0);
   >>>>
 
-  inline C < <<<<
-    if (args == nil) die("int:< -- not enough args");
-    return (datum) (rcv < car(args));
-  >>>>
+  (= x) (is? (int :cmp x) 0)
+  (> x) (is? (int :cmp x) 1)
+  (< x) (is? (int :cmp x) -1)
 
-  inline C > <<<<
-    if (args == nil) die("int:> -- not enough args");
-    return (datum) (rcv > car(args));
+  inline C + <<<<
+    register long a, b, r;
+
+    if (args == nil) die("int:+ -- not enough args");
+    a = datum2int(rcv);
+    b = datum2int(car(args));
+    r = a + b;
+    if (r >= MAX_LX_INT || r <= MIN_LX_INT) return bigint(r);
+    return int2datum(r);
   >>>>
 
   inline C - <<<<
-    if (args == nil) die("int:> -- not enough args");
-    /* TODO check that arithmetic result doesn't overflow */
-    return int2datum(datum2int(rcv) - datum2int(car(args)));
+    register long a, b, r;
+
+    if (args == nil) die("int:- -- not enough args");
+    a = datum2int(rcv);
+    b = datum2int(car(args));
+    r = a - b;
+    if (r >= MAX_LX_INT || r <= MIN_LX_INT) return bigint(r);
+    return int2datum(r);
   >>>>
 
-  inline C + <<<<
-    if (args == nil) die("int:> -- not enough args");
-    /* TODO check that arithmetic result doesn't overflow */
-    return int2datum(datum2int(rcv) + datum2int(car(args)));
+  inline C * <<<<
+    register long a, b, r;
+
+    if (args == nil) die("int:* -- not enough args");
+    a = datum2int(rcv);
+    b = datum2int(car(args));
+    if (b == 0) die("int:* -- modulo by zero");
+    r = a * b;
+    if (b == 0 || (r / b) == a) {
+      if (r >= MAX_LX_INT || r <= MIN_LX_INT) return bigint(r);
+      return int2datum(r);
+    }
+    die("should convert to bigints and try again");
+    return nil;
+  >>>>
+
+  inline C / <<<<
+    register long a, b, r;
+
+    if (args == nil) die("int:/ -- not enough args");
+    a = datum2int(rcv);
+    b = datum2int(car(args));
+    if (b == 0) die("int:/ -- division by zero");
+    r = a / b;
+    if (r == MAX_LX_INT + 1) return bigint(r);
+    return int2datum(r);
   >>>>
 
   inline C % <<<<
-    if (args == nil) die("int:> -- not enough args");
-    return int2datum(datum2int(rcv) %% datum2int(car(args)));
+    register long a, b, r;
+
+    if (args == nil) die("int:%% -- not enough args");
+    a = datum2int(rcv);
+    b = datum2int(car(args));
+    if (b == 0) die("int:%% -- modulo by zero");
+    r = a %% b;
+    return int2datum(r);
   >>>>
+
+  (** x) (error "not implemented")
 
 def install-int ():
   inline C run <<<<

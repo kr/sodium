@@ -1,0 +1,16 @@
+#!/home/kr/src/lx/lxi
+
+if (3 < 4):
+  pr "yay"
+  pr "boo"
+
+if (3 > 4):
+  pr "boo"
+  pr "yay"
+
+if (3 = 4):
+  pr "boo"
+  pr "yay"
+
+pr 1073741824
+pr (-1073741824 / -1)
