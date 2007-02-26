@@ -3,8 +3,10 @@
 [+] generalized array notation output: (a . b . c . d)
 [+] modules
 [+] convert stuff from prim.c into mixed LX/C modules where possible
-[ ] flesh out int methods
+[+] flesh out int methods
+[ ] fix lexing of quoted strings
 [ ] flesh out str methods
+[ ] make a bigint type for arbitrary precision
 [ ] flesh out other primitive type methods
 [ ] Make input "x:y" or "x.y" lex as 2 tokens
 [ ] change single-expr stmt form from "ex ." to ". ex"
