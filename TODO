@@ -4,6 +4,7 @@
 [+] modules
 [+] convert stuff from prim.c into mixed LX/C modules where possible
 [+] flesh out int methods
+[ ] fix finalization
 [ ] fix lexing of quoted strings
 [ ] flesh out str methods
 [ ] make a bigint type for arbitrary precision
