@@ -1,6 +1,6 @@
 
 def symbol ():
-  (to_s) "this-is-a-symbol"
+  (str) "this-is-a-symbol"
 
 def install-symbol ():
   inline C run <<<<
