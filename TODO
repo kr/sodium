@@ -24,5 +24,6 @@
 [ ] allow chaining of indentation tokens "f : g : EOL INDENT ... DEDENT"
 [ ] make the compiler also emit real C-code (not just packaged byte codes)
 [ ] generalized array notation input: '(a . b . c . d)
+[ ] PIC optimization
 
 [ ] redesign punctuation messages
