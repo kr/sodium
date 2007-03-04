@@ -83,6 +83,14 @@ def int ():
 
   (** x) (error "not implemented")
 
+  (str):
+    def upper (int / 10)
+    def lower (int % 10)
+    def table "0123456789"
+    if (int < 10):
+      table int
+      (upper :str) / (table lower)
+
 def install-int ():
   inline C run <<<<
     if (args == nil) die("install-int -- not enough args");

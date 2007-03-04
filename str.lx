@@ -109,9 +109,11 @@ def str ():
 
   (find-from n sub):
     def (helper s i):
-      if (s :starts-with sub):
-        i .
-        helper (s :tail 1) (i + 1)
+      if ((s :length) < (sub :length)):
+        i + (s :length)
+        if (s :starts-with sub):
+          i .
+          helper (s :tail 1) (i + 1)
     helper (str :tail n) n
 
   (find sub):
@@ -126,97 +128,21 @@ def str ():
   #       (format (str 1) (a :car)) / ((str :tail 2) % . (a :cdr))
   #       (str :head i) / ((str :tail i) % . a)
 
+  (%* a):
+    def (format code val):
+      val :str
+    def l (str :length)
+    def i (str :find "%")
+    if (is? i l):
+      str .
+      if ((str 0) = "%"):
+        (format (str 1) (a :car)) / ((str :tail 2) :%* (a :cdr))
+        (str :head i) / ((str :tail i) :%* a)
+
   inline C % <<<<
-    uint n, i;
-    datum str;
-    char *f, *s, *dest, *a, *fmt = copy_string_contents(rcv);
-
-
-    regs[R_VM0] = regs[R_VM1] = args;
-
-    /* first, find a upper bound on the string size */
-    n = 1; /* one for the null terminator */
-    for (f = fmt; *f; f++) {
-        if (*f != '%%') { n++; continue; }
-        switch (*++f) {
-            case 'c':
-                regs[R_VM1] = cdr(regs[R_VM1]);
-                /* fall through */
-            case '%%':
-                n++;
-                break;
-            case 'd':
-                regs[R_VM1] = cdr(regs[R_VM1]);
-                n += 20;
-                break;
-            case 'r': /* repr */
-                car(regs[R_VM1]) = make_string_init("$$$");
-                /* fall through */
-            case 'p': /* pretty */
-                car(regs[R_VM1]) = make_string_init("###");
-                /* fall through */
-            case 's':
-                n += strlen(string_contents(car(regs[R_VM1])));
-                regs[R_VM1] = cdr(regs[R_VM1]);
-                break;
-            default:
-                free(fmt);
-                die("prim_str -- unknown formatting code");
-        }
-    }
-
-    s = dest = malloc(sizeof(char) * n);
-    if (!dest) {
-        free(fmt);
-        die("prim_str -- out of memory");
-    }
-
-    /* second, format the string */
-    for (f = fmt; *f; f++) {
-        if (*f != '%%') {
-            *s++ = *f;
-            continue;
-        }
-        switch (*++f) {
-            case 'c':
-                free(s);
-                free(fmt);
-                die("prim_str -- OOPS I have not implemented chars yet");
-                regs[R_VM0] = cdr(regs[R_VM0]);
-                break;
-            case '%%':
-                *s++ = '%%';
-                break;
-            case 'd':
-                sprintf(s, "%%d", datum2int(car(regs[R_VM0])));
-                s += strlen(s);
-                regs[R_VM0] = cdr(regs[R_VM0]);
-                break;
-            case 'r': /* repr */
-                car(regs[R_VM0]) = make_string_init("$$$");
-                /* fall through */
-            case 'p': /* pretty */
-                car(regs[R_VM0]) = make_string_init("###");
-                /* fall through */
-            case 's':
-                a = string_contents(car(regs[R_VM0]));
-                i = strlen(a);
-                memcpy(s, a, i);
-                regs[R_VM0] = cdr(regs[R_VM0]);
-                s += i;
-                break;
-            default:
-                free(s);
-                free(fmt);
-                die("prim_str -- unknown formatting code");
-        }
-    }
-    *s = '\0';
-
-    str = make_string_init(dest);
-    free(dest);
-    free(fmt);
-    return str;
+    regs[R_VM0] = rcv;
+    args = cons(args, nil);
+    return call(regs[R_VM0], percent_star_sym, args);
   >>>>
 
 def intern-syms ():
