@@ -130,7 +130,7 @@ def str ():
 
   (%* a):
     def (format code val):
-      val :str
+      to-str val
     def l (str :length)
     def i (str :find "%")
     if (is? i l):
@@ -158,6 +158,10 @@ def install-str ():
     return ok_sym;
   >>>>
 
+def (to-str x):
+  if (inspect :same-type? x str):
+    x .
+    to-str (x :str)
 
 intern-syms
 install-str str

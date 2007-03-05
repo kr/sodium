@@ -22,14 +22,24 @@ get_primitive_surrogate(datum obj)
     return nil;
 }
 
+static datum
+replace_1st_of_1st(datum env, datum x)
+{
+  datum frame;
+
+  regs[R_VM0] = cdr(env);
+  frame = cons(x, cdar(env));
+  return cons(frame, regs[R_VM0]);
+}
+
 datum
 compiled_obj_env(datum obj)
 {
     datum surrogate;
 
     if ((surrogate = get_primitive_surrogate(obj))) {
-        datum frame = cons(obj, nil);
-        return cons(frame, genv);
+        datum env = compiled_obj_env(surrogate);
+        return replace_1st_of_1st(env, obj);
     }
 
     if (!objp(obj)) die1("not a compiled object", obj);
@@ -76,4 +86,20 @@ compiled_obj_has_method(datum obj, datum name)
         if (*table == name) return 1;
     }
     return 0;
+}
+
+int
+compiled_objs_same_type(datum obj1, datum obj2)
+{
+    datum surrogate;
+
+    if ((surrogate = get_primitive_surrogate(obj1))) {
+      return compiled_objs_same_type(surrogate, obj2);
+    }
+
+    if ((surrogate = get_primitive_surrogate(obj2))) {
+      return compiled_objs_same_type(obj1, surrogate);
+    }
+
+    return cdr(obj1) == cdr(obj2);
 }

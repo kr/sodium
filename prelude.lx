@@ -27,6 +27,9 @@ def inspect ():
   inline C has-method? <<<<
     return (datum) compiled_obj_has_method(car(args), cadr(args));
   >>>>
+  inline C same-type? <<<<
+    return (datum) compiled_objs_same_type(car(args), cadr(args));
+  >>>>
 
 def is? ():
   inline C run <<<<

@@ -11,5 +11,6 @@ extern datum int_surrogate, str_surrogate, pair_surrogate, nil_surrogate,
 datum compiled_obj_env(datum obj);
 uint *compiled_obj_method(datum obj, datum name);
 int compiled_obj_has_method(datum obj, datum name);
+int compiled_objs_same_type(datum obj1, datum obj2);
 
 #endif /*obj_h*/
