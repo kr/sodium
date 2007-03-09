@@ -1,5 +1,11 @@
+inline C <<<<
+#include "st.h"
+>>>>
 
 def symbol ():
+  inline C str <<<<
+    return make_string_init(symbol2charstar(rcv));
+  >>>>
   (str) "this-is-a-symbol"
 
 def install-symbol ():

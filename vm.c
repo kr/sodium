@@ -622,13 +622,13 @@ start(uint *start_addr)
 static char *
 find_module_file(const char *mname)
 {
-    char *name, *fmt = "%s.lxc";
+    char *name, *fmt = "lib/%s.lxc";
     uint len = strlen(mname);
 
-    name = malloc(sizeof(char) * (len + 5));
+    name = malloc(sizeof(char) * (len + 9));
     if (!name) die("out of memory allocating file name");
 
-    if (strcmp(mname + len - 4, ".lxc") == 0) fmt = "%s";
+    if (strcmp(mname + len - 4, ".lxc") == 0) fmt = "lib/%s";
     sprintf(name, fmt, mname);
     return name;
 }

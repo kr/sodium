@@ -1,0 +1,11 @@
+pr (inspect :methods "hi")
+pr (inspect :methods '())
+pr (inspect :methods '(a b))
+pr (inspect :methods 'x)
+pr (inspect :methods 45)
+pr (inspect :methods (obj () ((hi) 4) ((there) 7)))
+
+pr ('(a b c) :filter (fn (x) 1))
+
+pr ('() :run (fn (x) 0))
+pr ('(a b c) :run (fn (x) 0))

@@ -1,6 +1,9 @@
 
 def nil ():
   (str) "()"
+  (filter f) '()
+  (map f) '()
+  (run f) 'ok
 
 def install-nil ():
   inline C run <<<<

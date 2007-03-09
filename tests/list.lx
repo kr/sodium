@@ -1,0 +1,26 @@
+
+#import (unit-test T) should shouldnt
+def T (import unit-test)
+def should (T :should)
+def shouldnt (T :shouldnt)
+
+def (make-tester):
+  def empty '()
+  def single '()
+
+  obj ():
+    (set-up):
+      empty :: '()
+      single :: (cons 4 '())
+  
+    (test-car):
+      #should [4 = (single:car)]
+      should (fn () (4 = (single :car)))
+  
+    (test-map-empty):
+      def (f x) x
+      #should [is? (empty:map f) '()]
+      should (fn () (is? (empty :map f) '()))
+
+T make-tester
+pr "done"

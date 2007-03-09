@@ -103,3 +103,24 @@ compiled_objs_same_type(datum obj1, datum obj2)
 
     return cdr(obj1) == cdr(obj2);
 }
+
+datum
+compiled_obj_methods(datum obj)
+{
+    int n;
+    datum *table;
+    datum surrogate, methods = nil;
+
+    if ((surrogate = get_primitive_surrogate(obj))) {
+        return compiled_obj_methods(surrogate);
+    }
+
+    if (!objp(obj)) die1("compiled_obj_methods -- bad object", obj);
+
+    /* This pointer is stable. A garbage collection will not invalidate it */
+    table = (datum *) cdr(obj);
+
+    n = datum2int(*(table++));
+    for (; n--; table += 2) methods = cons(*table, methods);
+    return methods;
+}

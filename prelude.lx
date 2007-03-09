@@ -6,6 +6,11 @@ inline C <<<<
 
 def π 3.14159
 
+def false '()
+def true 1
+
+def (not x) (if x false true)
+
 def open (import file)
 
 def call ():
@@ -29,6 +34,9 @@ def inspect ():
   >>>>
   inline C same-type? <<<<
     return (datum) compiled_objs_same_type(car(args), cadr(args));
+  >>>>
+  inline C methods <<<<
+    return (datum) compiled_obj_methods(car(args));
   >>>>
 
 def is? ():

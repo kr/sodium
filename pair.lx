@@ -39,6 +39,18 @@ def pair ():
     return ok_sym;
   >>>>
 
+  (map f):
+    cons (f (pair :car)) ((pair :cdr):map f)
+
+  (filter f):
+    def rest ((pair :cdr) :filter f)
+    if (f (pair :car)) (cons (pair :car) rest) rest
+
+  (run f):
+    f (pair :car)
+    (pair :cdr) f
+    'ok .
+
 def install-pair ():
   inline C run <<<<
     if (args == nil) die("install-pair -- not enough args");

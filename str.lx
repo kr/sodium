@@ -104,14 +104,14 @@ def str ():
   (tail n) (str :substring n (str :length))
   (head n) (str :substring 0 n)
 
-  (starts-with sub):
+  (starts-with? sub):
     (str :head (sub :length)) = sub
 
   (find-from n sub):
     def (helper s i):
       if ((s :length) < (sub :length)):
         i + (s :length)
-        if (s :starts-with sub):
+        if (s :starts-with? sub):
           i .
           helper (s :tail 1) (i + 1)
     helper (str :tail n) n

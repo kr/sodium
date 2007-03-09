@@ -12,5 +12,6 @@ datum compiled_obj_env(datum obj);
 uint *compiled_obj_method(datum obj, datum name);
 int compiled_obj_has_method(datum obj, datum name);
 int compiled_objs_same_type(datum obj1, datum obj2);
+datum compiled_obj_methods(datum obj);
 
 #endif /*obj_h*/

@@ -1,0 +1,5 @@
+begin :
+  def x 7
+  def y 3
+
+pr x

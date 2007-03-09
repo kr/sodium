@@ -32,7 +32,7 @@ clean:
 	rm -f vm *.o core gmon.out
 
 distclean: clean
-	rm -f *.d *.pyc *.lxc ad-hoc-tests/*.lxc
+	rm -f *.d *.pyc *.lxc ad-hoc-tests/*.lxc lib/*.lxc tests/*.lxc
 
 reallyclean: distclean
 	rm -f prelude.c prelude.h *.lxc.c *.lxc.h module-index.c
