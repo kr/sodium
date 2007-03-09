@@ -154,3 +154,23 @@ Here is how to mix the two without sacrificing much speed:
     the lookup is for a call with more than MEC arguments, first try name:args.
     If it doesn't exist then try name:+.
 
+New notes, added on 2007-03-08 around 3:50 p.m.
+
+Source transformations for a more convenient import statement:
+
+  New keyword
+  load x is like previous import x
+
+  import x ==> def x (import x)
+
+  import (x y) ==> def y (import x)
+
+  import x a b ==> begin (def x (import x)) (def a (x :a)) (def b (x :b))
+
+  import x (a i) (b j) ==>
+  begin (def x (import x)) (def i (x :a)) (def j (x :b))
+
+Source transformations for more convenient exporting of symbols:
+
+  export a b c ==>
+  obj () ((a) a) ((b) b) ((c) c)
