@@ -48,10 +48,15 @@ def compile(exp, target, linkage, cenv):
     if tagged_list(exp, if_s): return compile_if(exp, target, linkage, cenv)
     if tagged_list(exp, fn_s): return compile_obj(fn2obj(exp), target, linkage, cenv)
     if tagged_list(exp, obj_s): return compile_obj(exp, target, linkage, cenv)
-    if tagged_list(exp, begin_s): return compile_sequence(exp.cdr(), target, linkage, cenv)
+    if tagged_list(exp, begin_s): return compile_begin(exp, target, linkage, cenv)
     if tagged_list(exp, inline_s): return compile_inline(exp)
     if pairp(exp): return compile_application(exp, target, linkage, cenv)
     raise Exception, 'Unknown expression type %s' % exp
+
+def compile_begin(exp, target, linkage, cenv):
+    seq = exp.cdr()
+    if cenv is not nil: seq = scan_out_defines(seq)
+    return compile_sequence(seq, target, linkage, cenv)
 
 env_r = S('env')
 global_r = S('global')

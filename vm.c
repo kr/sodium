@@ -3,6 +3,7 @@
 #include <ctype.h>
 #include <netinet/in.h>
 #include <string.h>
+#include <setjmp.h>
 #include "vm.h"
 #include "gen.h"
 #include "pair.h"
@@ -107,6 +108,16 @@ load_int(FILE *f)
 
 static datum
 init_int(uint value)
+{
+    if ((value & 1) != 1) {
+        printf("bad static int value 0x%x\n", value);
+        die("bad static int value\n");
+    }
+    return (datum) value;
+}
+
+static datum
+init_pointer(uint value)
 {
     return (datum) value;
 }
@@ -216,9 +227,9 @@ init_list(uint value)
     datum x;
 
     while (p) {
-        x = (datum) p->car;
-        p = (datum) p->cdr;
-        l = cons(x, nil);
+        x = static_datums[static_datums_base + p->car];
+        l = cons(x, l);
+        p = (spair) p->cdr;
     }
     return l;
 }
@@ -277,6 +288,7 @@ init_datums(static_datums_info static_datums, uint n)
 
     for (i = 0; i < n; i++) {
         switch (static_datums->types[i]) {
+            case '>': d = init_pointer(static_datums->entries[i]); break;
             case '#': d = init_int(static_datums->entries[i]); break;
             case '!': d = init_bigint(static_datums->entries[i]); break;
             case '@': d = init_string(static_datums->entries[i]); break;
@@ -758,11 +770,32 @@ next_task()
     return call(tasks, remove_sym, nil);
 }
 
+static jmp_buf jb;
+static datum break_sym;
+
+datum
+report_error(datum args)
+{
+    if (jb) longjmp(jb, (uint) args);
+    return die1("error outside of a promise fulfilment", args);
+    /*
+    printf("error outside of a promise fulfilment");
+    pr(args);
+    return nil;
+    */
+}
+
 static void
 process_tasks()
 {
     while (!tasks_empty()) {
-        call(next_task(), run_sym, nil);
+        datum err_args, task = next_task();
+        if ((err_args = (datum) setjmp(jb))) {
+            call(task, break_sym, err_args);
+        } else {
+            call(task, run_sym, nil);
+            setjmp(jb);
+        }
     }
 }
 
@@ -840,6 +873,7 @@ main(int argc, char **argv)
     genv = cons(nil, nil);
 
     run_sym = intern("run");
+    break_sym = intern("break!");
     ok_sym = intern("ok");
     emptyp_sym = intern("empty?");
     remove_sym = intern("remove!");

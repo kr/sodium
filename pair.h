@@ -45,7 +45,7 @@ char *copy_string_contents(datum str);
 #define caaddr(x) car(car(cdr(cdr(x))))
 #define cdaddr(x) cdr(car(cdr(cdr(x))))
 
-#define MAX_PAIRS 1024
+#define HEAP_SIZE 2048
 
 extern struct pair *busy_pairs, *old_pairs;
 
@@ -53,9 +53,9 @@ void init_mem(void);
 
 /*bool*/
 #define in_busy_pair_range(x) ((((pair)(x)) >= busy_pairs) && \
-                               (((pair)(x)) < &busy_pairs[MAX_PAIRS]))
+                               (((pair)(x)) < &busy_pairs[HEAP_SIZE]))
 #define in_old_pair_range(x) (old_pairs && (((pair)(x)) >= old_pairs) && \
-                              (((pair)(x)) < &old_pairs[MAX_PAIRS]))
+                              (((pair)(x)) < &old_pairs[HEAP_SIZE]))
 #define in_pair_range(x) (in_busy_pair_range(x) || in_old_pair_range(x))
 
 /*bool*/

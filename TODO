@@ -6,7 +6,7 @@
 [+] flesh out int methods
 [ ] fix finalization
 [ ] fix lexing of quoted strings
-[ ] broken promises
+[+] broken promises
 [ ] C function pointers are not datums -- treat them accordingly
 [ ] unit testing
 [ ] change name to something cool

@@ -152,7 +152,7 @@ extern struct lxc_module lxc_module_%(name)s;
                 sdts += '@'
                 print >>fd, '#define %s "%s"' % (c_name, str(d))
             elif isinstance(d, InlineMethEntry):
-                sdts += '#'
+                sdts += '>'
                 print >>fd, '#define %s %s' % (c_name, str(d))
             elif self_evaluatingp(d):
                 sdts += '#'
@@ -224,9 +224,8 @@ extern struct lxc_module lxc_module_%(name)s;
         if len(p):
             next_c_name = gen_unique_c_name()
             self.emit_c_pair(fd, p[1:], next_c_name)
-            item_name = make_datum_c_name(p[0])
-            print >>fd, 'static struct spair %s_s = { (uint) %s, (uint) %s };' % (c_name,
-                    item_name, next_c_name)
+            print >>fd, 'static struct spair %s_s = { %d, %s };' % (c_name,
+                    p[0], next_c_name)
             print >>fd, '#define %s &%s_s' % (c_name, c_name)
         else:
             print >>fd, '#define %s 0' % (c_name,)

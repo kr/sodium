@@ -5,10 +5,12 @@
 
 #include <stdlib.h>
 
-typedef struct spair {
-    uint car;
-    uint cdr;
-} *spair;
+typedef struct spair *spair;
+
+struct spair {
+    int car; /* index into static datums table */
+    spair cdr; /* pointer to next static pair in reversed list */
+};
 
 typedef struct static_datums_info {
     char *types;

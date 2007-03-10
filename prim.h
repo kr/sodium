@@ -5,6 +5,7 @@
 
 typedef datum(*prim_meth)(datum, datum);
 
+void prx(datum d);
 void pr(datum d);
 
 #endif /*prim_h*/

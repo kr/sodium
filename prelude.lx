@@ -24,8 +24,7 @@ def call ():
 
 def error ():
   inline C run <<<<
-    die("TODO implement me -- prim_error\n");
-    return nil;
+    return report_error(args);
   >>>>
 
 def inspect ():
@@ -108,50 +107,84 @@ def (make-queue):
     queue .
 
 def (make-promise):
-    def resolved '()
+    def status 'pending # or resolved or broken
+
     def value '()
-    def queue (make-queue)
+    def success-queue (make-queue)
+
+    def err-name '()
+    def err-val '()
+    def err-queue (make-queue)
+
+    def (resolved?) (is? status 'resolved)
+    def (pending?) (is? status 'pending)
+    def (broken?) (is? status 'broken)
 
     def promise ():
         (wait f):
-            if resolved :
-                f .run value
-                queue f
+            if (pending?) (success-queue f)
+            if (resolved?) (f .run value)
+
+        (wait-for-error f):
+            if (pending?) (err-queue f)
+            if (broken?) (f .run err-name err-val)
 
         (send msg args):
-            def pp '()
-            def p '()
-            def s '()
-            if resolved :
-                send value msg args
+            if (pending?):
                 begin :
+                    def pp '()
+                    def p '()
+                    def s '()
+                    #(p s) :: (make-promise)
                     pp :: (make-promise)
                     p :: (pp :car)
                     s :: (pp :cdr)
-                    queue : #[((send x msg args) :wait [(s x)])]
-                        fn (x) :
-                            (send x msg args) :wait (fn (y) (s y))
+                    def f (fn (x) ((send x msg args):wait (fn (x) (s x))))
+                    success-queue f
+                    # promise:wait [(send x msg args):wait [s x]]
+                    err-queue :
+                        fn (x y) (s :break! x y)
+                    # promise:wait-for-error [s:break! x y]
                     p .
+                if (resolved?):
+                    send value msg args
+                    make-broken-promise err-name err-val # status is 'broken
 
-    def (sink val):
-        if resolved (error "sink given a value but promise is already resolved")
-        resolved :: 1
-        value :: val
-        queue :consume! (fn (x) (x .run val))
-        #queue :consume! [(x .run val)]
-        queue :: '()
+    def sink ():
+        (run val):
+            if (resolved?) (error "sink given a value but promise is already resolved")
+            status :: 'resolved
+            value :: val
+            #success-queue:consume! [x .run val]
+            success-queue :consume! (fn (x) (x .run val))
+            success-queue :: '()
+            err-queue :: '()
+        (break! name val):
+            status :: 'broken
+            err-name :: name
+            err-val :: val
+            #err-queue :consume! [x .run name val]
+            err-queue :consume! (fn (x) (x .run name val))
+            success-queue :: '()
+            err-queue :: '()
 
     cons promise sink
+
+def (make-broken-promise name val):
+  def pp (make-promise)
+  (pp :cdr) :break! name val
+  pp .
 
 def (make-task rcv message args):
     def p (make-promise)
     def promise (p :car)
     def sink (p :cdr)
 
-    def (resolve):
-        sink (call rcv message args)
+    def resolver ():
+        (run) (sink (call rcv message args))
+        (break! x) (sink :break! 'error x)
 
-    cons promise resolve
+    cons promise resolver
 
 def (send rcv msg args):
     def task '()

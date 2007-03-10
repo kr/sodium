@@ -1,0 +1,25 @@
+#!/home/kr/src/lx/lxi
+
+# Test eventual sends
+
+def (f x) (if x (error "zippo") 7)
+
+def p (f .run 1)
+
+p :wait (fn (x) (pr "oh noes") (pr x))
+
+p :wait-for-error (fn (name val) (pr "thankfully, got error"))
+
+def o (p .+ 3)
+
+o :wait-for-error (fn (name val) (pr ("yay! name %s val %s" % name val)))
+
+o :wait (fn (x) (pr ("boo, answer is %s" % x)))
+
+def q (f .run '())
+
+q :wait (fn (x) (pr "nice yay") (pr x))
+
+q :wait-for-error (fn (name val) (pr "crap! got error"))
+
+q :wait-for-error (fn (name val) (pr ("crap! name %s val %s" % name val)))

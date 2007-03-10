@@ -73,6 +73,7 @@ datum lexical_lookup(datum env, uint level, uint index);
 datum lexical_setbang(datum env, uint level, uint index, datum val);
 datum extend_environment(datum env, datum argl, datum formals);
 datum call(datum o, datum m, pair a);
+datum report_error(datum args);
 
 extern datum regs[REG_COUNT];
 extern pair stack;

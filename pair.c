@@ -16,13 +16,13 @@ size_t free_index = 0, scan_index = 0;
 // pairp(datum x) {
 //     return objp(x) &&
 //         (((pair)x) >= busy_pairs) &&
-//         (((pair)x) < &busy_pairs[MAX_PAIRS]);
+//         (((pair)x) < &busy_pairs[HEAP_SIZE]);
 // }
 
 void
 init_mem(void)
 {
-    busy_pairs = malloc(sizeof(struct pair) * MAX_PAIRS);
+    busy_pairs = malloc(sizeof(struct pair) * HEAP_SIZE);
 #if GC_DEBUG
     printf("busy_pairs = %p\n", busy_pairs);
 #endif
@@ -45,10 +45,10 @@ dump_obj(datum o)
     static int rec = 0;
     int i, len = DATUM_LEN(((pair) o)->info);
     printf("\nbusy_pair base: %p    busy_pair top: %p\n",
-           busy_pairs, &busy_pairs[MAX_PAIRS]);
+           busy_pairs, &busy_pairs[HEAP_SIZE]);
     if (old_pairs) {
         printf("old_pair base: %p    old_pair top: %p\n",
-               old_pairs, &old_pairs[MAX_PAIRS]);
+               old_pairs, &old_pairs[HEAP_SIZE]);
     } else {
         printf("no old_pair\n");
     }
@@ -130,6 +130,7 @@ gc(int alen, datum x, datum y, int slen, int blen)
     int i, live = 0;
     pair np;
     free_index = 0;
+    datum new;
 
     if (gc_in_progress) die("ran out of memory during GC");
     gc_in_progress = 1;
@@ -138,7 +139,7 @@ gc(int alen, datum x, datum y, int slen, int blen)
     printf("BEGIN GC\n");
 #endif
 
-    free_pairs = malloc(sizeof(struct pair) * MAX_PAIRS);
+    free_pairs = malloc(sizeof(struct pair) * HEAP_SIZE);
     if (!free_pairs) die("gc -- out of memory");
 
     stack = relocate(stack);
@@ -186,12 +187,12 @@ gc(int alen, datum x, datum y, int slen, int blen)
 #if GC_DEBUG
     printf("busy_pairs = %p\n", busy_pairs);
 #endif
-    if (free_index >= MAX_PAIRS) die("gc -- no progress");
+    if (free_index >= HEAP_SIZE) die("gc -- no progress");
 #if GC_STATS
     printf("gc done (%d live)\n", live);
 #endif /*GC_STATS*/
 
-    for (scan_index = 0; scan_index < MAX_PAIRS;) {
+    for (scan_index = 0; scan_index < HEAP_SIZE;) {
         np = &old_pairs[scan_index++];
         switch (DATUM_TYPE(np->info)) {
             case DATUM_TYPE_OBJ:
@@ -206,16 +207,17 @@ gc(int alen, datum x, datum y, int slen, int blen)
 
     free(old_pairs);
     old_pairs = 0;
-    gc_in_progress = 0;
 
 #if GC_DIE
     die("GC_DIE");
 #endif
 
-    if (alen > -1) return make_array(alen);
-    if (slen > -1) return make_string(slen);
-    if (blen > -1) return make_obj(blen);
-    return cons(x, y);
+    if (alen > -1) new = make_array(alen);
+    else if (slen > -1) new = make_string(slen);
+    else if (blen > -1) new = make_obj(blen);
+    else new = cons(x, y);
+    gc_in_progress = 0;
+    return new;
 }
 
 datum
@@ -223,7 +225,7 @@ cons(datum x, datum y)
 {
     pair p;
 
-    if ((free_index + 3) >= MAX_PAIRS) return gc(-1, x, y, -1, -1);
+    if ((free_index + 3) >= HEAP_SIZE) return gc(-1, x, y, -1, -1);
     p = &busy_pairs[free_index++];
     p->info = DATUM_INFO(DATUM_TYPE_ARRAY, 2);
     car(p) = x;
@@ -239,7 +241,7 @@ make_array(uint len)
 
     if (len < 1) return nil;
     if (len != CLIP_LEN(len)) die("make_array -- too big");
-    if ((free_index + (len + 1)) >= MAX_PAIRS) return gc(len, nil, nil, -1, -1);
+    if ((free_index + (len + 1)) >= HEAP_SIZE) return gc(len, nil, nil, -1, -1);
     p = &busy_pairs[free_index++];
     p->info = DATUM_INFO(DATUM_TYPE_ARRAY, len);
     free_index += len;
@@ -257,7 +259,7 @@ make_string(uint len)
 
     words = max(len / 4 + ((len % 4) ? 1 : 0), 1);
 
-    if ((free_index + (words + 1)) >= MAX_PAIRS) return gc(-1, nil, nil, len, -1);
+    if ((free_index + (words + 1)) >= HEAP_SIZE) return gc(-1, nil, nil, len, -1);
 
     p = &busy_pairs[free_index++];
     p->info = DATUM_INFO(DATUM_TYPE_STRING, words);
@@ -270,7 +272,7 @@ make_obj(uint len)
 {
     pair p;
 
-    if ((free_index + (len + 1)) >= MAX_PAIRS) return gc(-1, nil, nil, -1, len);
+    if ((free_index + (len + 1)) >= HEAP_SIZE) return gc(-1, nil, nil, -1, len);
 
     p = &busy_pairs[free_index++];
     p->info = DATUM_INFO(DATUM_TYPE_OBJ, len);
