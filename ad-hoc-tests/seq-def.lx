@@ -1,5 +1,15 @@
 begin :
-  def x 7
-  def y 3
+  def x 9
+  def y 5
 
 pr x
+
+def (f):
+  if 4 :
+    begin :
+      def q 'blah
+      pr q
+    pr 'ooo
+  pr 'aaa
+
+f
