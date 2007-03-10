@@ -4,6 +4,7 @@ def nil ():
   (filter f) '()
   (map f) '()
   (run f) 'ok
+  (= x) (is? x nil)
 
 def install-nil ():
   inline C run <<<<

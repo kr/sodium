@@ -11,7 +11,7 @@ def (make-tester):
   obj ():
     (set-up):
       empty :: '()
-      single :: (cons 4 '())
+      single :: '(4)
   
     (test-car):
       #should [4 = (single:car)]
@@ -22,5 +22,8 @@ def (make-tester):
       #should [is? (empty:map f) '()]
       should (fn () (is? (empty :map f) '()))
 
-T make-tester
+    (test-equal):
+      should (fn () (single = '(4)))
+
+T (make-tester)
 pr "done"

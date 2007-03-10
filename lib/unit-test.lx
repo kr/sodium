@@ -2,7 +2,7 @@
 def *verbose* 1
 
 def module ():
-  (run tester-maker) (((make-runner tester-maker):suite))
+  (run tester) (((make-runner tester):suite))
   (should) should
   (shouldnt) shouldnt
 
@@ -17,8 +17,7 @@ def (shouldnt f):
 def (info msg):
   if *verbose* (pr msg)
 
-def (make-runner tester-maker):
-  def tester (tester-maker)
+def (make-runner tester):
   def runner ():
     (suite):
       runner :named-suite "suite"

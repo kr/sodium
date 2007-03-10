@@ -51,6 +51,11 @@ def pair ():
     (pair :cdr) f
     'ok .
 
+  (= p):
+    if ((pair :car) = (p :car)):
+      if ((pair :cdr) = (p :cdr)) true false
+      false .
+
 def install-pair ():
   inline C run <<<<
     if (args == nil) die("install-pair -- not enough args");
