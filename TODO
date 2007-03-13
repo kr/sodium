@@ -29,6 +29,9 @@
 [ ] allow chaining of indentation tokens "f : g : EOL INDENT ... DEDENT"
 [ ] make the compiler also emit real C-code (not just packaged byte codes)
 [ ] generalized array notation input: '(a . b . c . d)
+[ ] inline bytecode notation
+[ ] reimplement CISCy operations (e.g. variable lookup, call) in bytecode
 [ ] PIC optimization
+[ ] use qhasm or similar to produce native binaries
 
 [ ] redesign punctuation messages
