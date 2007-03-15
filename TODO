@@ -8,6 +8,8 @@
 [ ] fix lexing of quoted strings
 [+] broken promises
 [ ] C function pointers are not datums -- treat them accordingly
+[ ] fix finalization
+[ ] fix return linkage for the "call" function (possibly all native methods)
 [ ] unit testing
 [ ] change name to something cool
 [ ] flesh out str methods
