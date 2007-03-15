@@ -45,7 +45,7 @@ char *copy_string_contents(datum str);
 #define caaddr(x) car(car(cdr(cdr(x))))
 #define cdaddr(x) cdr(car(cdr(cdr(x))))
 
-#define HEAP_SIZE 2048
+#define HEAP_SIZE (2 * 1024 * 1024)
 
 extern struct pair *busy_pairs, *old_pairs;
 

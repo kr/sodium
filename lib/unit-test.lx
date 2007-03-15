@@ -1,10 +1,8 @@
 
 def *verbose* 1
 
-def module ():
-  (run tester) (((make-runner tester):suite))
-  (should) should
-  (shouldnt) shouldnt
+def (run-all tester):
+  ((make-runner tester):suite).print-on pr
 
 def (should f):
   #shouldnt [not (f)]
@@ -40,26 +38,36 @@ def (make-runner tester):
           # Why is this necessary?!
           '()
 
-        (run-with result-collector):
+        (all-the-rest):
+          ensure (fn () (case :perform-test)) (fn () (case :tear-down))
+
+        (run-with collector):
           case :set-up
-          case :perform-test
-          case :tear-down
+          def p (case :all-the-rest)
+          wait p (fn (x) (collector :pass-in case))
+
+          p :wait-for-error :
+            fn (name val):
+              if (eq? name 'failure) (collector :failure-in case)
+          p :wait-for-error :
+            fn (name val):
+              if (eq? name 'error) (collector :error-in case)
 
           #begin
           #  ActiveRecord::Base.transaction do
           #    self.set-up
           #    begin
           #      self.perform-test
-          #      result-collector.pass-in(self) if result-collector
+          #      collector.pass-in(self) if collector
           #    ensure
           #      self.tear-down
           #    end
           #  end
           #rescue Test::Unit::AssertionFailedError => ex
-          #  result-collector.failure-in(ex, self) if result-collector
+          #  collector.failure-in(ex, self) if collector
           #  raise Stop unless RUT.keep-going
           #rescue Exception => ex
-          #  result-collector.error-in(ex, self) if result-collector
+          #  collector.error-in(ex, self) if collector
           #  raise Stop unless RUT.keep-going
           #end
 
@@ -84,136 +92,123 @@ def (make-suite name tests):
     (name) name
 
     (run):
-      def result-collector (suite :default-result-collector)
-      #result-collector :start
-      suite :run-with result-collector
-      #result-collector :stop
-      #result-collector .
-      5 .
+      def collector (make-collector suite)
+      collector :start
+      ensure (fn () (suite :run-with collector)) (fn () (collector :stop))
 
-    (run-with result-collector):
+    (run-with collector):
+      def p (make-promise)
       info ("\n\nRunning suite %s" % name)
-      #tests [x:run-with result-collector]
-      tests (fn (t) (t :run-with result-collector))
+      #tests [x:run-with collector]
+      #tests :schedule (fn (t) (t :run-with collector))
+      def promises (tests :map (fn (t) (t :run-with collector)))
+      wait-all promises (fn (l) ((p :cdr) collector))
+      p :car
 
     (count):
       (tests :map (fn (x) (x :count))) :fold 0 (fn (sum x) (sum + x))
 
-    (default-result-collector):
-      #(suite :default-result-collector-maker) suite
-      '() .
-      #' For vim sake
-
-    #(default-result-collector-maker) make-result-collector
-
   suite .
 
-#def (make-result-collector suite):
-#  def start-time 0
-#  def stop-time 0
-#  def test-name (suite :name)
-#  def failures '()
-#  def errors '()
-#  def total-count (suite :count)
-#  def total-run 0
-#  def pass-count 0
-#
-#  def test-result-collector ():
-#    (start) (start-time :: (time :now))
-#
-#    (stop) (stop-time :: (time :now))
-#
-#    def error-in(ex, case)
-#      @errors << TestResult.error(ex, case)
-#      @total-run += 1
-#      putc 'E'
-#      STDOUT.flush
-#    end
-#
-#    def failure-in(ex, case)
-#      @failures << TestResult.failure(ex, case)
-#      @total-run += 1
-#      putc 'F'
-#      STDOUT.flush
-#    end
-#
-#    def pass-in(case)
-#      @pass-count += 1
-#      @total-run += 1
-#      putc '.'
-#      STDOUT.flush
-#    end
-#
-#    def errors
-#      @errors
-#    end
-#
-#    def failures
-#      @failures
-#    end
-#
-#    def bad-results
-#      @failures + @errors
-#    end
-#
-#    def duration
-#      @stop-time - @start-time
-#    end
-#
-#    def summary
-#      skipped-count = @total-count - @total-run
-#      skipped-msg = ''
-#      skipped-msg = ' (%d skipped)' % [ skipped-count ] if skipped-count > 0
-#      "Finished in %0.2fs\n%d tests: %d pass, %d fail, with %d errors %s" %
-#        [ self.duration, @total-count, @pass-count, @failures.size,
-#          @errors.size, skipped-msg ]
-#    end
-#
-#    def report
-#      puts "\n", self.summary
-#      self.bad-results.each-with-index { |r, i| r.report(i + 1) }
-#    end
-#end
-#
-#class TestResult
-#  def initialize(kind, ex, test)
-#    @kind = kind
-#    @ex = ex
-#    @test = test
-#  end
-#
-#  def self.failure(ex, test)
-#    self.new(:Failure, ex, test)
-#  end
-#
-#  def self.error(ex, test)
-#    self.new(:Error, ex, test)
-#  end
-#
-#  def report(n)
-#    return self.report-verbosely(n) if RUT.*verbose* or @kind === :Error
-#    return self.report-succinctly(n)
-#  end
-#
-#  def report-succinctly(n)
-#    puts "\n#{n}) #{@kind} in #{@test}:\n#{@ex.message}"
-#  end
-#
-#  def report-verbosely(n)
-#    self.report-succinctly(n)
-#    puts @ex.backtrace.map { |line| '  ' + self.fix-path(line) }
-#  end
-#
-#  def fix-path(line)
-#    path, rest = line.split(':', 2)
-#    File.make-relative(path) + ':' + fix-rest(rest)
-#  end
-#
-#  def fix-rest(rest)
-#    return rest if !rest.index(':')
-#    lno, rest = rest.split(':', 2)
-#    lno + ': ' + rest
-#  end
-#end
+def (make-collector suite):
+  def start-time 0
+  def stop-time 0
+  def test-name (suite :name)
+  def failures (make-queue)
+  def errors (make-queue)
+  def total-count (suite :count)
+  def total-run 0
+  def pass-count 0
 
-module .
+  def collector ():
+    (start) (start-time :: (time :now))
+
+    (stop) (stop-time :: (time :now))
+
+    (error-in ex case):
+      errors (make-result :error ex case)
+      total-run :: (total-run + 1)
+      pr "E"
+      #STDOUT :flush
+
+    (failure-in ex case):
+      failures (make-result :failure ex case)
+      total-run :: (total-run + 1)
+      pr "F"
+      #STDOUT :flush
+
+    (pass-in case):
+      pass-count :: (pass-count + 1)
+      total-run :: (total-run + 1)
+      pr "."
+      #STDOUT :flush
+
+    (errors) errors
+
+    (failures) failures
+
+    (bad-results) (failures + errors)
+
+    (duration) (stop-time - start-time)
+
+    (summary):
+      def skipped-count (total-count - total-run)
+      def skipped-msg (if (skipped-count > 0)
+                          (" (%d skipped)" % skipped-count)
+                          "")
+      def fmt "Finished in %0.2fs\n%d tests: %d pass, %d fail, with %d errors %s"
+      fmt % (collector :duration) total-count pass-count (failures :size) (errors :size) skipped-msg
+    end
+
+    (report):
+      puts "\n"
+      puts (collector :summary)
+      (collector :bad-results):each-with-index (fn (r i) (r :report (i + 1)))
+
+class TestResult
+  def initialize(kind, ex, test)
+    @kind = kind
+    @ex = ex
+    @test = test
+  end
+
+  def self.failure(ex, test)
+    self.new(:Failure, ex, test)
+  end
+
+  def self.error(ex, test)
+    self.new(:Error, ex, test)
+  end
+
+  def report(n)
+    return self.report-verbosely(n) if RUT.*verbose* or @kind === :Error
+    return self.report-succinctly(n)
+  end
+
+  def report-succinctly(n)
+    puts "\n#{n}) #{@kind} in #{@test}:\n#{@ex.message}"
+  end
+
+  def report-verbosely(n)
+    self.report-succinctly(n)
+    puts @ex.backtrace.map { |line| '  ' + self.fix-path(line) }
+  end
+
+  def fix-path(line)
+    path, rest = line.split(':', 2)
+    File.make-relative(path) + ':' + fix-rest(rest)
+  end
+
+  def fix-rest(rest)
+    return rest if !rest.index(':')
+    lno, rest = rest.split(':', 2)
+    lno + ': ' + rest
+  end
+end
+
+# module
+obj ():
+  (run-all) run-all
+  (should) should
+  (shouldnt) shouldnt
+

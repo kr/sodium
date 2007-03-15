@@ -3,11 +3,11 @@
 # Test eventual sends
 
 def a ():
-    (m) 5
+    (m) (pr "should be fourth") 5
     (q) (pr "should be second")
 
 def b ():
-    (n) a
+    (n) (pr "should be third") a
 
 a .q
 

@@ -1,6 +1,7 @@
 
-#import (unit-test T) should shouldnt
+#import (unit-test T) run-all should shouldnt
 def T (import unit-test)
+def run-all (T :run-all)
 def should (T :should)
 def shouldnt (T :shouldnt)
 
@@ -25,5 +26,5 @@ def (make-tester):
     (test-equal):
       should (fn () (single = '(4)))
 
-T (make-tester)
+run-all (make-tester)
 pr "done"
