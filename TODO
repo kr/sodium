@@ -4,13 +4,13 @@
 [+] modules
 [+] convert stuff from prim.c into mixed LX/C modules where possible
 [+] flesh out int methods
-[ ] fix lexing of quoted strings
+[+] fix lexing of quoted strings
 [+] broken promises
 [ ] C function pointers are not datums -- treat them accordingly
 [ ] fix finalization
 [ ] fix return linkage for the "call" function (possibly all native methods)
 [ ] unit testing
-[ ] change name to something cool
+[ ] change name to "sodium"
 [ ] flesh out str methods
 [ ] flesh out other primitive type methods
 [ ] Make input "x:y" or "x.y" lex as 2 tokens
