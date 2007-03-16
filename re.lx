@@ -14,12 +14,12 @@ def re ():
     return int2datum(PCRE_DOTALL);
   >>>>
 
-  (run pat) (re :make pat (re :dotall))
+  (run pat) (re:make pat (re:dotall))
 
   (make pat opts):
     def r ():
-      (run subj) (r :match subj (r :runopts))
-      (find subj) (r :match subj (r :findopts))
+      (run subj) (r:match subj (r:runopts))
+      (find subj) (r:match subj (r:findopts))
 
       inline C runopts <<<<
         return int2datum(PCRE_ANCHORED);
@@ -86,7 +86,7 @@ def re ():
         return d;
       >>>>
 
-    r :: (r :prepare)
+    r :: (r:prepare)
     r .
 
 re .

@@ -13,10 +13,14 @@
 [ ] change name to "sodium"
 [ ] flesh out str methods
 [ ] flesh out other primitive type methods
-[ ] Make input "x:y" or "x.y" lex as 2 tokens
+[+] Make input "x:y" or "x.y" lex as 2 tokens
+[ ] Lex with maximum munch rather than a priority order
 [ ] change single-expr stmt form from "ex ." to ". ex"
 [ ] square brackets for super-shorthand lambda exprs
 [ ] new import and export source transformations
+[ ] re-arrange punctuation ops: use == for equality, and = for assignment
+[ ] let set! (aka =, nee ::) implicitly define, without shadowing
+[ ] have set! return the new value
 [ ] make a bigint type for arbitrary precision
 [ ] (x y z) :: 3-list
 [ ] overloading by number of args

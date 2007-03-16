@@ -92,14 +92,17 @@ FOREIGN = 'FOREIGN'
 
 scan_order = (FOREIGN, DEC, INT, SMESS, IMESS, NAME, ASSIGN, DOT, DOTS, LPAR, RPAR, QUOTE, STR, EOL, SPACE)
 
+# anything except parens, quotes, space, colon, and dot
+name_class = r"[^()'" + '"' + "\s#:\.]"
+
 # special chars are . : ( ) '
 rules = compile_res(
     FOREIGN= r'<<<<.*?>>>>',
     DEC    = r'-?[0-9]+\.[0-9]*',
     INT    = r'-?[0-9]+',
-    SMESS  = r"\.[^()'" + '"' + "\s#:\.][^()'" + '"' + "\s#]*",
-    IMESS  = r":[^()'" + '"' + "\s#:\.][^()'" + '"' + "\s#]*",
-    NAME   = r"[^()'" + '"' + "\s#:\.][^()'" + '"' + "\s#]*",
+    SMESS  = r'\.' + name_class + '+',
+    IMESS  = ':' + name_class + '+',
+    NAME   = name_class + '+',
     ASSIGN = r'::',
     DOT    = r'\.',
     DOTS   = r':',

@@ -40,12 +40,12 @@ def inspect ():
 
 # TODO replace this with 
 def (promise? x):
-  inspect :has-method? x 'wait
+  inspect:has-method? x 'wait
 
 def (ensure try finally):
   def success (fn (x) (finally) x)
   def failure (fn (name val) (finally) (error name val))
-  (try .run) :wait+ success failure
+  (try .run):wait+ success failure
 
 def is? ():
   inline C run <<<<
@@ -87,32 +87,32 @@ def (make-queue):
         (empty?):
             is? front '()
         (front):
-            if (queue :empty?) (error "front called on an empty queue")
-            front :car
+            if (queue:empty?) (error "front called on an empty queue")
+            front:car
         (run item):
             def new (cons item '())
-            if (queue :empty?):
-                begin :
+            if (queue:empty?):
+                begin:
                     front :: new
                     rear :: new
-                begin :
-                    rear :set-cdr! new
+                begin:
+                    rear:set-cdr! new
                     rear :: new
             queue .
         (remove!):
-            def item (queue :front)
-            queue :delete!
+            def item (queue:front)
+            queue:delete!
             item .
         (delete!):
-            if (queue :empty?) (error "delete! called on an empty queue")
-            front :: (front :cdr)
+            if (queue:empty?) (error "delete! called on an empty queue")
+            front :: (front:cdr)
             queue .
         (consume! f):
-            if (queue :empty?):
+            if (queue:empty?):
                 'ok .
-                begin :
-                    f (queue :remove!)
-                    queue :consume! f
+                begin:
+                    f (queue:remove!)
+                    queue:consume! f
     queue .
 
 def (make-promise):
@@ -167,14 +167,14 @@ def (make-promise):
         #    and this promise is broken.
         (wait+ f h):
           def pp (make-promise)
-          def p (pp :car)
-          def s (pp :cdr)
+          def p (pp:car)
+          def s (pp:cdr)
 
-          def success :
+          def success:
             fn (x) (schedule-task (make-task+ (fn () (f x)) s))
           queue-for-success success
 
-          def failure :
+          def failure:
             fn (x y) (schedule-task (make-task+ (fn () (h x y)) s))
           queue-for-err failure
 
@@ -182,15 +182,15 @@ def (make-promise):
 
         (wait f):
           # if there is an error, just re-raise it
-          promise :wait+ f (fn (name val) (error name val))
+          promise:wait+ f (fn (name val) (error name val))
 
         (wait-for-error h):
           # if the promise is fulfilled, just return the value
-          promise :wait+ (fn (x) x) h
+          promise:wait+ (fn (x) x) h
 
         (send msg args):
             if (pending?):
-                promise :wait (fn (x) (def v (call x msg args)) v)
+                promise:wait (fn (x) (def v (call x msg args)) v)
                 if (resolved?):
                     send value msg args
                     make-broken-promise err-name err-val # status is 'broken
@@ -200,30 +200,30 @@ def (make-promise):
             if (resolved?) (error "already resolved")
             status :: 'resolved
             value :: val
-            #success-queue :consume! [x val]
-            success-queue :consume! (fn (x) (x val))
+            #success-queue:consume! [x val]
+            success-queue:consume! (fn (x) (x val))
             process 'resolved
         (break! name val):
             if (broken?) (error "already broken")
             status :: 'broken
             err-name :: name
             err-val :: val
-            #err-queue :consume! [x name val]
-            err-queue :consume! (fn (x) (x name val))
+            #err-queue:consume! [x name val]
+            err-queue:consume! (fn (x) (x name val))
             process 'broken
 
     cons promise sink
 
 def (make-broken-promise name val):
   def pp (make-promise)
-  (pp :cdr) :break! name val
+  (pp:cdr):break! name val
   pp .
 
 # expects a thunk, returns a (promise, task) pair
 def (make-task f):
     def p (make-promise)
-    def promise (p :car)
-    def sink (p :cdr)
+    def promise (p:car)
+    def sink (p:cdr)
 
     def task (make-task+ f sink)
 
@@ -233,7 +233,7 @@ def (make-task f):
 def (make-task+ f sink):
   obj ():
     (run) (def x (f)) (sink x)
-    (break! x) (sink :break! 'error x)
+    (break! x) (sink:break! 'error x)
 
 def (schedule-task task):
   *tasks* task
@@ -241,12 +241,12 @@ def (schedule-task task):
 # expects a thunk, returns a promise
 def (make-and-schedule-task f):
   def task-pair (make-task f)
-  schedule-task (task-pair :cdr)
-  task-pair :car
+  schedule-task (task-pair:cdr)
+  task-pair:car
 
 def (send rcv msg args):
-    if (inspect :has-method? rcv 'send):
-        rcv :send msg args
+    if (inspect:has-method? rcv 'send):
+        rcv:send msg args
         make-and-schedule-task (fn () (def x (call rcv msg args)) x)
 
 def *tasks* (make-queue)

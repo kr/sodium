@@ -16,9 +16,9 @@ def int ():
     return (a < b) ? int2datum(-1) : (a > b) ? int2datum(1) : int2datum(0);
   >>>>
 
-  (= x) (is? (int :cmp x) 0)
-  (> x) (is? (int :cmp x) 1)
-  (< x) (is? (int :cmp x) -1)
+  (= x) (is? (int:cmp x) 0)
+  (> x) (is? (int:cmp x) 1)
+  (< x) (is? (int:cmp x) -1)
 
   inline C + <<<<
     register long a, b, r;
@@ -89,7 +89,7 @@ def int ():
     def table "0123456789"
     if (int < 10):
       table int
-      (upper :str) / (table lower)
+      (upper:str) / (table lower)
 
 def install-int ():
   inline C run <<<<

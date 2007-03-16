@@ -101,43 +101,43 @@ def str ():
     }
   >>>>
 
-  (tail n) (str :substring n (str :length))
-  (head n) (str :substring 0 n)
+  (tail n) (str:substring n (str:length))
+  (head n) (str:substring 0 n)
 
   (starts-with? sub):
-    (str :head (sub :length)) = sub
+    (str:head (sub:length)) = sub
 
   (find-from n sub):
     def (helper s i):
-      if ((s :length) < (sub :length)):
-        i + (s :length)
-        if (s :starts-with? sub):
+      if ((s:length) < (sub:length)):
+        i + (s:length)
+        if (s:starts-with? sub):
           i .
-          helper (s :tail 1) (i + 1)
-    helper (str :tail n) n
+          helper (s:tail 1) (i + 1)
+    helper (str:tail n) n
 
   (find sub):
-    str :find-from 0 sub
+    str:find-from 0 sub
 
   # (% . a):
   #   pr "in %"
-  #   def i (str :find "%")
+  #   def i (str:find "%")
   #   if (not i):
   #     str .
   #     if ((str 0) = "%"):
-  #       (format (str 1) (a :car)) / ((str :tail 2) % . (a :cdr))
-  #       (str :head i) / ((str :tail i) % . a)
+  #       (format (str 1) (a:car)) / ((str:tail 2) % . (a:cdr))
+  #       (str:head i) / ((str:tail i) % . a)
 
   (%* a):
     def (format code val):
       to-str val
-    def l (str :length)
-    def i (str :find "%")
+    def l (str:length)
+    def i (str:find "%")
     if (is? i l):
       str .
       if ((str 0) = "%"):
-        (format (str 1) (a :car)) / ((str :tail 2) :%* (a :cdr))
-        (str :head i) / ((str :tail i) :%* a)
+        (format (str 1) (a:car)) / ((str:tail 2):%* (a:cdr))
+        (str:head i) / ((str:tail i):%* a)
 
   inline C % <<<<
     regs[R_VM0] = rcv;
@@ -159,9 +159,9 @@ def install-str ():
   >>>>
 
 def (to-str x):
-  if (inspect :same-type? x str):
+  if (inspect:same-type? x str):
     x .
-    to-str (x :str)
+    to-str (x:str)
 
 intern-syms
 install-str str
