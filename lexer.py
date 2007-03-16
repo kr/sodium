@@ -106,7 +106,7 @@ rules = compile_res(
     LPAR   = r'\(',
     RPAR   = r'\)',
     QUOTE  = r"'",
-    STR    = r'"[^"]*"',
+    STR    = r'"([^"\\]|\\.)*"',
     EOL    = r' *(:?#[^\n]*)?\n',
     SPACE  = r' +',
 )

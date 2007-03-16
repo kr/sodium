@@ -150,7 +150,7 @@ atom : NAME
         if type == T.NAME:
             return lx.S(lexeme)
         if type == T.STR:
-            return lx.String(lexeme[1:-1])
+            return lx.String(unescape(lexeme[1:-1]))
         if type == T.DEC:
             return lx.Decimal(lexeme)
         if type == T.FOREIGN:
@@ -164,6 +164,34 @@ atom : NAME
         while self.peek not in sentinels:
             rl = cons(parse(), rl)
         return rl.reverse()
+
+def unescape(s):
+    i = 0
+    l = len(s)
+    r = [ ]
+    while i < l:
+        c = s[i]
+        if c == '\\':
+            i += 1
+            c = tab[s[i]]
+        # TODO octal and hex escape sequnces
+        r.append(c)
+        i += 1
+    return ''.join(r)
+
+tab = {
+    'n':"\n",
+    't':"\t",
+    'v':"\v",
+    'b':"\b",
+    'r':"\r",
+    'f':"\f",
+    'a':"\a",
+    '\\':"\\",
+    '?':"?",
+    "'":"'",
+    '"':'"',
+}
 
 def make_invoke(op, first, lexeme, tail):
     return list(lx.S(op), first, (lx.S('quote'), lx.S(lexeme[1:])),

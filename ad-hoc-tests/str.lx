@@ -2,6 +2,9 @@ def x "hello, "
 def y "world"
 def z "world"
 
+pr "hell\\o, \"my world\""
+pr "abc\ndef"
+
 pr "hello, world"
 pr (x / y)
 pr ""
@@ -39,11 +42,11 @@ pr (y :tail 2)
 pr ""
 
 pr "()"
-pr (x :starts-with "foo")
+pr (x :starts-with? "foo")
 pr ""
 
 pr "1"
-pr (x :starts-with "hel")
+pr (x :starts-with? "hel")
 pr ""
 
 pr "3"
