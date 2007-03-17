@@ -174,3 +174,32 @@ Source transformations for more convenient exporting of symbols:
 
   export a b c ==>
   obj () ((a) a) ((b) b) ((c) c)
+
+New notes, added on 2007-03-16 around 3:11 p.m.
+
+  Literal syntax for: dates, times, email addrs, files, uris
+
+  pseudo-ISO:
+    2007-03-16
+    2007-03-16T15:13
+    2007-03-16T15:13Z
+    2007-03-16T15:13+5
+    2007-03-16T3:13pm
+    2007-03-16T03:13pm
+    2007-03-16T03:13:32pm
+    2007-03-16T03:13:32.2345pm
+    03:13am
+    03:13pm
+    03:13:32pm
+    03:13:32.2345pm
+  other formats?
+
+  kr@xph.us
+
+  /usr/local/foo/bar.txt
+
+  http://xph.us/software/
+  http://xph.us/software/unlambda
+  http://xph.us/software/unlambda.html
+
+  Protocols: http https ftp data file imap mailto pop sip (others?)
