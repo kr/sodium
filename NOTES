@@ -177,7 +177,7 @@ Source transformations for more convenient exporting of symbols:
 
 New notes, added on 2007-03-16 around 3:11 p.m.
 
-  Literal syntax for: dates, times, email addrs, files, uris
+  Literal syntax for: dates, times, email addrs, paths, uris
 
   pseudo-ISO:
     2007-03-16
