@@ -51,11 +51,6 @@ def pair ():
     (pair:cdr) f
     'ok .
 
-  (schedule f):
-    def p (f .run (pair:car))
-    wait p (fn (x) ((pair:cdr):schedule f))
-    p .
-
   (= p):
     if ((pair:car) = (p:car)):
       if ((pair:cdr) = (p:cdr)) true false

@@ -28,6 +28,7 @@ class S(object):
 
     def __str__(self): return self.s
     def __repr__(self): return self.s
+    def __cmp__(self, other): return cmp(str(self), str(other))
 
     def __getitem__(self, k):
         return self.s[k]

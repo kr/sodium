@@ -34,6 +34,7 @@ def_s = S('def')
 import_s = S('import')
 if_s = S('if')
 fn_s = S('fn')
+shfn_s = S(':shorthand-fn:')
 obj_s = S('obj')
 begin_s = S('begin')
 inline_s = S('inline')
@@ -47,11 +48,15 @@ def compile(exp, target, linkage, cenv):
     if tagged_list(exp, import_s): return compile_import(exp, target, linkage, cenv)
     if tagged_list(exp, if_s): return compile_if(exp, target, linkage, cenv)
     if tagged_list(exp, fn_s): return compile_obj(fn2obj(exp), target, linkage, cenv)
+    if tagged_list(exp, shfn_s): return compile_shfn(exp, target, linkage, cenv)
     if tagged_list(exp, obj_s): return compile_obj(exp, target, linkage, cenv)
     if tagged_list(exp, begin_s): return compile_begin(exp, target, linkage, cenv)
     if tagged_list(exp, inline_s): return compile_inline(exp)
     if pairp(exp): return compile_application(exp, target, linkage, cenv)
     raise Exception, 'Unknown expression type %s' % exp
+
+def compile_shfn(exp, target, linkage, cenv):
+  return compile(shfn2fn(exp), target, linkage, cenv)
 
 def compile_begin(exp, target, linkage, cenv):
     seq = exp.cdr()
@@ -431,6 +436,10 @@ def fn2obj(exp):
     body = fn_body(exp)
     return make_obj(plist(cons(sig, body)))
 
+def shfn2fn(exp):
+    seq = exp.cdr()
+    return make_fn(scan_out_xyz_sequence(seq), seq)
+
 def analyze_obj(exp):
     def f(to):
         name = to.caar()
@@ -635,7 +644,96 @@ def scan_out_defines(body):
     vars, exps, voids = scan(body)
     if vars.nullp(): return exps
     binding = make_fn(vars, exps)
-    return plist(cons(binding, voids))
+    return plist(cons(binding, voids)) # apply the fn to the void values
+
+def set_equal(l1, l2):
+  if l1.nullp() and l2.nullp(): return True
+  if l1.nullp() or l2.nullp(): return False
+  if l1.car() is not l2.car(): return False
+  return set_equal(l1.cdr(), l2.cdr())
+
+def set_minus1(l, x):
+  if l.nullp(): return nil
+  a = l.car()
+  d = set_minus1(l.cdr(), x)
+  return d if a is x else cons(a, d)
+
+def set_minus(a, b):
+  if b.nullp(): return a
+  return set_minus1(set_minus(a, b.cdr()), b.car())
+
+# only works with sorted lists
+def set_merge(l1, l2):
+  if l1.nullp(): return l2
+  if l2.nullp(): return l1
+  l1a = l1.car()
+  l2a = l2.car()
+  if l1a is l2a: return cons(l1a, set_merge(l1.cdr(), l2.cdr()))
+  if l1a < l2a: return cons(l1a, set_merge(l1.cdr(), l2))
+  if l1a > l2a: return cons(l2a, set_merge(l1, l2.cdr()))
+  raise "can't happen"
+
+def scan_out_xyz(exp):
+    if self_evaluatingp(exp): return nil
+    if tagged_list(exp, quote_s): return nil
+    if variablep(exp): return scan_out_xyz_variable(exp)
+    if tagged_list(exp, set__s): return scan_out_xyz_assignment(exp)
+    if tagged_list(exp, def_s): return scan_out_xyz_definition(exp)
+    if tagged_list(exp, import_s): return nil
+    if tagged_list(exp, if_s): return scan_out_xyz_if(exp)
+    if tagged_list(exp, fn_s): return scan_out_xyz_obj(fn2obj(exp))
+    if tagged_list(exp, shfn_s): return nil # impossible
+    if tagged_list(exp, obj_s): return scan_out_xyz_obj(exp)
+    if tagged_list(exp, begin_s): return scan_out_xyz_begin(exp)
+    if tagged_list(exp, inline_s): return nil
+    if pairp(exp): return scan_out_xyz_application(exp)
+    raise Exception, 'Unknown expression type in scan_out_xyz %s' % exp
+
+def scan_out_xyz_obj(exp):
+    return foldl(set_merge, nil, exp_methods(exp).map(scan_out_xyz_method))
+
+def memq(x, l):
+    if l.nullp(): return False
+    if l.car() is x: return l
+    return memq(x, l.cdr())
+
+def meth_xyz_params(meth):
+    params = meth_params(meth)
+    x_l = plist(x_s) if memq(x_s, params) else nil
+    y_l = plist(y_s) if memq(y_s, params) else nil
+    z_l = plist(z_s) if memq(z_s, params) else nil
+    return set_merge(x_l, set_merge(y_l, z_l))
+
+def scan_out_xyz_method(meth):
+    if set_equal(meth_xyz_params(meth), plist(x_s, y_s, z_s)): return nil
+    return set_minus(scan_out_xyz_sequence(meth_body(meth)),
+                                           meth_xyz_params(meth))
+
+x_s = S('x')
+y_s = S('y')
+z_s = S('z')
+def scan_out_xyz_variable(exp):
+  if exp in (x_s, y_s, z_s): return plist(exp)
+  return nil
+
+def foldl(f, i, l):
+    if l.nullp(): return i
+    return foldl(f, f(i, l.car()), l.cdr())
+
+def scan_out_xyz_assignment(exp): return scan_out_xyz(exp.caddr())
+def scan_out_xyz_definition(exp): return scan_out_xyz(definition_value(exp))
+def scan_out_xyz_if(exp):
+    return set_merge(scan_out_xyz(exp.cadr()),
+                 set_merge(scan_out_xyz(exp.caddr()),
+                       scan_out_xyz(if_alternative(exp))))
+def scan_out_xyz_begin(exp): return scan_out_xyz_sequence(exp.cdr())
+def scan_out_xyz_application(exp):
+    return foldl(set_merge, nil, exp.map(scan_out_xyz))
+
+def scan_out_xyz_sequence(seq):
+    if seq.nullp(): return nil
+    exp = seq.car()
+    return set_merge(scan_out_xyz(exp), scan_out_xyz_sequence(seq.cdr()))
 
 def make_promise():
     return pair2tuple(global_env['make-promise'].run())

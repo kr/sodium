@@ -43,8 +43,8 @@ def (promise? x):
   inspect:has-method? x 'wait
 
 def (ensure try finally):
-  def success (fn (x) (finally) x)
-  def failure (fn (name val) (finally) (error name val))
+  def success [begin (finally) x]
+  def failure [begin (finally) (error x y)]
   (try .run):wait+ success failure
 
 def is? ():
@@ -170,27 +170,23 @@ def (make-promise):
           def p (pp:car)
           def s (pp:cdr)
 
-          def success:
-            fn (x) (schedule-task (make-task+ (fn () (f x)) s))
-          queue-for-success success
+          queue-for-success [schedule-task (make-task+ (fn () (f x)) s)]
 
-          def failure:
-            fn (x y) (schedule-task (make-task+ (fn () (h x y)) s))
-          queue-for-err failure
+          queue-for-err [schedule-task (make-task+ (fn () (h x y)) s)]
 
           p .
 
         (wait f):
           # if there is an error, just re-raise it
-          promise:wait+ f (fn (name val) (error name val))
+          promise:wait+ f [error x y]
 
         (wait-for-error h):
           # if the promise is fulfilled, just return the value
-          promise:wait+ (fn (x) x) h
+          promise:wait+ [begin x] h
 
         (send msg args):
             if (pending?):
-                promise:wait (fn (x) (def v (call x msg args)) v)
+                promise:wait [begin (def v (call x msg args)) v]
                 if (resolved?):
                     send value msg args
                     make-broken-promise err-name err-val # status is 'broken
@@ -200,16 +196,14 @@ def (make-promise):
             if (resolved?) (error "already resolved")
             status :: 'resolved
             value :: val
-            #success-queue:consume! [x val]
-            success-queue:consume! (fn (x) (x val))
+            success-queue:consume! [x val]
             process 'resolved
         (break! name val):
             if (broken?) (error "already broken")
             status :: 'broken
             err-name :: name
             err-val :: val
-            #err-queue:consume! [x name val]
-            err-queue:consume! (fn (x) (x name val))
+            err-queue:consume! [x name val]
             process 'broken
 
     cons promise sink
@@ -247,6 +241,8 @@ def (make-and-schedule-task f):
 def (send rcv msg args):
     if (inspect:has-method? rcv 'send):
         rcv:send msg args
-        make-and-schedule-task (fn () (def x (call rcv msg args)) x)
+        #make-and-schedule-task [call rcv msg args]
+        # here is the weird workaround
+        make-and-schedule-task [begin (def r (call rcv msg args)) r]
 
 def *tasks* (make-queue)

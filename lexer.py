@@ -84,16 +84,18 @@ DOT     = 'DOT'
 DOTS    = 'DOTS'
 LPAR    = 'LPAR'
 RPAR    = 'RPAR'
+LSQU    = 'LSQU'
+RSQU    = 'RSQU'
 QUOTE   = 'QUOTE'
 STR     = 'STR'
 SPACE   = 'SPACE'
 EOL     = 'EOL'
 FOREIGN = 'FOREIGN'
 
-scan_order = (FOREIGN, DEC, INT, SMESS, IMESS, NAME, ASSIGN, DOT, DOTS, LPAR, RPAR, QUOTE, STR, EOL, SPACE)
+scan_order = (FOREIGN, DEC, INT, SMESS, IMESS, NAME, ASSIGN, DOT, DOTS, LPAR, RPAR, LSQU, RSQU, QUOTE, STR, EOL, SPACE)
 
 # anything except parens, quotes, space, colon, and dot
-name_class = r"[^()'" + '"' + "\s#:\.]"
+name_class = r"[^][()'" + '"' + "\s#:\.]"
 
 # special chars are . : ( ) '
 rules = compile_res(
@@ -108,6 +110,8 @@ rules = compile_res(
     DOTS   = r':',
     LPAR   = r'\(',
     RPAR   = r'\)',
+    LSQU   = r'\[',
+    RSQU   = r'\]',
     QUOTE  = r"'",
     STR    = r'"([^"\\]|\\.)*"',
     EOL    = r' *(:?#[^\n]*)?\n',

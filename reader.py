@@ -2,6 +2,7 @@ import re
 import lx
 import lexer as T
 from pair import cons, list, nil
+from util import traced
 
 # lower case names are nonterminals
 # ALL CAPS names are terminals
@@ -118,17 +119,20 @@ mole : expr+
 expr : atom
      | '(' ')'
      | '(' mole ')'
+     | '[' mole ']'
      | "'" expr
         '''
 
         if self.peek == T.LPAR:
             self.match(T.LPAR)
-            if self.peek == T.RPAR:
-                mole = nil
-            else:
-                mole = self.__mole(T.RPAR)
+            mole = self.__mole(T.RPAR)
             self.match(T.RPAR)
             return mole
+        elif self.peek == T.LSQU:
+            self.match(T.LSQU)
+            mole = self.__mole(T.RSQU)
+            self.match(T.RSQU)
+            return list(lx.S(':shorthand-fn:'), mole)
         elif self.peek == T.QUOTE:
             self.match(T.QUOTE)
             expr = self.__expr()
@@ -157,6 +161,7 @@ atom : NAME
             return lexeme[4:-4]
 
     def __mole(self, *follow):
+        if self.peek in follow: return nil
         return self.__mole_tail(self.__expr(), *follow).reverse()
 
     def match_loop(self, parse, *sentinels):
