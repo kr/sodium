@@ -203,3 +203,80 @@ New notes, added on 2007-03-16 around 3:11 p.m.
   http://xph.us/software/unlambda.html
 
   Protocols: http https ftp data file imap mailto pop sip (others?)
+
+New notes, added on 2007-03-20 around 1:52 a.m.
+
+  Here is how to offer optional args in addition to var args and overloading by
+  arity. It is done by (surprise, surprise) another source transformation.
+
+  The idea: expand a method definition with optional arguments into several
+  method definitions, each of which calculates one optional value and passes it
+  to the next. The usual mechanism for selecting a method by arity will cause
+  the appropriate one to be called.
+
+  For example (using a pseudo-syntax that wouldn't actually work):
+
+    obj () ((m x y=1 z=2 w=3) body)
+
+  becomes
+
+    obj ():
+        (m x) (self:m x 1)
+        (m x y) (self:m x y 2)
+        (m x y z) (self:m x y z 3)
+        (m x y z w) body
+
+  Unfortunately, this means that a call to m:1 will execute three extra method
+  calls. This transformation would play nicely with the PIC optimizer, making
+  this not very burdensome, but it's still less than ideal.
+
+  Alternatively, the example above could be expanded to the following:
+
+    obj ():
+        (m x) (self:m x 1 2 3)
+        (m x y) (self:m x y 2 3)
+        (m x y z) (self:m x y z 3)
+        (m x y z w) body
+
+  This would reduce the number of method calls but add some bloat in the
+  generated code, which might affect locality and cache behavior. It's unclear
+  which strategy is better; I'll need to do some profiling to get a real
+  answer. My hunch is that the second version with more code but fewer run time
+  calls will win overall because the expressions that get duplicated will tend
+  to be very small -- nearly always just loading compile-time constants.
+
+  Now it just needs a syntax. I said above that "x=1" wouldn't work. That's
+  because "x=1" is a perfectly valid variable name. I'm currently considering
+  further abusing the colon, as in "x:1", but that is unsatisfying. It also
+  looks too similar to a method call when the default expr is a variable
+  lookup, as in "x:y". I could use a parenthesized form, but I'm saving that
+  for destructuring binds.
+
+New notes, added on 2007-03-20 around 2:21 a.m.
+
+  A neat side effect of doing optional args by this source transformation
+  method is that it becomes pretty easy to give meaningful, well-defined
+  behavior if the user wants to put an optional argument in the middle of the
+  list. They don't have to go only at the end. Consider:
+
+  obj () ((m x y=3 z) body)
+
+  obj ():
+      (m x z) (self:m x 3 z)
+      (m x y z) body
+
+  Or, a slightly more complicated example:
+
+  obj () ((m a b=3 c d=7 e) body)
+
+  obj ():
+      (m a c e) (self:m a 3 c e)
+      (m a b c e) (self:m a b c 7 e)
+      (m a b c d e) body
+
+  It still needs a syntax, though. I've also skirted around another issue:
+  doing this as a source transformation causes trouble in reliably referring to
+  the receiver. I cleverly avoided this problem in my pseudo-syntax by using
+  the word "self", which has no special meaning in LX (or should I say,
+  "Sodium"). This would be no problem in bytecode, but it's tricky as a source
+  transformation. I may have to introduce another "impossible" keyword.
