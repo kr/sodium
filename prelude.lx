@@ -186,7 +186,7 @@ def (make-promise):
 
         (send msg args):
             if (pending?):
-                promise:wait [begin (def v (call x msg args)) v]
+                promise:wait [call x msg args]
                 if (resolved?):
                     send value msg args
                     make-broken-promise err-name err-val # status is 'broken
@@ -241,8 +241,6 @@ def (make-and-schedule-task f):
 def (send rcv msg args):
     if (inspect:has-method? rcv 'send):
         rcv:send msg args
-        #make-and-schedule-task [call rcv msg args]
-        # here is the weird workaround
-        make-and-schedule-task [begin (def r (call rcv msg args)) r]
+        make-and-schedule-task [call rcv msg args]
 
 def *tasks* (make-queue)

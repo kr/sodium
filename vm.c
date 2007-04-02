@@ -746,15 +746,18 @@ start_body(uint *start_addr)
 datum
 call(datum o, datum m, pair a)
 {
+    if (!symbolp(m)) die1("call -- not a symbol", m);
     regs[R_PROC] = o;
     regs[R_ARGL] = a;
-    regs[R_CONTINUE] = quit_inst;
-    regs[R_VM0] = compiled_obj_method(o, m);
+    regs[R_VM0] = compiled_obj_method(regs[R_PROC], m);
     if (addrp(regs[R_VM0])) {
-        start(compiled_obj_method(o, m));
+        stack = cons(regs[R_CONTINUE], stack); // save
+        regs[R_CONTINUE] = quit_inst;
+        start(regs[R_VM0]);
+        regs[R_CONTINUE] = car(stack); stack = cdr(stack); // restore
         return regs[R_VAL];
     } else {
-        return ((prim_meth) regs[R_VM0])(o, a);
+        return ((prim_meth) regs[R_VM0])(regs[R_PROC], regs[R_ARGL]);
     }
 }
 
