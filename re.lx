@@ -55,7 +55,7 @@ def re ():
         return make_string_init_len(res, res_len);
       >>>>
 
-      inline C destroy! <<<<
+      inline C finalize! <<<<
         free(((pair) rcv)->datums[2]);
         return ok_sym;
       >>>>

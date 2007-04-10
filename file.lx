@@ -72,7 +72,7 @@ def file ():
         return ok_sym;
       >>>>
 
-      (destroy!) (f:close)
+      (finalize!) (f:close)
 
       inline C prepare <<<<
         char *mode = "rb";

@@ -80,7 +80,7 @@ extern pair stack;
 extern datum genv, tasks;
 extern datum to_import, to_start, modules;
 
-extern datum run_sym, ok_sym, emptyp_sym, remove_sym, destroy_sym;
+extern datum run_sym, ok_sym, emptyp_sym, remove_sym, finalize_sym;
 
 extern datum *static_datums;
 extern size_t static_datums_fill;

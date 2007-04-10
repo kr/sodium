@@ -1,6 +1,6 @@
 
 def (f x):
-  obj () ((destroy!) (pr x))
+  obj () ((finalize!) (pr x))
 
 f "Three"
 

@@ -10,7 +10,7 @@
 int gc_in_progress = 0;
 struct pair *busy_pairs, *old_pairs;
 static struct pair *free_pairs;
-size_t free_index = 0, scan_index = 0;
+size_t free_index = 0, scan_index = 0, dead_index = 0;
 
 // int /*bool*/
 // pairp(datum x) {
@@ -36,8 +36,10 @@ init_mem(void)
 #define DATUM_TYPE_ARRAY 0x01
 #define DATUM_TYPE_STRING 0x02
 #define DATUM_TYPE_OBJ 0x03
+#define DATUM_TYPE_UNDEAD 0x04
 #define DATUM_TYPE_BROKEN_HEART 0xff
 #define DATUM_LEN(i) ((i) & 0x00ffffff)
+#define SET_DATUM_TYPE(o,t) {(o)->info = DATUM_INFO(t, DATUM_LEN((o)->info));}
 
 void
 dump_obj(datum o)
@@ -90,27 +92,18 @@ relocate(pair p)
     }
 #endif
 
-    //switch (DATUM_TYPE(p->info)) {
-    //    case DATUM_TYPE_ARRAY:
-            np = &free_pairs[free_index++];
-            np->info = p->info;
-            for (len = DATUM_LEN(p->info); len--;) {
-                np->datums[len] = p->datums[len];
-                ++free_index;
-            }
-    //        break;
-    //    case DATUM_TYPE_STRING:
-    //        np = &free_pairs[free_index];
-    //        strcpy((char *) np, (const char *) p);
-    //        len = strlen((const char *) np);
-    //        free_index += max(len / 4 + ((len % 4) ? 1 : 0), 2);
-    //        break;
-    //    default:
-    //        die("relocate -- unknown object type");
-    //}
+    np = &free_pairs[free_index++];
+    np->info = p->info;
+    if (DATUM_TYPE(p->info) == DATUM_TYPE_STRING) {
+        np->info = DATUM_INFO(DATUM_TYPE_STRING, DATUM_LEN(p->info));
+    }
+    for (len = DATUM_LEN(p->info); len--;) {
+        np->datums[len] = p->datums[len];
+        ++free_index;
+    }
 
 #if GC_DEBUG
-    printf("...copied\n");
+    printf("...copied to %p\n", np);
 #endif
 
 #if GC_DEBUG_STR
@@ -162,15 +155,19 @@ gc(int alen, datum x, datum y, int slen, int blen)
         static_datums[i] = relocate(static_datums[i]);
     }
 
+    scan_index = dead_index = 0;
+
+scan_again:
 #if GC_DEBUG
-    printf("free_index is %d\n", free_index);
+    printf("scan_index is %d, free_index is %d\n", scan_index, free_index);
 #endif
-    for (scan_index = 0; scan_index < free_index;) {
+    while (scan_index < free_index) {
         np = &free_pairs[scan_index++];
         ++live;
         switch (DATUM_TYPE(np->info)) {
             case DATUM_TYPE_ARRAY:
             case DATUM_TYPE_OBJ:
+            case DATUM_TYPE_UNDEAD:
                 for (i = DATUM_LEN(np->info); i--;) {
                     np->datums[i] = relocate(np->datums[i]);
                     ++scan_index;
@@ -180,6 +177,35 @@ gc(int alen, datum x, datum y, int slen, int blen)
                 scan_index += DATUM_LEN(np->info);
                 break;
         }
+    }
+
+    if (!dead_index) {
+#if GC_DEBUG
+        printf("resurrecting recently deceased\n");
+#endif
+        /* resurrect the recently deceased, if they have unfinished business */
+        while (dead_index < HEAP_SIZE) {
+            np = &busy_pairs[dead_index++];
+            switch (DATUM_TYPE(np->info)) {
+                case DATUM_TYPE_OBJ:
+#if GC_DEBUG
+                    printf("scanning dead object ");
+                    pr(np);
+                    printf("  with env ");
+                    pr(car(np));
+#endif
+                    if (compiled_obj_has_method(np, finalize_sym)) {
+                        np = relocate(np);
+                        SET_DATUM_TYPE(np, DATUM_TYPE_UNDEAD);
+                    }
+                    break;
+            }
+            dead_index += DATUM_LEN(np->info);
+        }
+#if GC_DEBUG
+        printf("scaning again\n");
+#endif
+        goto scan_again; /* relocate the undead and their dependencies */
     }
 
     old_pairs = busy_pairs;
@@ -192,21 +218,22 @@ gc(int alen, datum x, datum y, int slen, int blen)
     printf("gc done (%d live)\n", live);
 #endif /*GC_STATS*/
 
-    for (scan_index = 0; scan_index < HEAP_SIZE;) {
-        np = &old_pairs[scan_index++];
-        switch (DATUM_TYPE(np->info)) {
-            case DATUM_TYPE_OBJ:
-                if (compiled_obj_has_method(np, destroy_sym)) {
-                    call(np, destroy_sym, nil);
-                }
-                /*(((prim) car(np))(np, destroy_sym))(np, nil);*/
-                break;
-        }
-        scan_index += DATUM_LEN(np->info);
-    }
-
     free(old_pairs);
     old_pairs = 0;
+
+    /* finalize all undead objects */
+    /* we can't do this earlier because we call in to LX code and that requres
+     * that the free/busy pointers are swapped back */
+    dead_index = 0;
+    while (dead_index < HEAP_SIZE) {
+        np = &busy_pairs[dead_index++];
+        switch (DATUM_TYPE(np->info)) {
+            case DATUM_TYPE_UNDEAD:
+                call(np, finalize_sym, nil);
+                break;
+        }
+        dead_index += DATUM_LEN(np->info);
+    }
 
 #if GC_DIE
     die("GC_DIE");
@@ -375,6 +402,13 @@ obj_tag_matches(datum o)
 {
     pair p = (pair) o;
     return DATUM_TYPE(p->info) == DATUM_TYPE_OBJ;
+}
+
+int
+undead_tag_matches(datum o)
+{
+    pair p = (pair) o;
+    return DATUM_TYPE(p->info) == DATUM_TYPE_UNDEAD;
 }
 
 int
