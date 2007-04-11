@@ -280,3 +280,96 @@ New notes, added on 2007-03-20 around 2:21 a.m.
   the word "self", which has no special meaning in LX (or should I say,
   "Sodium"). This would be no problem in bytecode, but it's tricky as a source
   transformation. I may have to introduce another "impossible" keyword.
+
+New notes, added on 2007-04-10 around 12:03 a.m.
+
+  The name is Sodium!!! That is all.
+
+New notes, added on 2007-04-11 around 1:55 p.m.
+
+  Three things today. First, I'm strongly considering swapping the meanings of
+  dot and colon in method invocation. So x.m would be an blocking call and x:m
+  would be an nonblocking call. Originally, I chose dot for the asynchronous
+  operation because I wanted to encourage people to use it by making it easier
+  to type, compared with the colon. But after writing just a couple thousand
+  lines of Sodium (nee LX) code, I've observed that blocking calls are going to
+  be much more common than nonblocking calls no matter what. I should optimize
+  for the common case.
+
+  By the way, I'm also changing my terminology slightly. Until now I had been
+  pretty careful about referring to synchronous method invocations as
+  "immediate calls" and asynchronous method invocations as "eventual sends". I
+  think a better approach is to refer to them both as "calls" or "message
+  sends" (a la Smalltalk) or "invocations" or whatever, to reinforce the notion
+  that they are more similar than different. Then, where necessary, one can
+  distinguish the two by using an adjective such as "blocking" or "nonblocking"
+  or "synchronous" or "asynchronous" (or even "immediate" or "eventual").
+
+  Second, I'm strongly considering adding a bit more low-level syntax (i.e. not
+  a parse tree transformation) to let the programmer omit more parentheses. I
+  first mentioned this on 2006-11-19 but didn't consider it very seriously.
+  Here's how it works:
+
+  Currently, any combination can contain at most one "IMESS" or "SMESS" token
+  (that is, a symbol prefixed by a colon or dot) and that token must occur in
+  the second position. The occurrence of another of these tokens is an error.
+  Instead, I will let the occurrence of another such token signal that
+  everything seen so far in the combination should be treated as if it were
+  wrapped in parens. That means that this
+
+    (o a b c):m x y
+
+  can be shortened to
+
+    o a b c:m x y
+
+  and this
+
+    ((x:foo):bar):baz a b
+
+  can be shortened to
+
+    x:foo:bar:baz a b
+
+  This feature almost always lets you omit a set of parens that starts at the
+  beginning of the line. The exception is
+
+    (x):m
+
+  which cannot be shortened. That's because the :m would be in the second
+  position and x itself (rather than the result of calling x:run with zero
+  args) would be sent the message.
+
+  To go along with this, I'm planning on changing the treatment of punctuation
+  messages. Currently, 3 + 4 is translated to 3 :+ 4 by a parse tree
+  transformation during eval. Instead, I'm going to move it all the way down to
+  the lexer. I'll have the lexer emit an IMESS token when it encounters a word
+  of just one or two characters in the list of special punctuation. So x-y will
+  still be a single symbol token, but x - y will lex the same way as x:- y.
+
+  Third, I'm weakly considering making the equals sign more special to provide
+  for a readable syntax for optional params. This would involve adding one more
+  token type to the lexer, a "keyword" token (for lack of a better name), that
+  looks like a symbol suffixed with an equals sign. Then, in a list of formal
+  params, a keyword followed by an expr would count as one optional parameter.
+  This is essentially the pseudo-syntax I used in my earlier example, but made
+  real. This would mean that x=5 is no longer a valid variable name; you can't
+  use '=' in identifiers any more. Having used Scheme, I like the ability to
+  use nearly any character in a variable name, so I would lament the loss of
+  the equals sign. But, then again, the lack of '=' in identifiers doesn't seem
+  to bother Python users very much.
+
+  This would also provide a syntax for keyword args. Unfortunately, syntax is
+  not the hard part of keyword args. I'd love to do keyword args some day but
+  I'll need some inspiration on the mechanism.
+
+New notes, added on 2007-04-11 around 3:11 p.m.
+
+  Well, the last piece of the puzzle in providing optional args is a way to
+  refer to the self object reliably, even when that object is not bound to any
+  name in scope. Right now, the answer is implicit self. Since an IMESS token
+  cannot currently occur as the first thing in a combination, I'll use that to
+  mean that the receiver is self. Although generally I agree that explicit is
+  better than implicit, I think this is better than adding a reserved word or
+  something. And arguably, this isn't really implicit, it's just terse. The
+  notation is unambiguous and it doesn't break any existing code.
