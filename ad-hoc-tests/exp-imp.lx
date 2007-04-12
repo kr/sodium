@@ -1,8 +1,5 @@
 
-def m (load-module foo)
-def a (m:a)
-def b (m:y)
-def c (m:c)
+import foo a (y -> b) c
 
 a
 

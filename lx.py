@@ -33,6 +33,7 @@ set__s = S('set!')
 def_s = S('def')
 load_module_s = S('load-module')
 export_s = S('export')
+import_s = S('import')
 if_s = S('if')
 fn_s = S('fn')
 shfn_s = S(':shorthand-fn:')
@@ -62,7 +63,10 @@ def compile_shfn(exp, target, linkage, cenv):
 
 def compile_begin(exp, target, linkage, cenv):
     seq = exp.cdr()
-    if cenv is not nil: seq = scan_out_defines(seq)
+    if cenv is not nil:
+      seq = scan_out_defines(seq)
+    else:
+      seq = expand_imports(seq)
     return compile_sequence(seq, target, linkage, cenv)
 
 env_r = S('env')
@@ -636,6 +640,32 @@ def find_variable(var, cenv):
         return help(n + 1, cenv.cdr())
     return help(0, cenv)
 
+def make_load_module(name):
+  return plist(load_module_s, name)
+
+def make_def(name, exp):
+  return plist(def_s, name, exp)
+
+def make_call(rcv, msg, *args):
+  return plist(rcv, S(':' + str(msg)), *args)
+
+def expand_imports(seq):
+  def expand_import(stmt):
+    def old_name(term):
+      if symbolp(term): return term
+      return term.car()
+    def new_name(term):
+      if symbolp(term): return term
+      return term.caddr()
+    def import_term2def(term):
+      return make_def(new_name(term), make_call(new_name(stmt.cadr()), old_name(term)))
+    def module2def(name):
+      return make_def(new_name(name), make_load_module(old_name(name)))
+    if not tagged_list(stmt, import_s): return plist(stmt)
+    return cons(module2def(stmt.cadr()), stmt.cddr().map(import_term2def))
+  if seq.nullp(): return seq
+  return expand_import(seq.car()).append(expand_imports(seq.cdr()))
+
 unassigned_s = S(':unassigned:')
 q_unassigned_s = plist(quote_s, unassigned_s)
 def scan_out_defines(body):
@@ -650,7 +680,7 @@ def scan_out_defines(body):
             return cons(var, vars), cons(set, exps), cons(q_unassigned_s, voids)
         else:
             return vars, cons(exp, exps), voids
-    vars, exps, voids = scan(body)
+    vars, exps, voids = scan(expand_imports(body))
     if vars.nullp(): return exps
     binding = make_fn(vars, exps)
     return plist(cons(binding, voids)) # apply the fn to the void values

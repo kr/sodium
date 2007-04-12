@@ -373,7 +373,8 @@ New notes, added on 2007-04-11 around 3:11 p.m.
   mean that the receiver is self. Although generally I agree that explicit is
   better than implicit, I think this is better than adding a reserved word or
   something. And arguably, this isn't really implicit, it's just terse. The
-  notation is unambiguous and it doesn't break any existing code.
+  notation is unambiguous (unlike, say, Ruby) and it doesn't break any existing
+  code.
 
 Updated notes on 2007-04-12 around 11:07 a.m.
 (Originally added on 2007-03-08 around 3:50 p.m.)
