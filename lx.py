@@ -658,10 +658,8 @@ def expand_imports(seq):
       if symbolp(term): return term
       return term.caddr()
     def import_term2def(term):
-      print make_def(new_name(term), make_call(new_name(stmt.cadr()), old_name(term)))
       return make_def(new_name(term), make_call(new_name(stmt.cadr()), old_name(term)))
     def module2def(name):
-      print make_def(new_name(name), make_load_module(old_name(name)))
       return make_def(new_name(name), make_load_module(old_name(name)))
     if not tagged_list(stmt, import_s): return plist(stmt)
     return cons(module2def(stmt.cadr()), stmt.cddr().map(import_term2def))
