@@ -1,9 +1,5 @@
 
-#load-module (unit-test T) run-all should shouldnt
-def T (load-module unit-test)
-def run-all (T :run-all)
-def should (T :should)
-def shouldnt (T :shouldnt)
+import (unit-test -> T) run-all should shouldnt
 
 def (make-tester):
   def empty '()

@@ -206,9 +206,4 @@ class TestResult
   end
 end
 
-# module
-obj ():
-  (run-all) run-all
-  (should) should
-  (shouldnt) shouldnt
-
+export run-all should shouldnt
