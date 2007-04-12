@@ -1,0 +1,11 @@
+
+def m (load-module foo)
+def a (m:a)
+def b (m:y)
+def c (m:c)
+
+a
+
+b
+
+c

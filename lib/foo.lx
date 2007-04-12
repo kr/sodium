@@ -1,0 +1,7 @@
+
+def (a) (pr "this is a")
+def (b) (pr "this is b")
+def (c) (pr "this is c")
+
+export a (b -> y) c
+

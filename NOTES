@@ -155,6 +155,7 @@ Here is how to mix the two without sacrificing much speed:
     If it doesn't exist then try name:+.
 
 New notes, added on 2007-03-08 around 3:50 p.m.
+(Updated 2007-04-12 around 11:07 a.m. to fix typo.)
 
 Source transformations for a more convenient import statement:
 
@@ -373,3 +374,36 @@ New notes, added on 2007-04-11 around 3:11 p.m.
   better than implicit, I think this is better than adding a reserved word or
   something. And arguably, this isn't really implicit, it's just terse. The
   notation is unambiguous and it doesn't break any existing code.
+
+Updated notes on 2007-04-12 around 11:07 a.m.
+(Originally added on 2007-03-08 around 3:50 p.m.)
+
+Source transformations for a more convenient import statement:
+
+  New keyword
+  load-module x is like previous import x
+
+  import x
+    => def x (load-module x)
+
+  import (x -> y)
+    => def y (load-module x)
+
+  import x a b
+    => def x (load-module x)
+       def a (x :a)
+       def b (x :b)
+
+  import x (a -> i) (b -> j) ==>
+    => def x (load-module x)
+       def i (x :a)
+       def j (x :b)
+
+Source transformations for more convenient exporting of symbols:
+
+  export a b c
+    => obj () ((a) a) ((b) b) ((c) c)
+
+  export a (b -> y) c
+    => obj () ((a) a) ((y) b) ((c) c)
+

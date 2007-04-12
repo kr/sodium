@@ -32,6 +32,7 @@ quote_s = S('quote')
 set__s = S('set!')
 def_s = S('def')
 load_module_s = S('load-module')
+export_s = S('export')
 if_s = S('if')
 fn_s = S('fn')
 shfn_s = S(':shorthand-fn:')
@@ -52,6 +53,7 @@ def compile(exp, target, linkage, cenv):
     if tagged_list(exp, obj_s): return compile_obj(exp, target, linkage, cenv)
     if tagged_list(exp, begin_s): return compile_begin(exp, target, linkage, cenv)
     if tagged_list(exp, inline_s): return compile_inline(exp)
+    if tagged_list(exp, export_s): return compile(export2obj(exp), target, linkage, cenv)
     if pairp(exp): return compile_application(exp, target, linkage, cenv)
     raise Exception, 'Unknown expression type %s' % exp
 
@@ -435,6 +437,13 @@ def fn2obj(exp):
     sig = cons(run_s, fn_params(exp))
     body = fn_body(exp)
     return make_obj(plist(cons(sig, body)))
+
+def export2obj(exp):
+  def export_term2to(term):
+    if symbolp(term): return cons(plist(term), plist(term))
+    return cons(plist(term.caddr()), plist(term.car()))
+  tos = exp.cdr().map(export_term2to)
+  return make_obj(tos)
 
 def shfn2fn(exp):
     seq = exp.cdr()
