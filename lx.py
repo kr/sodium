@@ -31,7 +31,7 @@ def make_method(parameters, body):
 quote_s = S('quote')
 set__s = S('set!')
 def_s = S('def')
-import_s = S('import')
+load_module_s = S('load-module')
 if_s = S('if')
 fn_s = S('fn')
 shfn_s = S(':shorthand-fn:')
@@ -45,7 +45,7 @@ def compile(exp, target, linkage, cenv):
     if variablep(exp): return compile_variable(exp, target, linkage, cenv)
     if tagged_list(exp, set__s): return compile_assignment(exp, target, linkage, cenv)
     if tagged_list(exp, def_s): return compile_definition(exp, target, linkage, cenv)
-    if tagged_list(exp, import_s): return compile_import(exp, target, linkage, cenv)
+    if tagged_list(exp, load_module_s): return compile_import(exp, target, linkage, cenv)
     if tagged_list(exp, if_s): return compile_if(exp, target, linkage, cenv)
     if tagged_list(exp, fn_s): return compile_obj(fn2obj(exp), target, linkage, cenv)
     if tagged_list(exp, shfn_s): return compile_shfn(exp, target, linkage, cenv)
@@ -679,7 +679,7 @@ def scan_out_xyz(exp):
     if variablep(exp): return scan_out_xyz_variable(exp)
     if tagged_list(exp, set__s): return scan_out_xyz_assignment(exp)
     if tagged_list(exp, def_s): return scan_out_xyz_definition(exp)
-    if tagged_list(exp, import_s): return nil
+    if tagged_list(exp, load_module_s): return nil
     if tagged_list(exp, if_s): return scan_out_xyz_if(exp)
     if tagged_list(exp, fn_s): return scan_out_xyz_obj(fn2obj(exp))
     if tagged_list(exp, shfn_s): return nil # impossible

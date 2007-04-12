@@ -1,12 +1,12 @@
 
-def compile (import compiler)
+def compile (load-module compiler)
 
 compile "a.lx"
 
-def c (import ad-hoc-tests/c)
+def c (load-module ad-hoc-tests/c)
 
 c
 
-pr (import sample-module)
+pr (load-module sample-module)
 
 pr private

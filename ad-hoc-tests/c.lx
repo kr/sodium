@@ -1,4 +1,4 @@
-def x (import ad-hoc-tests/d)
+def x (load-module ad-hoc-tests/d)
 
 x .a
 

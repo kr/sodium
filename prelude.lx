@@ -11,7 +11,7 @@ def true 1
 
 def (not x) (if x false true)
 
-def open (import file)
+def open (load-module file)
 
 def call ():
   inline C run <<<<
