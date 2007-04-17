@@ -28,7 +28,10 @@ class S(object):
 
     def __str__(self): return self.s
     def __repr__(self): return self.s
-    def __cmp__(self, other): return cmp(str(self), str(other))
+    def __eq__(self, other):
+      return self is other
+    def __cmp__(self, other):
+      return cmp(self.s, other.s)
 
     def __getitem__(self, k):
         return self.s[k]

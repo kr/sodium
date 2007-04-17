@@ -1,0 +1,18 @@
+
+def pp (make-promise)
+def p (pp:car)
+def s (pp:cdr)
+
+def f (p.a)
+
+f:wait [pr x]
+
+s (obj () ((a) 5))
+
+
+#def p (load-module pm)
+#p:wait [set! p x]
+#
+#def v (p.m)
+#
+#v:wait (fn (x) (pr x) (set! v x))

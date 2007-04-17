@@ -80,6 +80,13 @@ def pr ():
     return ok_sym;
   >>>>
 
+def prx ():
+  inline C run <<<<
+    if (args == nil) die("prx -- not enough args");
+    prx(car(args));
+    return ok_sym;
+  >>>>
+
 def (make-queue):
     def front '()
     def rear '()
@@ -185,11 +192,7 @@ def (make-promise):
           promise:wait+ [begin x] h
 
         (send msg args):
-            if (pending?):
-                promise:wait [call x msg args]
-                if (resolved?):
-                    send value msg args
-                    make-broken-promise err-name err-val # status is 'broken
+          promise:wait [call x msg args]
 
     def sink ():
         (run val):
@@ -226,7 +229,7 @@ def (make-task f):
 # expects a thunk and a sink, returns a task
 def (make-task+ f sink):
   obj ():
-    (run) (def x (f)) (sink x)
+    (run) (sink (f))
     (break! x) (sink:break! 'error x)
 
 def (schedule-task task):

@@ -72,6 +72,7 @@ def compile_begin(exp, target, linkage, cenv):
 env_r = S('env')
 global_r = S('global')
 not_found_s = S('not-found')
+percent_s = S('%')
 def compile_self_evaluating(exp, target, linkage, cenv):
     return end_with_linkage(linkage,
             make_ir_seq((), (target,), LOAD_IMM(target, exp)))
@@ -81,7 +82,7 @@ def compile_quoted(exp, target, linkage, cenv):
 def compile_variable(exp, target, linkage, cenv):
     addr = find_variable(exp, cenv)
     if addr is not_found_s:
-        if exp == '%':
+        if exp is percent_s:
             raise 'lookup of %'
         return end_with_linkage(linkage,
             make_ir_seq((), (target),
@@ -649,6 +650,18 @@ def make_def(name, exp):
 def make_call(rcv, msg, *args):
   return plist(rcv, S(':' + str(msg)), *args)
 
+def make_send(rcv, msg, *args):
+  return plist(rcv, S('.' + str(msg)), *args)
+
+def make_if(test, consequent, alternative=None):
+  if alternative is None: return plist(if_s, test, consequent)
+  return plist(if_s, test, consequent, alternative)
+
+def make_begin(*stmts):
+  return plist(begin_s, *stmts)
+
+promise__s = S('promise?')
+wait_s = S('wait')
 def expand_imports(seq):
   def expand_import(stmt):
     def old_name(term):
@@ -658,11 +671,27 @@ def expand_imports(seq):
       if symbolp(term): return term
       return term.caddr()
     def import_term2def(term):
-      return make_def(new_name(term), make_call(new_name(stmt.cadr()), old_name(term)))
+      nn = new_name(stmt.cadr())
+      on = old_name(term)
+      val = make_if(plist(promise__s, nn),
+                    make_send(nn, on),
+                    make_call(nn, on))
+      return make_def(new_name(term), val)
     def module2def(name):
       return make_def(new_name(name), make_load_module(old_name(name)))
+    def replace(term):
+      name = new_name(term)
+      arg = x_s
+      if name is x_s: arg = y_s
+      return make_call(name, wait_s,
+                       make_fn(plist(arg), plist(plist(set__s, name, arg))))
     if not tagged_list(stmt, import_s): return plist(stmt)
-    return cons(module2def(stmt.cadr()), stmt.cddr().map(import_term2def))
+    terms = stmt.cddr()
+    return cons(module2def(stmt.cadr()),
+                terms.map(import_term2def)).append(
+                  plist(make_if(plist(promise__s, new_name(stmt.cadr())),
+                          make_begin(*terms.map(replace)))))
+
   if seq.nullp(): return seq
   return expand_import(seq.car()).append(expand_imports(seq.cdr()))
 

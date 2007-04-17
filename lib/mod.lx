@@ -1,0 +1,5 @@
+
+def (one) (pr "this is c")
+
+export one
+

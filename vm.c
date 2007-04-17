@@ -824,6 +824,7 @@ make_modules_available()
     modules_available = 1;
 }
 
+/* a module entry: (name obj (promise . sink)) */
 static datum
 make_module_entry(datum name)
 {
