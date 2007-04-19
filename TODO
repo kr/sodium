@@ -9,6 +9,8 @@
 [ ] C function pointers are not datums -- treat them accordingly
 [+] fix finalization
 [+] fix return linkage for the "call" function
+[ ] add debugging info to byte code files
+[ ] exceptions
 [ ] unit testing
 [ ] change name to "sodium"
 [ ] flesh out str methods
