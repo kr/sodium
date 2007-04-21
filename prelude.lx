@@ -43,8 +43,8 @@ def (promise? x):
   inspect.has-method? x 'wait
 
 def (ensure try finally):
-  def success [begin (finally) x]
-  def failure [begin (finally) (error x y)]
+  def success [do (finally) x]
+  def failure [do (finally) (error x y)]
   (try:run).wait+ success failure
 
 def is? ():
@@ -99,10 +99,10 @@ def (make-queue):
         (run item):
             def new (cons item '())
             if (queue.empty?):
-                begin:
+                do:
                     front :: new
                     rear :: new
-                begin:
+                do:
                     rear.set-cdr! new
                     rear :: new
             queue .
@@ -117,7 +117,7 @@ def (make-queue):
         (consume! f):
             if (queue.empty?):
                 'ok .
-                begin:
+                do:
                     f (queue.remove!)
                     queue.consume! f
     queue .
@@ -189,7 +189,7 @@ def (make-promise):
 
         (wait-for-error h):
           # if the promise is fulfilled, just return the value
-          promise.wait+ [begin x] h
+          promise.wait+ [do x] h
 
         (send msg args):
           promise.wait [call x msg args]

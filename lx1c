@@ -38,8 +38,8 @@ if module:
     # ((fn () ...))
     exp = cons(cons(lx.fn_s, cons(nil, exps)), nil)
 else:
-    # (begin ...)
-    exp = cons(lx.begin_s, exps)
+    # (do ...)
+    exp = cons(lx.do_s, exps)
 
 code = lx.compile(exp, lx.S('val'), lx.S('next'), nil)
 outfd = open(outfile, 'w')

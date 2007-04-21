@@ -53,10 +53,10 @@ def (make-runner tester):
             fn (name val):
               if (eq? name 'error) (collector .error-in case)
 
-          #begin
+          #do
           #  ActiveRecord::Base.transaction do
           #    self.set-up
-          #    begin
+          #    do
           #      self.perform-test
           #      collector.pass-in(self) if collector
           #    ensure

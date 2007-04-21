@@ -19,7 +19,7 @@
 [ ] Lex with maximum munch rather than a priority order
 [ ] change single-expr stmt form from "ex ." to ". ex"
 [+] square brackets for super-shorthand lambda exprs
-[ ] rename "begin" to "do"
+[+] rename "begin" to "do"
 [ ] cond exprs
 [+] new import and export source transformations
 [ ] re-arrange punctuation ops: use == for equality, and = for assignment

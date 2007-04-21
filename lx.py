@@ -38,7 +38,7 @@ if_s = S('if')
 fn_s = S('fn')
 shfn_s = S(':shorthand-fn:')
 obj_s = S('obj')
-begin_s = S('begin')
+do_s = S('do')
 inline_s = S('inline')
 def compile(exp, target, linkage, cenv):
     if self_evaluatingp(exp):
@@ -52,7 +52,7 @@ def compile(exp, target, linkage, cenv):
     if tagged_list(exp, fn_s): return compile_obj(fn2obj(exp), target, linkage, cenv)
     if tagged_list(exp, shfn_s): return compile_shfn(exp, target, linkage, cenv)
     if tagged_list(exp, obj_s): return compile_obj(exp, target, linkage, cenv)
-    if tagged_list(exp, begin_s): return compile_begin(exp, target, linkage, cenv)
+    if tagged_list(exp, do_s): return compile_do(exp, target, linkage, cenv)
     if tagged_list(exp, inline_s): return compile_inline(exp)
     if tagged_list(exp, export_s): return compile(export2obj(exp), target, linkage, cenv)
     if pairp(exp): return compile_application(exp, target, linkage, cenv)
@@ -61,7 +61,7 @@ def compile(exp, target, linkage, cenv):
 def compile_shfn(exp, target, linkage, cenv):
   return compile(shfn2fn(exp), target, linkage, cenv)
 
-def compile_begin(exp, target, linkage, cenv):
+def compile_do(exp, target, linkage, cenv):
     seq = exp.cdr()
     if cenv is not nil:
       seq = scan_out_defines(seq)
@@ -382,7 +382,7 @@ def analyze(exp):
     if tagged_list(exp, if_s): return analyze_if(exp)
     if tagged_list(exp, fn_s): return analyze(fn2obj(exp))
     if tagged_list(exp, obj_s): return analyze_obj(exp)
-    if tagged_list(exp, begin_s): return analyze_sequence(exp.cdr())
+    if tagged_list(exp, do_s): return analyze_sequence(exp.cdr())
     if pairp(exp): return analyze_application(exp)
     raise Exception, 'Unknown expression type %s' % exp
 
@@ -531,7 +531,7 @@ def send(rcv, msg, args):
     raise Exception, 'Unknown receiver type %r' % (rcv,)
 
 def eval_sequence(exps, env):
-    return eval(cons(begin_s, exps), env)
+    return eval(cons(do_s, exps), env)
 
 def variablep(exp):
     return symbolp(exp)
@@ -654,8 +654,8 @@ def make_if(test, consequent, alternative=None):
   if alternative is None: return plist(if_s, test, consequent)
   return plist(if_s, test, consequent, alternative)
 
-def make_begin(*stmts):
-  return plist(begin_s, *stmts)
+def make_do(*stmts):
+  return plist(do_s, *stmts)
 
 promise__s = S('promise?')
 wait_s = S('wait')
@@ -687,11 +687,11 @@ def expand_imports(seq):
     pr(cons(module2def(stmt.cadr()),
                 terms.map(import_term2def)).append(
                   plist(make_if(plist(promise__s, new_name(stmt.cadr())),
-                          make_begin(*terms.map(replace))))))
+                          make_do(*terms.map(replace))))))
     return cons(module2def(stmt.cadr()),
                 terms.map(import_term2def)).append(
                   plist(make_if(plist(promise__s, new_name(stmt.cadr())),
-                          make_begin(*terms.map(replace)))))
+                          make_do(*terms.map(replace)))))
 
   if seq.nullp(): return seq
   return expand_import(seq.car()).append(expand_imports(seq.cdr()))
@@ -753,7 +753,7 @@ def scan_out_xyz(exp):
     if tagged_list(exp, fn_s): return scan_out_xyz_obj(fn2obj(exp))
     if tagged_list(exp, shfn_s): return nil # impossible
     if tagged_list(exp, obj_s): return scan_out_xyz_obj(exp)
-    if tagged_list(exp, begin_s): return scan_out_xyz_begin(exp)
+    if tagged_list(exp, do_s): return scan_out_xyz_do(exp)
     if tagged_list(exp, inline_s): return nil
     if pairp(exp): return scan_out_xyz_application(exp)
     raise Exception, 'Unknown expression type in scan_out_xyz %s' % exp
@@ -795,7 +795,7 @@ def scan_out_xyz_if(exp):
     return set_merge(scan_out_xyz(exp.cadr()),
                  set_merge(scan_out_xyz(exp.caddr()),
                        scan_out_xyz(if_alternative(exp))))
-def scan_out_xyz_begin(exp): return scan_out_xyz_sequence(exp.cdr())
+def scan_out_xyz_do(exp): return scan_out_xyz_sequence(exp.cdr())
 def scan_out_xyz_application(exp):
     return foldl(set_merge, nil, exp.map(scan_out_xyz))
 

@@ -33,7 +33,7 @@ x :: 3
 pr "about to print x, which should equal 3"
 pr x
 if x :
-    begin :
+    do :
         pr x
 
   # weird comment in the middle
