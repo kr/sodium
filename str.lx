@@ -113,7 +113,7 @@ def str ():
       if ((s.length) < (sub.length)):
         i + (s.length)
         if (s.starts-with? sub):
-          i .
+          . i
           helper (s.tail 1) (i + 1)
     helper (str.tail n) n
 
@@ -124,7 +124,7 @@ def str ():
   #   pr "in %"
   #   def i (str.find "%")
   #   if (not i):
-  #     str .
+  #     . str
   #     if ((str 0) = "%"):
   #       (format (str 1) (a.car)) / ((str.tail 2) % . (a.cdr))
   #       (str.head i) / ((str.tail i) % . a)
@@ -135,7 +135,7 @@ def str ():
     def l (str.length)
     def i (str.find "%")
     if (is? i l):
-      str .
+      . str
       if ((str 0) = "%"):
         (format (str 1) (a.car)) / ((str.tail 2).%* (a.cdr))
         (str.head i) / ((str.tail i).%* a)
@@ -161,10 +161,10 @@ def install-str ():
 
 def (to-str x):
   if (inspect.same-type? x str):
-    x .
+    . x
     to-str (x.str)
 
 intern-syms
 install-str str
 
-'() .
+. '()

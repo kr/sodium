@@ -4,35 +4,8 @@ import lexer as T
 from pair import cons, list, nil
 from util import traced
 
-# lower case names are nonterminals
-# ALL CAPS names are terminals
-
-BNF = r'''
-
-program : stmt* EOF
-
-stmt : mole EOL
-     : expr '.' EOL
-     | mole ':' EOL INDENT stmt+ DEDENT
-
-expr : atom
-     | '(' ')'
-     | '(' mole ')'
-     | "'" expr
-
-mole : expr+
-     | expr SMESS expr*
-     | expr IMESS expr*
-     | NAME '::' expr
-
-atom : NAME
-     | INT
-     | DEC
-     | STR
-
-
-'''
-
+# In BNF comments, lower case names are nonterminals and
+# ALL CAPS names are terminals.
 
 class Parser:
     def __init__(self, tokens):
@@ -73,16 +46,15 @@ program : stmt* EOF
     def __stmt(self):
         '''
 stmt : mole EOL
-     : expr '.' EOL
      | mole ':' EOL INDENT stmt+ DEDENT
         '''
 
-        first = self.__expr()
         if self.peek == T.DOT:
             self.match(T.DOT)
+            e = self.__expr()
             self.match(T.EOL)
-            return first
-        rexprs = self.__mole_tail(first, T.EOL, T.DOTS)
+            return e
+        rexprs = self.__mole_tail(self.__expr(), T.EOL, T.DOTS)
         extra = nil
         terminator, x = self.xmatch(T.EOL, T.DOTS)
         if terminator == T.DOTS:
@@ -92,10 +64,18 @@ stmt : mole EOL
             self.match(T.DEDENT)
         return rexprs.reverse(extra)
 
+    def __mole(self, *follow):
+        if self.peek in follow: return nil
+        if self.peek == T.DOT:
+          self.match(T.DOT)
+          return self.__expr()
+        return self.__mole_tail(self.__expr(), *follow).reverse()
+
     # returns list in reverse order
     def __mole_tail(self, first, *follow):
         '''
-mole : expr+
+mole : '.' expr
+     | expr+
      | expr SMESS expr*
      | expr IMESS expr*
      | NAME ':=' expr
@@ -159,10 +139,6 @@ atom : NAME
             return lx.Decimal(lexeme)
         if type == T.FOREIGN:
             return lexeme[4:-4]
-
-    def __mole(self, *follow):
-        if self.peek in follow: return nil
-        return self.__mole_tail(self.__expr(), *follow).reverse()
 
     def match_loop(self, parse, *sentinels):
         rl = nil

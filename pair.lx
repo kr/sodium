@@ -49,12 +49,12 @@ def pair ():
   (run f):
     f (pair.car)
     (pair.cdr) f
-    'ok .
+    . 'ok
 
   (= p):
     if ((pair.car) = (p.car)):
       if ((pair.cdr) = (p.cdr)) true false
-      false .
+      . false
 
 def install-pair ():
   inline C run <<<<
@@ -65,4 +65,4 @@ def install-pair ():
 
 install-pair pair
 
-'() .
+. '()

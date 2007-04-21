@@ -16,4 +16,4 @@ def install-nil ():
 
 install-nil nil
 
-'() .
+. '()

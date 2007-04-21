@@ -2,7 +2,7 @@ def (fib n):
     def (fib-iter a b i):
         pr ("fib-iter %d %d %d" % a b i)
         if (i = 0):
-            b .
+            . b
             fib-iter (a + b) a (i - 1)
     fib-iter 1 0 n
 

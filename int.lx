@@ -100,4 +100,4 @@ def install-int ():
 
 install-int int
 
-'() .
+. '()

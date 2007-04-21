@@ -1,4 +1,4 @@
 def (compile name):
     pr ("the name is %s" % name)
 
-compile .
+. compile

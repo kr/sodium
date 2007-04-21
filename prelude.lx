@@ -105,22 +105,22 @@ def (make-queue):
                 do:
                     rear.set-cdr! new
                     rear :: new
-            queue .
+            . queue
         (remove!):
             def item (queue.front)
             queue.delete!
-            item .
+            . item
         (delete!):
             if (queue.empty?) (error "delete! called on an empty queue")
             front :: (front.cdr)
-            queue .
+            . queue
         (consume! f):
             if (queue.empty?):
-                'ok .
+                . 'ok
                 do:
                     f (queue.remove!)
                     queue.consume! f
-    queue .
+    . queue
 
 def (make-promise):
     def status 'pending # or resolved or broken
@@ -181,7 +181,7 @@ def (make-promise):
 
           queue-for-err [schedule-task (make-task+ (fn () (h x y)) s)]
 
-          p .
+          . p
 
         (wait f):
           # if there is an error, just re-raise it
@@ -214,7 +214,7 @@ def (make-promise):
 def (make-broken-promise name val):
   def pp (make-promise)
   (pp.cdr).break! name val
-  pp .
+  . pp
 
 # expects a thunk, returns a (promise, task) pair
 def (make-task f):

@@ -87,6 +87,6 @@ def re ():
       >>>>
 
     r :: (r.prepare)
-    r .
+    . r
 
-re .
+. re

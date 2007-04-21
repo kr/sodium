@@ -101,7 +101,7 @@ def file ():
       >>>>
 
     f :: (f.prepare)
-    f .
+    . f
 
 intern-syms
-file .
+. file

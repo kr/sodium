@@ -3,4 +3,4 @@ def x (load-module ad-hoc-tests/d)
 x :a
 
 def (cf) (pr "wheee c")
-cf .
+. cf

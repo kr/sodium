@@ -17,7 +17,7 @@
 [ ] flesh out other primitive type methods
 [+] Make input "x:y" or "x.y" lex as 2 tokens
 [ ] Lex with maximum munch rather than a priority order
-[ ] change single-expr stmt form from "ex ." to ". ex"
+[+] change single-expr stmt form from "ex ." to ". ex"
 [ ] allow chaining of indentation tokens "f : g : EOL INDENT ... DEDENT"
 [+] square brackets for super-shorthand lambda exprs
 [+] rename "begin" to "do"

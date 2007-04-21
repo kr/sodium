@@ -75,7 +75,7 @@ def (make-runner tester):
 
         (to-s) ('%s:%s' % self.class selector)
 
-      case .
+      . case
 
     (cases):
       #(runner .selectors).map [runner .make-case x]
@@ -85,7 +85,7 @@ def (make-runner tester):
       #(inspect .methods tester) .filter [(x .str) .starts-with? "test-"]
       (inspect .methods tester) .filter (fn (x) ((x .str) .starts-with? "test-"))
 
-  runner .
+  . runner
 
 def (make-suite name tests):
   def suite ():
@@ -108,7 +108,7 @@ def (make-suite name tests):
     (count):
       (tests .map (fn (x) (x .count))) .fold 0 (fn (sum x) (sum + x))
 
-  suite .
+  . suite
 
 def (make-collector suite):
   def start-time 0

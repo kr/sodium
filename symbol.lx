@@ -17,4 +17,4 @@ def install-symbol ():
 
 install-symbol symbol
 
-'() .
+. '()
