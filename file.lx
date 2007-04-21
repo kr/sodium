@@ -72,7 +72,7 @@ def file ():
         return ok_sym;
       >>>>
 
-      (finalize!) (f:close)
+      (finalize!) (f.close)
 
       inline C prepare <<<<
         char *mode = "rb";
@@ -100,7 +100,7 @@ def file ():
         return d;
       >>>>
 
-    f :: (f:prepare)
+    f :: (f.prepare)
     f .
 
 intern-syms

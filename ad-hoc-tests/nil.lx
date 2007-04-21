@@ -1,5 +1,5 @@
 def x '()
 
-pr (x :to_s)
+pr (x .to_s)
 
-pr (x :car)
+pr (x .car)

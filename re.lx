@@ -14,12 +14,12 @@ def re ():
     return int2datum(PCRE_DOTALL);
   >>>>
 
-  (run pat) (re:make pat (re:dotall))
+  (run pat) (re.make pat (re.dotall))
 
   (make pat opts):
     def r ():
-      (run subj) (r:match subj (r:runopts))
-      (find subj) (r:match subj (r:findopts))
+      (run subj) (r.match subj (r.runopts))
+      (find subj) (r.match subj (r.findopts))
 
       inline C runopts <<<<
         return int2datum(PCRE_ANCHORED);
@@ -34,16 +34,16 @@ def re ():
         int rc, subj_len, res_len, opts;
         pcre *re = (pcre *) ((pair) rcv)->datums[2];
 
-        if (args == nil) die("r:match -- not enough args");
+        if (args == nil) die("r.match -- not enough args");
         subj = string_contents(car(args));
         subj_len = strlen(subj);
         args = cdr(args);
 
-        if (args == nil) die("r:match -- not enough args");
+        if (args == nil) die("r.match -- not enough args");
         opts = datum2int(car(args));
         args = cdr(args);
 
-        if (args != nil) die("r:match -- too many args");
+        if (args != nil) die("r.match -- too many args");
 
         rc = pcre_exec(re, NULL, subj, subj_len, 0, opts, ovector, OVECCOUNT);
 
@@ -73,7 +73,7 @@ def re ():
         args = regs[R_VM1];
         rcv = regs[R_VM0];
 
-        if (args != nil) die("r:prepare -- too many args");
+        if (args != nil) die("r.prepare -- too many args");
 
         pattern = string_contents(%(pat)s);
         opts = datum2int(%(opts)s);
@@ -86,7 +86,7 @@ def re ():
         return d;
       >>>>
 
-    r :: (r:prepare)
+    r :: (r.prepare)
     r .
 
 re .

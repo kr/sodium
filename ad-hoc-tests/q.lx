@@ -6,4 +6,4 @@ q 3
 q 4
 q 5
 
-q :consume! pr
+q.consume! pr

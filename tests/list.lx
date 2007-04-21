@@ -11,13 +11,13 @@ def (make-tester):
       single :: '(4)
   
     (test-car):
-      #should [4 = (single:car)]
-      should (fn () (4 = (single :car)))
+      #should [4 = (single.car)]
+      should (fn () (4 = (single .car)))
   
     (test-map-empty):
       def (f x) x
-      #should [is? (empty:map f) '()]
-      should (fn () (is? (empty :map f) '()))
+      #should [is? (empty.map f) '()]
+      should (fn () (is? (empty .map f) '()))
 
     (test-equal):
       should (fn () (single = '(4)))

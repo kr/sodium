@@ -40,12 +40,12 @@ def inspect ():
 
 # TODO replace this with 
 def (promise? x):
-  inspect:has-method? x 'wait
+  inspect.has-method? x 'wait
 
 def (ensure try finally):
   def success [begin (finally) x]
   def failure [begin (finally) (error x y)]
-  (try .run):wait+ success failure
+  (try:run).wait+ success failure
 
 def is? ():
   inline C run <<<<
@@ -94,32 +94,32 @@ def (make-queue):
         (empty?):
             is? front '()
         (front):
-            if (queue:empty?) (error "front called on an empty queue")
-            front:car
+            if (queue.empty?) (error "front called on an empty queue")
+            front.car
         (run item):
             def new (cons item '())
-            if (queue:empty?):
+            if (queue.empty?):
                 begin:
                     front :: new
                     rear :: new
                 begin:
-                    rear:set-cdr! new
+                    rear.set-cdr! new
                     rear :: new
             queue .
         (remove!):
-            def item (queue:front)
-            queue:delete!
+            def item (queue.front)
+            queue.delete!
             item .
         (delete!):
-            if (queue:empty?) (error "delete! called on an empty queue")
-            front :: (front:cdr)
+            if (queue.empty?) (error "delete! called on an empty queue")
+            front :: (front.cdr)
             queue .
         (consume! f):
-            if (queue:empty?):
+            if (queue.empty?):
                 'ok .
                 begin:
-                    f (queue:remove!)
-                    queue:consume! f
+                    f (queue.remove!)
+                    queue.consume! f
     queue .
 
 def (make-promise):
@@ -174,8 +174,8 @@ def (make-promise):
         #    and this promise is broken.
         (wait+ f h):
           def pp (make-promise)
-          def p (pp:car)
-          def s (pp:cdr)
+          def p (pp.car)
+          def s (pp.cdr)
 
           queue-for-success [schedule-task (make-task+ (fn () (f x)) s)]
 
@@ -185,42 +185,42 @@ def (make-promise):
 
         (wait f):
           # if there is an error, just re-raise it
-          promise:wait+ f [error x y]
+          promise.wait+ f [error x y]
 
         (wait-for-error h):
           # if the promise is fulfilled, just return the value
-          promise:wait+ [begin x] h
+          promise.wait+ [begin x] h
 
         (send msg args):
-          promise:wait [call x msg args]
+          promise.wait [call x msg args]
 
     def sink ():
         (run val):
             if (resolved?) (error "already resolved")
             status :: 'resolved
             value :: val
-            success-queue:consume! [x val]
+            success-queue.consume! [x val]
             process 'resolved
         (break! name val):
             if (broken?) (error "already broken")
             status :: 'broken
             err-name :: name
             err-val :: val
-            err-queue:consume! [x name val]
+            err-queue.consume! [x name val]
             process 'broken
 
     cons promise sink
 
 def (make-broken-promise name val):
   def pp (make-promise)
-  (pp:cdr):break! name val
+  (pp.cdr).break! name val
   pp .
 
 # expects a thunk, returns a (promise, task) pair
 def (make-task f):
     def p (make-promise)
-    def promise (p:car)
-    def sink (p:cdr)
+    def promise (p.car)
+    def sink (p.cdr)
 
     def task (make-task+ f sink)
 
@@ -230,7 +230,7 @@ def (make-task f):
 def (make-task+ f sink):
   obj ():
     (run) (sink (f))
-    (break! x) (sink:break! 'error x)
+    (break! x) (sink.break! 'error x)
 
 def (schedule-task task):
   *tasks* task
@@ -238,12 +238,12 @@ def (schedule-task task):
 # expects a thunk, returns a promise
 def (make-and-schedule-task f):
   def task-pair (make-task f)
-  schedule-task (task-pair:cdr)
-  task-pair:car
+  schedule-task (task-pair.cdr)
+  task-pair.car
 
 def (send rcv msg args):
-    if (inspect:has-method? rcv 'send):
-        rcv:send msg args
+    if (inspect.has-method? rcv 'send):
+        rcv.send msg args
         make-and-schedule-task [call rcv msg args]
 
 def *tasks* (make-queue)

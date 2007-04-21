@@ -3,7 +3,7 @@ def f (open "config.h" 'read)
 
 pr f
 
-def s (f :read)
+def s (f .read)
 
 pr s
 
@@ -14,7 +14,7 @@ def f (open "run" 'read)
 
 pr f
 
-def s (f :read)
+def s (f .read)
 
 pr s
 
@@ -26,9 +26,9 @@ def f (open "foo" 'write)
 
 pr f
 
-f :write "hello\n"
+f .write "hello\n"
 
-f :close
+f .close
 
 
 
@@ -39,6 +39,6 @@ def f (open "foo" 'read)
 
 pr f
 
-def s (f :read)
+def s (f .read)
 
 pr s

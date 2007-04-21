@@ -2,7 +2,7 @@
 def *verbose* 1
 
 def (run-all tester):
-  ((make-runner tester):suite).print-on pr
+  ((make-runner tester).suite):print-on pr
 
 def (should f):
   #shouldnt [not (f)]
@@ -18,19 +18,19 @@ def (info msg):
 def (make-runner tester):
   def runner ():
     (suite):
-      runner :named-suite "suite"
+      runner .named-suite "suite"
 
     (named-suite name):
-      make-suite name (runner :cases)
+      make-suite name (runner .cases)
 
     (make-case selector):
       def case ():
         (set-up):
-          if (inspect :has-method? tester 'set-up) (tester :set-up)
+          if (inspect .has-method? tester 'set-up) (tester .set-up)
           #' for vim sake
 
         (tear-down):
-          if (inspect :has-method? tester 'tear-down) (tester :tear-down)
+          if (inspect .has-method? tester 'tear-down) (tester .tear-down)
           #' for vim sake
 
         (perform-test):
@@ -39,19 +39,19 @@ def (make-runner tester):
           '()
 
         (all-the-rest):
-          ensure (fn () (case :perform-test)) (fn () (case :tear-down))
+          ensure (fn () (case .perform-test)) (fn () (case .tear-down))
 
         (run-with collector):
-          case :set-up
-          def p (case :all-the-rest)
-          wait p (fn (x) (collector :pass-in case))
+          case .set-up
+          def p (case .all-the-rest)
+          wait p (fn (x) (collector .pass-in case))
 
-          p :wait-for-error :
+          p .wait-for-error :
             fn (name val):
-              if (eq? name 'failure) (collector :failure-in case)
-          p :wait-for-error :
+              if (eq? name 'failure) (collector .failure-in case)
+          p .wait-for-error :
             fn (name val):
-              if (eq? name 'error) (collector :error-in case)
+              if (eq? name 'error) (collector .error-in case)
 
           #begin
           #  ActiveRecord::Base.transaction do
@@ -78,12 +78,12 @@ def (make-runner tester):
       case .
 
     (cases):
-      #(runner :selectors):map [runner :make-case x]
-      (runner :selectors):map (fn (x) (runner :make-case x))
+      #(runner .selectors).map [runner .make-case x]
+      (runner .selectors).map (fn (x) (runner .make-case x))
   
     (selectors):
-      #(inspect :methods tester) :filter [(x :str) :starts-with? "test-"]
-      (inspect :methods tester) :filter (fn (x) ((x :str) :starts-with? "test-"))
+      #(inspect .methods tester) .filter [(x .str) .starts-with? "test-"]
+      (inspect .methods tester) .filter (fn (x) ((x .str) .starts-with? "test-"))
 
   runner .
 
@@ -93,55 +93,55 @@ def (make-suite name tests):
 
     (run):
       def collector (make-collector suite)
-      collector :start
-      ensure (fn () (suite :run-with collector)) (fn () (collector :stop))
+      collector .start
+      ensure (fn () (suite .run-with collector)) (fn () (collector .stop))
 
     (run-with collector):
       def p (make-promise)
       info ("\n\nRunning suite %s" % name)
-      #tests [x:run-with collector]
-      #tests :schedule (fn (t) (t :run-with collector))
-      def promises (tests :map (fn (t) (t :run-with collector)))
-      wait-all promises (fn (l) ((p :cdr) collector))
-      p :car
+      #tests [x.run-with collector]
+      #tests .schedule (fn (t) (t .run-with collector))
+      def promises (tests .map (fn (t) (t .run-with collector)))
+      wait-all promises (fn (l) ((p .cdr) collector))
+      p .car
 
     (count):
-      (tests :map (fn (x) (x :count))) :fold 0 (fn (sum x) (sum + x))
+      (tests .map (fn (x) (x .count))) .fold 0 (fn (sum x) (sum + x))
 
   suite .
 
 def (make-collector suite):
   def start-time 0
   def stop-time 0
-  def test-name (suite :name)
+  def test-name (suite .name)
   def failures (make-queue)
   def errors (make-queue)
-  def total-count (suite :count)
+  def total-count (suite .count)
   def total-run 0
   def pass-count 0
 
   def collector ():
-    (start) (start-time :: (time :now))
+    (start) (start-time :: (time .now))
 
-    (stop) (stop-time :: (time :now))
+    (stop) (stop-time :: (time .now))
 
     (error-in ex case):
-      errors (make-result :error ex case)
+      errors (make-result .error ex case)
       total-run :: (total-run + 1)
       pr "E"
-      #STDOUT :flush
+      #STDOUT .flush
 
     (failure-in ex case):
-      failures (make-result :failure ex case)
+      failures (make-result .failure ex case)
       total-run :: (total-run + 1)
       pr "F"
-      #STDOUT :flush
+      #STDOUT .flush
 
     (pass-in case):
       pass-count :: (pass-count + 1)
       total-run :: (total-run + 1)
       pr "."
-      #STDOUT :flush
+      #STDOUT .flush
 
     (errors) errors
 
@@ -157,13 +157,13 @@ def (make-collector suite):
                           (" (%d skipped)" % skipped-count)
                           "")
       def fmt "Finished in %0.2fs\n%d tests: %d pass, %d fail, with %d errors %s"
-      fmt % (collector :duration) total-count pass-count (failures :size) (errors :size) skipped-msg
+      fmt % (collector .duration) total-count pass-count (failures .size) (errors .size) skipped-msg
     end
 
     (report):
       puts "\n"
-      puts (collector :summary)
-      (collector :bad-results):each-with-index (fn (r i) (r :report (i + 1)))
+      puts (collector .summary)
+      (collector .bad-results).each-with-index (fn (r i) (r .report (i + 1)))
 
 class TestResult
   def initialize(kind, ex, test)

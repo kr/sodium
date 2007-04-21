@@ -9,15 +9,15 @@ def a ():
 def b ():
     (n) (pr "should be third") a
 
-a.q
+a:q
 
-def x (b.n)
+def x (b:n)
 
-def y (x.m)
+def y (x:m)
 
-y:wait:
+y.wait:
   fn (x):
-    y:wait (fn (x) (pr "should be last"))
+    y.wait (fn (x) (pr "should be last"))
     pr x
     pr "should be next-to-last"
 

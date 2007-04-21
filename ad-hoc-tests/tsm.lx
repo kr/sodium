@@ -8,4 +8,4 @@ pr (p "fee-fee")
 pr "----"
 
 pr (p "fee-boo")
-pr (p :find "fee-boo")
+pr (p .find "fee-boo")

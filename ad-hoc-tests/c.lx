@@ -1,6 +1,6 @@
 def x (load-module ad-hoc-tests/d)
 
-x .a
+x :a
 
 def (cf) (pr "wheee c")
 cf .

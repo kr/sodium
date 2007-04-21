@@ -2,7 +2,7 @@ def private 42
 
 def y (load-module ad-hoc-tests/c)
 
-y .run
+y :run
 
 def df ():
     (a):

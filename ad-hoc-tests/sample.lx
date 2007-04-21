@@ -8,14 +8,14 @@ def a ():
 def b ():
     (n) a
 
-def x (b .n)
+def x (b :n)
 
-def y (x .m)
+def y (x :m)
 
-y :wait :
+y .wait :
   fn (x):
     pr "should be next-to-last"
-    y :wait (fn (x) (pr "should be last"))
+    y .wait (fn (x) (pr "should be last"))
 
 
 def x 7
@@ -25,7 +25,7 @@ def x ():
     (run p1 p2):
         pr p1
         pr p2
-x .run 9 5
+x :run 9 5
 pr "about to print '(x y)"
 pr '(x
      y)
@@ -53,8 +53,8 @@ pr ("pi is %f" % π)
 
 def d (make-dict)
 
-d :put! "hi" 42
+d .put! "hi" 42
 
-pr (d :get "hi")
-d :delete! "hi"
-pr (d :get "hi")
+pr (d .get "hi")
+d .delete! "hi"
+pr (d .get "hi")

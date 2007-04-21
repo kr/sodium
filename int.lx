@@ -10,20 +10,20 @@ def int ():
   inline C cmp <<<<
     register long a, b;
 
-    if (args == nil) die("int:cmp -- not enough args");
+    if (args == nil) die("int.cmp -- not enough args");
     a = datum2int(rcv);
     b = datum2int(car(args));
     return (a < b) ? int2datum(-1) : (a > b) ? int2datum(1) : int2datum(0);
   >>>>
 
-  (= x) (is? (int:cmp x) 0)
-  (> x) (is? (int:cmp x) 1)
-  (< x) (is? (int:cmp x) -1)
+  (= x) (is? (int.cmp x) 0)
+  (> x) (is? (int.cmp x) 1)
+  (< x) (is? (int.cmp x) -1)
 
   inline C + <<<<
     register long a, b, r;
 
-    if (args == nil) die("int:+ -- not enough args");
+    if (args == nil) die("int.+ -- not enough args");
     a = datum2int(rcv);
     b = datum2int(car(args));
     r = a + b;
@@ -34,7 +34,7 @@ def int ():
   inline C - <<<<
     register long a, b, r;
 
-    if (args == nil) die("int:- -- not enough args");
+    if (args == nil) die("int.- -- not enough args");
     a = datum2int(rcv);
     b = datum2int(car(args));
     r = a - b;
@@ -45,10 +45,10 @@ def int ():
   inline C * <<<<
     register long a, b, r;
 
-    if (args == nil) die("int:* -- not enough args");
+    if (args == nil) die("int.* -- not enough args");
     a = datum2int(rcv);
     b = datum2int(car(args));
-    if (b == 0) die("int:* -- modulo by zero");
+    if (b == 0) die("int.* -- modulo by zero");
     r = a * b;
     if (b == 0 || (r / b) == a) {
       if (r >= MAX_LX_INT || r <= MIN_LX_INT) return bigint(r);
@@ -61,10 +61,10 @@ def int ():
   inline C / <<<<
     register long a, b, r;
 
-    if (args == nil) die("int:/ -- not enough args");
+    if (args == nil) die("int./ -- not enough args");
     a = datum2int(rcv);
     b = datum2int(car(args));
-    if (b == 0) die("int:/ -- division by zero");
+    if (b == 0) die("int./ -- division by zero");
     r = a / b;
     if (r == MAX_LX_INT + 1) return bigint(r);
     return int2datum(r);
@@ -73,10 +73,10 @@ def int ():
   inline C % <<<<
     register long a, b, r;
 
-    if (args == nil) die("int:%% -- not enough args");
+    if (args == nil) die("int.%% -- not enough args");
     a = datum2int(rcv);
     b = datum2int(car(args));
-    if (b == 0) die("int:%% -- modulo by zero");
+    if (b == 0) die("int.%% -- modulo by zero");
     r = a %% b;
     return int2datum(r);
   >>>>
@@ -89,7 +89,7 @@ def int ():
     def table "0123456789"
     if (int < 10):
       table int
-      (upper:str) / (table lower)
+      (upper.str) / (table lower)
 
 def install-int ():
   inline C run <<<<

@@ -5,8 +5,8 @@ def (er) (error "blah")
 def ok-promise (ensure (fn () (ok)) (fn () (pr "ok succeded")))
 def er-promise (ensure (fn () (er)) (fn () (pr "er succeded")))
 
-ok-promise :wait (fn (x) (pr x))
-er-promise :wait (fn (x) (pr x))
+ok-promise .wait (fn (x) (pr x))
+er-promise .wait (fn (x) (pr x))
 
-ok-promise :wait-for-error (fn (name val) (pr name) (pr val))
-er-promise :wait-for-error (fn (name val) (pr name) (pr val))
+ok-promise .wait-for-error (fn (name val) (pr name) (pr val))
+er-promise .wait-for-error (fn (name val) (pr name) (pr val))

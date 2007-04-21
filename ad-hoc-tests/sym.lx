@@ -1,5 +1,5 @@
 def x 'foo
 
-pr (x :to_s)
+pr (x .to_s)
 
-pr (x :foo)
+pr (x .foo)

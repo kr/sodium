@@ -261,19 +261,16 @@ def compile_application(exp, target, linkage, cenv):
 
 def message_send(exp):
     return call_app(exp) or send_app(exp)
-    #if exp.len() < 2: return False
-    #m = exp.cadr()
-    #return symbolp(m) and (m[0] in (':', '.') or str(m) in PUNC)
 
 def call_app(exp):
     if exp.len() < 2: return False
     m = exp.cadr()
-    return symbolp(m) and (m[0] == ':' or str(m) in PUNC)
+    return symbolp(m) and (m[0] == '.' or str(m) in PUNC)
 
 def send_app(exp):
     if exp.len() < 2: return False
     m = exp.cadr()
-    return symbolp(m) and (m[0] == '.' or str(m) in PUNC)
+    return symbolp(m) and (m[0] == ':' or str(m) in PUNC)
 
 send_s = S('send')
 def exp_object(exp):
@@ -481,8 +478,8 @@ def analyze_application(exp):
     fproc = analyze(exp.car())
     if (not exp.cdr().nullp()) and symbolp(exp.cadr()):
         f, msg = None, exp.cadr()
-        if msg[0] == ':': f, msg = call, S(msg[1:])
-        if msg[0] == '.': f, msg = send, S(msg[1:])
+        if msg[0] == '.': f, msg = call, S(msg[1:])
+        if msg[0] == ':': f, msg = send, S(msg[1:])
         if len(msg) == 1 and msg in PUNC: f, msg = call, msg
         if f:
             aprocs = exp.cddr().map(analyze)
@@ -648,10 +645,10 @@ def make_def(name, exp):
   return plist(def_s, name, exp)
 
 def make_call(rcv, msg, *args):
-  return plist(rcv, S(':' + str(msg)), *args)
+  return plist(rcv, S('.' + str(msg)), *args)
 
 def make_send(rcv, msg, *args):
-  return plist(rcv, S('.' + str(msg)), *args)
+  return plist(rcv, S(':' + str(msg)), *args)
 
 def make_if(test, consequent, alternative=None):
   if alternative is None: return plist(if_s, test, consequent)
@@ -687,6 +684,10 @@ def expand_imports(seq):
                        make_fn(plist(arg), plist(plist(set__s, name, arg))))
     if not tagged_list(stmt, import_s): return plist(stmt)
     terms = stmt.cddr()
+    pr(cons(module2def(stmt.cadr()),
+                terms.map(import_term2def)).append(
+                  plist(make_if(plist(promise__s, new_name(stmt.cadr())),
+                          make_begin(*terms.map(replace))))))
     return cons(module2def(stmt.cadr()),
                 terms.map(import_term2def)).append(
                   plist(make_if(plist(promise__s, new_name(stmt.cadr())),

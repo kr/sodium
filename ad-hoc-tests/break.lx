@@ -4,22 +4,22 @@
 
 def (f x) (if x (error "zippo") 7)
 
-def p (f .run 1) # doomed promise -- must be an error
+def p (f :run 1) # doomed promise -- must be an error
 
-p :wait (fn (x) (pr "oh noes") (pr x))
+p .wait (fn (x) (pr "oh noes") (pr x))
 
-p :wait-for-error (fn (name val) (pr "thankfully, got error"))
+p .wait-for-error (fn (name val) (pr "thankfully, got error"))
 
-def o (p .+ 3) # doomed promise -- must be an error
+def o (p :+ 3) # doomed promise -- must be an error
 
-o :wait-for-error (fn (name val) (pr ("yay! name %s val %s" % name val)))
+o .wait-for-error (fn (name val) (pr ("yay! name %s val %s" % name val)))
 
-o :wait (fn (x) (pr ("boo, answer is %s" % x)))
+o .wait (fn (x) (pr ("boo, answer is %s" % x)))
 
-def q (f .run '()) # promise for 7
+def q (f :run '()) # promise for 7
 
-q :wait (fn (x) (pr "nice yay") (pr x))
+q .wait (fn (x) (pr "nice yay") (pr x))
 
-q :wait-for-error (fn (name val) (pr "crap! got error"))
+q .wait-for-error (fn (name val) (pr "crap! got error"))
 
-q :wait-for-error (fn (name val) (pr ("crap! name %s val %s" % name val)))
+q .wait-for-error (fn (name val) (pr ("crap! name %s val %s" % name val)))

@@ -8,5 +8,5 @@ def (count):
     if ((n % 100000) = 0) (pr n)
     count
 
-report .run
+report :run
 count
