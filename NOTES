@@ -278,9 +278,9 @@ New notes, added on 2007-03-20 around 2:21 a.m.
   It still needs a syntax, though. I've also skirted around another issue:
   doing this as a source transformation causes trouble in reliably referring to
   the receiver. I cleverly avoided this problem in my pseudo-syntax by using
-  the word "self", which has no special meaning in LX (or should I say,
-  "Sodium"). This would be no problem in bytecode, but it's tricky as a source
-  transformation. I may have to introduce another "impossible" keyword.
+  the word "self", which has no special meaning in LX. This would be no problem
+  in bytecode, but it's tricky as a source transformation. I may have to
+  introduce another "impossible" keyword.
 
 New notes, added on 2007-04-10 around 12:03 a.m.
 
@@ -289,8 +289,8 @@ New notes, added on 2007-04-10 around 12:03 a.m.
 New notes, added on 2007-04-11 around 1:55 p.m.
 
   Three things today. First, I'm strongly considering swapping the meanings of
-  dot and colon in method invocation. So x.m would be an blocking call and x:m
-  would be an nonblocking call. Originally, I chose dot for the asynchronous
+  dot and colon in method invocation. So x.m would be a blocking call and x:m
+  would be a nonblocking call. Originally, I chose dot for the asynchronous
   operation because I wanted to encourage people to use it by making it easier
   to type, compared with the colon. But after writing just a couple thousand
   lines of Sodium (nee LX) code, I've observed that blocking calls are going to
