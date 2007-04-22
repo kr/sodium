@@ -12,6 +12,8 @@ class Parser:
         self.tokens = tokens
         self.next()
 
+    def __repr__(self): return '[parser]'
+
     def next(self):
         try:
             self.peek, self.lexeme, self.p = self.tokens.next()
@@ -33,6 +35,9 @@ class Parser:
         self.next()
         return lexeme
 
+    def try_match(self, *types):
+        return (self.peek in types) and self.match(*types)
+
     def parse(self): return self.__program()
 
     def __program(self):
@@ -45,41 +50,29 @@ program : stmt* EOF
 
     def __stmt(self):
         '''
-stmt : mole EOL
-     | mole ':' EOL INDENT stmt+ DEDENT
+stmt : mole
+     | mole EOL
         '''
 
-        if self.peek == T.DOT:
-            self.match(T.DOT)
-            e = self.__expr()
-            self.match(T.EOL)
-            return e
-        rexprs = self.__mole_tail(self.__expr(), T.EOL, T.DOTS)
-        extra = nil
-        terminator, x = self.xmatch(T.EOL, T.DOTS)
-        if terminator == T.DOTS:
-            self.match(T.EOL)
-            self.match(T.INDENT)
-            extra = self.match_loop(self.__stmt, T.DEDENT)
-            self.match(T.DEDENT)
-        return rexprs.reverse(extra)
+        exprs = self.__mole(T.EOL)
+        self.try_match(T.EOL)
+        return exprs
+
 
     def __mole(self, *follow):
+        '''
+mole : '.' expr
+     | expr tail
+     | expr SMESS tail
+     | expr IMESS tail
+     | NAME '::' expr
+        '''
+
         if self.peek in follow: return nil
         if self.peek == T.DOT:
           self.match(T.DOT)
           return self.__expr()
-        return self.__mole_tail(self.__expr(), *follow).reverse()
-
-    # returns list in reverse order
-    def __mole_tail(self, first, *follow):
-        '''
-mole : '.' expr
-     | expr+
-     | expr SMESS expr*
-     | expr IMESS expr*
-     | NAME ':=' expr
-        '''
+        first = self.__expr()
 
         rtail = list(first)
         stype, lexeme = self.peek, None
@@ -87,12 +80,30 @@ mole : '.' expr
             stype, lexeme = self.xmatch(T.SMESS, T.IMESS, T.ASSIGN)
             if stype == T.ASSIGN:
                 # TODO check that first is a NAME
-                return list(self.__expr(), first, lx.S('set!'))
+                return list(lx.S('set!'), first, self.__expr())
+            return cons(first, cons(lx.S(lexeme), self.__tail(*follow)))
             rtail = cons(lx.S(lexeme), rtail)
 
-        while self.peek not in follow:
-            rtail = cons(self.__expr(), rtail)
-        return rtail
+        return cons(first, self.__tail(*follow))
+
+    def __tail(self, *follow):
+        '''
+tail :
+     | ':' mole
+     | ':' EOL INDENT stmt+ DEDENT
+     | expr tail
+        '''
+
+        if self.peek in follow: return nil
+        if self.peek == T.DOTS:
+            self.match(T.DOTS)
+            if self.peek != T.EOL: return list(self.__mole(*follow))
+            self.match(T.EOL)
+            self.match(T.INDENT)
+            exprs = self.match_loop(self.__stmt, T.DEDENT)
+            self.match(T.DEDENT)
+            return exprs
+        return cons(self.__expr(), self.__tail(*follow))
 
     def __expr(self):
         '''
