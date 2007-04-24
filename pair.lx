@@ -44,7 +44,9 @@ def pair ():
 
   (filter f):
     def rest ((pair.cdr).filter f)
-    if (f (pair.car)) (cons (pair.car) rest) rest
+    if (f (pair.car)):
+      cons (pair.car) rest
+      . rest
 
   (run f):
     f (pair.car)

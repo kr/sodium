@@ -39,8 +39,7 @@ def inspect ():
   >>>>
 
 # TODO replace this with 
-def (promise? x):
-  inspect.has-method? x 'wait
+def (promise? x): inspect.has-method? x 'wait
 
 def (ensure try finally):
   def success [do (finally) x]
@@ -88,39 +87,38 @@ def prx ():
   >>>>
 
 def (make-queue):
-    def front '()
-    def rear '()
-    def queue ():
-        (empty?):
-            is? front '()
-        (front):
-            if (queue.empty?) (error "front called on an empty queue")
-            front.car
-        (run item):
-            def new (cons item '())
-            if (queue.empty?):
-                do:
-                    front :: new
-                    rear :: new
-                do:
-                    rear.set-cdr! new
-                    rear :: new
-            . queue
-        (remove!):
-            def item (queue.front)
-            queue.delete!
-            . item
-        (delete!):
-            if (queue.empty?) (error "delete! called on an empty queue")
-            front :: (front.cdr)
-            . queue
-        (consume! f):
-            if (queue.empty?):
-                . 'ok
-                do:
-                    f (queue.remove!)
-                    queue.consume! f
-    . queue
+  def front '()
+  def rear '()
+  def queue ():
+    (empty?): is? front '()
+    (front):
+      if (queue.empty?) (error "front called on an empty queue")
+      front.car
+    (run item):
+      def new (cons item '())
+      if (queue.empty?):
+        do:
+          front :: new
+          rear :: new
+        do:
+          rear.set-cdr! new
+          rear :: new
+      . queue
+    (remove!):
+      def item (queue.front)
+      queue.delete!
+      . item
+    (delete!):
+      if (queue.empty?): error "delete! called on an empty queue"
+      front :: (front.cdr)
+      . queue
+    (consume! f):
+      if (queue.empty?):
+        . 'ok
+        do:
+          f (queue.remove!)
+          queue.consume! f
+  . queue
 
 def (make-promise):
     def status 'pending # or resolved or broken
@@ -155,59 +153,56 @@ def (make-promise):
       err-queue :: '()
 
     def promise ():
-        # This is the fully general wait function.
-        #  f is a unary function to filter the value upon fulfillment
-        #  h is a binary function to filter the error notice upon breakage
-        #
-        # There are four possiblities for the resolution of the new promise:
-        #
-        # 1. The original promise is fulfilled, the filter is successful, and
-        #    this promise is fulfilled.
-        #
-        # 2. The original promise is fulfilled, the filter raises an error, and
-        #    this promise is broken.
-        #
-        # 3. The original promise is broken, the error handler is successful,
-        #    and this promise is fulfilled.
-        #
-        # 4. The original promise is broken, the error handler raises an error,
-        #    and this promise is broken.
-        (wait+ f h):
-          def pp (make-promise)
-          def p (pp.car)
-          def s (pp.cdr)
+      # This is the fully general wait function.
+      #  f is a unary function to filter the value upon fulfillment
+      #  h is a binary function to filter the error notice upon breakage
+      #
+      # There are four possiblities for the resolution of the new promise:
+      #
+      # 1. The original promise is fulfilled, the filter is successful, and
+      #    this promise is fulfilled.
+      #
+      # 2. The original promise is fulfilled, the filter raises an error, and
+      #    this promise is broken.
+      #
+      # 3. The original promise is broken, the error handler is successful,
+      #    and this promise is fulfilled.
+      #
+      # 4. The original promise is broken, the error handler raises an error,
+      #    and this promise is broken.
+      (wait+ f h):
+        def pp (make-promise)
+        def p (pp.car)
+        def s (pp.cdr)
 
-          queue-for-success [schedule-task (make-task+ (fn () (f x)) s)]
+        queue-for-success [schedule-task (make-task+ (fn () (f x)) s)]
 
-          queue-for-err [schedule-task (make-task+ (fn () (h x y)) s)]
+        queue-for-err [schedule-task (make-task+ (fn () (h x y)) s)]
 
-          . p
+        . p
 
-        (wait f):
-          # if there is an error, just re-raise it
-          promise.wait+ f [error x y]
+      # if there is an error, just re-raise it
+      (wait f): promise.wait+ f [error x y]
 
-        (wait-for-error h):
-          # if the promise is fulfilled, just return the value
-          promise.wait+ [do x] h
+      # if the promise is fulfilled, just return the value
+      (wait-for-error h): promise.wait+ [do x] h
 
-        (send msg args):
-          promise.wait [call x msg args]
+      (send msg args): promise.wait [call x msg args]
 
     def sink ():
-        (run val):
-            if (resolved?) (error "already resolved")
-            status :: 'resolved
-            value :: val
-            success-queue.consume! [x val]
-            process 'resolved
-        (break! name val):
-            if (broken?) (error "already broken")
-            status :: 'broken
-            err-name :: name
-            err-val :: val
-            err-queue.consume! [x name val]
-            process 'broken
+      (run val):
+        if (resolved?): error "already resolved"
+        status :: 'resolved
+        value :: val
+        success-queue.consume! [x val]
+        process 'resolved
+      (break! name val):
+        if (broken?): error "already broken"
+        status :: 'broken
+        err-name :: name
+        err-val :: val
+        err-queue.consume! [x name val]
+        process 'broken
 
     cons promise sink
 
