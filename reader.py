@@ -7,6 +7,7 @@ from util import traced
 # In BNF comments, lower case names are nonterminals and
 # ALL CAPS names are terminals.
 
+MESSAGE_TOKENS = (T.IMESS, T.SMESS, T.ASSIGN)
 class Parser:
     def __init__(self, tokens):
         self.tokens = tokens
@@ -61,7 +62,8 @@ stmt : mole
 
     def __mole(self, *follow):
         '''
-mole : '.' expr
+mole : 
+     | '.' expr
      | expr tail
      | expr SMESS tail
      | expr IMESS tail
@@ -74,17 +76,48 @@ mole : '.' expr
           return self.__expr()
         first = self.__expr()
 
-        rtail = list(first)
-        stype, lexeme = self.peek, None
-        if stype in (T.SMESS, T.IMESS, T.ASSIGN):
-            stype, lexeme = self.xmatch(T.SMESS, T.IMESS, T.ASSIGN)
-            if stype == T.ASSIGN:
-                # TODO check that first is a NAME
-                return list(lx.S('set!'), first, self.__expr())
-            return cons(first, cons(lx.S(lexeme), self.__tail(*follow)))
-            rtail = cons(lx.S(lexeme), rtail)
+        strip = (self.peek in MESSAGE_TOKENS)
+        res = self.__molex(first, *follow)
+        if strip: return res.car()
+        return res
+        #rtail = list(first)
+        #stype, lexeme = self.peek, None
+        #if stype in (T.SMESS, T.IMESS, T.ASSIGN):
+        #    stype, lexeme = self.xmatch(T.SMESS, T.IMESS, T.ASSIGN)
+        #    if stype == T.ASSIGN:
+        #        # TODO check that first is a NAME
+        #        return list(lx.S('set!'), first, self.__expr())
+        #    return cons(first, cons(lx.S(lexeme), self.__tail(*follow)))
+        #    rtail = cons(lx.S(lexeme), rtail)
 
-        return cons(first, self.__tail(*follow))
+        #return cons(first, self.__tail(*follow))
+
+    def __message(self):
+      stype, lexeme = self.xmatch(*MESSAGE_TOKENS)
+      return lx.S(lexeme)
+
+    def gobble_messages_reverse(self, l):
+      if self.peek not in MESSAGE_TOKENS: return l
+      return self.gobble_messages_reverse(cons(self.__message(), l))
+
+    def make_head(self, l):
+      a = l.car()
+      d = l.cdr()
+      if d.nullp(): return a
+      return list(self.make_head(d), a)
+
+    def __molex(self, first, *follow):
+      rhead = self.gobble_messages_reverse(list(first))
+      tail = cons(rhead.car(), self.__tail(*follow))
+      if rhead.cdr().nullp():
+        return tail
+      head = self.make_head(rhead.cdr())
+      x = list(cons(head, tail))
+      return x
+
+      #head = messages.cdr()
+      #if head.nullp(): return tail
+      #return cons(x, tail)
 
     def __tail(self, *follow):
         '''
@@ -103,7 +136,8 @@ tail :
             exprs = self.match_loop(self.__stmt, T.DEDENT)
             self.match(T.DEDENT)
             return exprs
-        return cons(self.__expr(), self.__tail(*follow))
+        return self.__molex(self.__expr(), *follow)
+        #return cons(self.__expr(), self.__tail(*follow))
 
     def __expr(self):
         '''

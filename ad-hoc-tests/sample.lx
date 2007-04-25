@@ -48,7 +48,7 @@ def o: obj ():
 
 pr (o)
 
-pr "pi is %f" % π
+pr ("pi is %f" % π)
 
 def d (make-dict)
 

@@ -408,3 +408,29 @@ Source transformations for more convenient exporting of symbols:
   export a (b -> y) c
     => obj () ((a) a) ((y) b) ((c) c)
 
+New notes, added on 2007-04-25 around 3:35 p.m.
+
+  Well, I've swapped the meaning of colon and dot for messages and implemented
+  the extra paren-omitting syntax feature. You can now put a message anywhere
+  in a combination and the reader will insert parens for you. There's one small
+  but significant change from my original description of this feature, though.
+  I've changed the associativity so that a message only applies to the
+  subexpression immediately before it rather than all subexpressions up to that
+  point. You could say it's "right-associative".
+
+  So my previous example
+
+    o a b c:m x y
+
+  actually means
+
+    o a b (c:m x y)
+
+  rather than
+
+    (o a b c):m x y
+
+  I made this change after looking at a few examples and noticing that it
+  allows you to omit far more parens than my original plan.
+
+  I haven't yet changed the lexer to turn punctuation into messages.

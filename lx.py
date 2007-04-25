@@ -40,6 +40,7 @@ shfn_s = S(':shorthand-fn:')
 obj_s = S('obj')
 do_s = S('do')
 inline_s = S('inline')
+assign_s = S('::')
 def compile(exp, target, linkage, cenv):
     if self_evaluatingp(exp):
         return compile_self_evaluating(exp, target, linkage, cenv)
@@ -55,8 +56,12 @@ def compile(exp, target, linkage, cenv):
     if tagged_list(exp, do_s): return compile_do(exp, target, linkage, cenv)
     if tagged_list(exp, inline_s): return compile_inline(exp)
     if tagged_list(exp, export_s): return compile(export2obj(exp), target, linkage, cenv)
+    if tagged_list2(exp, assign_s): return compile(assign2setbang(exp), target, linkage, cenv)
     if pairp(exp): return compile_application(exp, target, linkage, cenv)
     raise Exception, 'Unknown expression type %s' % exp
+
+def assign2setbang(exp):
+  return plist(set__s, exp.car(), exp.caddr())
 
 def compile_shfn(exp, target, linkage, cenv):
   return compile(shfn2fn(exp), target, linkage, cenv)
@@ -563,6 +568,9 @@ def self_evaluatingp(exp):
 
 def tagged_list(exp, tag):
     return pairp(exp) and (not exp.nullp()) and exp.car() is tag
+
+def tagged_list2(exp, tag):
+    return pairp(exp) and (not exp.nullp()) and tagged_list(exp.cdr(), tag)
 
 class EmptyEnvironment(dict):
     def __setitem__(self, var, val):
