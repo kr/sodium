@@ -1,5 +1,10 @@
 import re
 
+PUNC = ('+', '*')
+def classify(lexeme, type):
+  if type == NAME and lexeme in PUNC: return IMESS
+  return type
+
 def lex(s):
     bol = True
     nesting = 0
@@ -38,7 +43,7 @@ def lex(s):
             if type == RPAR: nesting -= 1
 
             if type != SPACE:
-                # TODO # type = classify(lexeme)
+                type = classify(lexeme, type)
                 yield type, lexeme, lc(l, c)
         s = s[len(lexeme):]
         p += len(lexeme)

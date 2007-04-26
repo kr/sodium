@@ -44,7 +44,7 @@ def (promise? x): inspect.has-method? x 'wait
 def (ensure try finally):
   def success [do (finally) x]
   def failure [do (finally) (error x y)]
-  (try:run).wait+ success failure
+  try:run.wait+ success failure
 
 def is? ():
   inline C run <<<<
@@ -92,7 +92,7 @@ def (make-queue):
   def queue ():
     (empty?): is? front '()
     (front):
-      if (queue.empty?) (error "front called on an empty queue")
+      if (queue.empty?): error "front called on an empty queue"
       front.car
     (run item):
       def new (cons item '())
@@ -105,18 +105,18 @@ def (make-queue):
           rear :: new
       . queue
     (remove!):
-      def item (queue.front)
+      def item queue.front
       queue.delete!
       . item
     (delete!):
       if (queue.empty?): error "delete! called on an empty queue"
-      front :: (front.cdr)
+      front :: front.cdr
       . queue
     (consume! f):
       if (queue.empty?):
         . 'ok
         do:
-          f (queue.remove!)
+          f queue.remove!
           queue.consume! f
   . queue
 
@@ -214,18 +214,17 @@ def (make-broken-promise name val):
 # expects a thunk, returns a (promise, task) pair
 def (make-task f):
     def p (make-promise)
-    def promise (p.car)
-    def sink (p.cdr)
+    def promise p.car
+    def sink p.cdr
 
     def task (make-task+ f sink)
 
     cons promise task
 
 # expects a thunk and a sink, returns a task
-def (make-task+ f sink):
-  obj ():
-    (run) (sink (f))
-    (break! x) (sink.break! 'error x)
+def (make-task+ f sink): obj ():
+  (run): sink (f)
+  (break! x): sink.break! 'error x
 
 def (schedule-task task):
   *tasks* task
@@ -233,7 +232,7 @@ def (schedule-task task):
 # expects a thunk, returns a promise
 def (make-and-schedule-task f):
   def task-pair (make-task f)
-  schedule-task (task-pair.cdr)
+  schedule-task task-pair.cdr
   task-pair.car
 
 def (send rcv msg args):
