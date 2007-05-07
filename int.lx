@@ -20,7 +20,7 @@ def int ():
   (> x) (is? (int.cmp x) 1)
   (< x) (is? (int.cmp x) -1)
 
-  inline C + <<<<
+  inline C "+" <<<<
     register long a, b, r;
 
     if (args == nil) die("int.+ -- not enough args");
@@ -42,7 +42,7 @@ def int ():
     return int2datum(r);
   >>>>
 
-  inline C * <<<<
+  inline C "*" <<<<
     register long a, b, r;
 
     if (args == nil) die("int.* -- not enough args");
