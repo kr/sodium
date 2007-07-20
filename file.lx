@@ -36,8 +36,8 @@ def file ():
 
         if (!f) die("f:read -- this file is closed");
         len = fsize(f);
-        str = make_string(len + 1);
-        for (s = string_contents(str); len; len -= r) {
+        str = make_bytes(len + 1);
+        for (s = bytes_contents(str); len; len -= r) {
             r = fread(s, sizeof(char), len, f);
             // TODO error checking with feof() and ferror()
             s += r;
@@ -53,7 +53,7 @@ def file ():
 
         if (!f) die("f:write -- this file is closed");
         if (args == nil) die("f:write -- not enough args");
-        s = string_contents(car(args));
+        s = bytes_contents(car(args));
         for (len = strlen(s); len; len -= r) {
             r = fwrite(s, sizeof(char), len, f);
             // TODO error checking with feof() and ferror()
@@ -94,7 +94,7 @@ def file ():
         args = regs[R_VM1];
         rcv = regs[R_VM0];
 
-        ((pair) d)->datums[2] = fopen(string_contents(%(name)s), mode);
+        ((pair) d)->datums[2] = fopen(bytes_contents(%(name)s), mode);
         car(d) = car(rcv);
         cdr(d) = cdr(rcv);
         return d;

@@ -35,7 +35,7 @@ def re ():
         pcre *re = (pcre *) ((pair) rcv)->datums[2];
 
         if (args == nil) die("r.match -- not enough args");
-        subj = string_contents(car(args));
+        subj = bytes_contents(car(args));
         subj_len = strlen(subj);
         args = cdr(args);
 
@@ -52,7 +52,7 @@ def re ():
 
         res = subj + ovector[0];
         res_len = ovector[1] - ovector[0];
-        return make_string_init_len(res, res_len);
+        return make_bytes_init_len(res, res_len);
       >>>>
 
       inline C finalize! <<<<
@@ -75,7 +75,7 @@ def re ():
 
         if (args != nil) die("r.prepare -- too many args");
 
-        pattern = string_contents(%(pat)s);
+        pattern = bytes_contents(%(pat)s);
         opts = datum2int(%(opts)s);
         re = pcre_compile(pattern, opts, &error, &erroffset, NULL);
         if (re == NULL) return nil;

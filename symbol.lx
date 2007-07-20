@@ -4,7 +4,7 @@ inline C <<<<
 
 def symbol ():
   inline C str <<<<
-    return make_string_init(symbol2charstar(rcv));
+    return make_bytes_init(symbol2charstar(rcv));
   >>>>
   (str) "this-is-a-symbol"
 

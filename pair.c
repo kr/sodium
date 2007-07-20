@@ -34,7 +34,7 @@ init_mem(void)
 #define DATUM_INFO(t,l) (((t)<<24)|CLIP_LEN(l))
 #define DATUM_TYPE(i) ((i) >> 24)
 #define DATUM_TYPE_ARRAY 0x01
-#define DATUM_TYPE_STRING 0x02
+#define DATUM_TYPE_BYTES 0x02
 #define DATUM_TYPE_OBJ 0x03
 #define DATUM_TYPE_UNDEAD 0x04
 #define DATUM_TYPE_BROKEN_HEART 0xff
@@ -87,15 +87,15 @@ relocate(pair p)
 #endif
 
 #if GC_DEBUG_STR
-    if (DATUM_TYPE(p->info) == DATUM_TYPE_STRING) {
-        printf("copying string at %p\n", p);
+    if (DATUM_TYPE(p->info) == DATUM_TYPE_BYTES) {
+        printf("copying bytes at %p\n", p);
     }
 #endif
 
     np = &free_pairs[free_index++];
     np->info = p->info;
-    if (DATUM_TYPE(p->info) == DATUM_TYPE_STRING) {
-        np->info = DATUM_INFO(DATUM_TYPE_STRING, DATUM_LEN(p->info));
+    if (DATUM_TYPE(p->info) == DATUM_TYPE_BYTES) {
+        np->info = DATUM_INFO(DATUM_TYPE_BYTES, DATUM_LEN(p->info));
     }
     for (len = DATUM_LEN(p->info); len--;) {
         np->datums[len] = p->datums[len];
@@ -107,7 +107,7 @@ relocate(pair p)
 #endif
 
 #if GC_DEBUG_STR
-    if (DATUM_TYPE(p->info) == DATUM_TYPE_STRING) {
+    if (DATUM_TYPE(p->info) == DATUM_TYPE_BYTES) {
         printf("copied ``%s'' to ``%s''\n",
                 (char *) p->datums, (char *) np->datums);
     }
@@ -173,7 +173,7 @@ scan_again:
                     ++scan_index;
                 }
                 break;
-            case DATUM_TYPE_STRING:
+            case DATUM_TYPE_BYTES:
                 scan_index += DATUM_LEN(np->info);
                 break;
         }
@@ -240,7 +240,7 @@ scan_again:
 #endif
 
     if (alen > -1) new = make_array(alen);
-    else if (slen > -1) new = make_string(slen);
+    else if (slen > -1) new = make_bytes(slen);
     else if (blen > -1) new = make_obj(blen);
     else new = cons(x, y);
     gc_in_progress = 0;
@@ -279,7 +279,7 @@ make_array(uint len)
 }
 
 datum
-make_string(uint len)
+make_bytes(uint len)
 {
     pair p;
     uint words;
@@ -289,7 +289,7 @@ make_string(uint len)
     if ((free_index + (words + 1)) >= HEAP_SIZE) return gc(-1, nil, nil, len, -1);
 
     p = &busy_pairs[free_index++];
-    p->info = DATUM_INFO(DATUM_TYPE_STRING, words);
+    p->info = DATUM_INFO(DATUM_TYPE_BYTES, words);
     free_index += words;
     return p;
 }
@@ -316,35 +316,35 @@ make_compiled_obj(datum env, uint *table)
 }
 
 datum
-make_string_init_len(const char *s, int len)
+make_bytes_init_len(const char *s, int len)
 {
-    datum d = make_string(len + 1);
-    strcpy(string_contents(d), s);
-    string_contents(d)[len] = '\0';
+    datum d = make_bytes(len + 1);
+    strcpy(bytes_contents(d), s);
+    bytes_contents(d)[len] = '\0';
     return d;
 }
 
 datum
-make_string_init(const char *s)
+make_bytes_init(const char *s)
 {
-    return make_string_init_len(s, strlen(s));
+    return make_bytes_init_len(s, strlen(s));
 }
 
 char *
-string_contents(datum str)
+bytes_contents(datum str)
 {
     pair p;
-    if (!stringp(str)) die1("string_contents -- not a string", str);
+    if (!bytesp(str)) die1("bytes_contents -- not an instance of bytes", str);
     p = (pair) str;
     return (char *) p->datums;
 }
 
-/* caller must free the string returned by this function */
+/* caller must free the bytes returned by this function */
 char *
-copy_string_contents(datum str)
+copy_bytes_contents(datum str)
 {
     uint n;
-    char *s, *x = string_contents(str);
+    char *s, *x = bytes_contents(str);
     n = strlen(x) + 1;
     s = malloc(sizeof(char) * n);
     memcpy(s, x, n);
@@ -391,10 +391,10 @@ array_tag_matches(datum arr)
 }
 
 int
-string_tag_matches(datum arr)
+bytes_tag_matches(datum arr)
 {
     pair p = (pair) arr;
-    return DATUM_TYPE(p->info) == DATUM_TYPE_STRING;
+    return DATUM_TYPE(p->info) == DATUM_TYPE_BYTES;
 }
 
 int

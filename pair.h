@@ -12,9 +12,9 @@ typedef struct pair {
 
 datum cons(datum x, datum y);
 datum make_array(uint len);
-datum make_string(uint len);
-datum make_string_init(const char *s);
-datum make_string_init_len(const char *s, int len);
+datum make_bytes(uint len);
+datum make_bytes_init(const char *s);
+datum make_bytes_init_len(const char *s, int len);
 datum make_obj(uint len);
 datum make_compiled_obj(datum env, uint *table);
 
@@ -23,10 +23,10 @@ datum array_get(datum arr, uint index);
 void array_put(datum arr, uint index, datum val);
 uint array_len(datum arr);
 
-char *string_contents(datum str);
+char *bytes_contents(datum str);
 
-/* caller must free the string returned by this function */
-char *copy_string_contents(datum str);
+/* caller must free the bytes returned by this function */
+char *copy_bytes_contents(datum str);
 
 #define checked_car(x) array_get((x),0)
 #define checked_cdr(x) array_get((x),1)
@@ -60,7 +60,7 @@ void init_mem(void);
 
 /*bool*/
 int array_tag_matches(datum arr);
-int string_tag_matches(datum str);
+int bytes_tag_matches(datum str);
 int obj_tag_matches(datum o);
 int undead_tag_matches(datum o);
 int broken_heart_tag_matches(datum bh);
@@ -68,7 +68,7 @@ int broken_heart_tag_matches(datum bh);
 /*bool*/
 #define pairp(x) (in_pair_range(x) && array_tag_matches(x))
 
-#define stringp(x) (in_pair_range(x) && string_tag_matches(x))
+#define bytesp(x) (in_pair_range(x) && bytes_tag_matches(x))
 
 #define objp(x) (in_pair_range(x) && obj_tag_matches(x))
 #define undeadp(x) (in_pair_range(x) && undead_tag_matches(x))

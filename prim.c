@@ -38,8 +38,8 @@ prx(datum d)
         printf("<addr %p>", d);
     } else if (symbolp(d)) {
         pr_symbol(d);
-    } else if (stringp(d)) {
-        printf("%s", string_contents(d));
+    } else if (bytesp(d)) {
+        printf("%s", bytes_contents(d));
     } else if (pairp(d)) {
         printf("(");
         pr_bare(d, "");

@@ -17,7 +17,7 @@ get_primitive_surrogate(datum obj)
     if (intp(obj)) return int_surrogate;
     if (symbolp(obj)) return symbol_surrogate;
 
-    if (stringp(obj)) return str_surrogate;
+    if (bytesp(obj)) return str_surrogate;
     if (pairp(obj)) return pair_surrogate;
     return nil;
 }

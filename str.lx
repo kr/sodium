@@ -19,12 +19,12 @@ def str ():
     if (args == nil) die("str./ -- not enough args");
     if (cdr(args) != nil) die("str./ -- too many args");
 
-    s1 = copy_string_contents(rcv);
-    s2 = copy_string_contents(car(args));
+    s1 = copy_bytes_contents(rcv);
+    s2 = copy_bytes_contents(car(args));
     l1 = strlen(s1);
     l2 = strlen(s2);
-    new_str = make_string(l1 + l2 + 1);
-    s = string_contents(new_str);
+    new_str = make_bytes(l1 + l2 + 1);
+    s = bytes_contents(new_str);
     strcpy(s, s1);
     strcpy(s + l1, s2);
     s[l1 + l2] = '\0';
@@ -42,14 +42,14 @@ def str ():
     if (args == nil) die("str -- not enough args");
     if (!intp(car(args))) die("str -- expected int");
     i = datum2int(car(args));
-    s[0] = string_contents(rcv)[i];
+    s[0] = bytes_contents(rcv)[i];
     s[1] = '\0';
-    return make_string_init(s);
+    return make_bytes_init(s);
   >>>>
 
   inline C length <<<<
     if (args != nil) die("str.length -- too many args");
-    return int2datum(strlen(string_contents(rcv)));
+    return int2datum(strlen(bytes_contents(rcv)));
   >>>>
 
   inline C = <<<<
@@ -59,9 +59,9 @@ def str ():
     if (args == nil) die("str.= -- not enough args");
     if (cdr(args) != nil) die("str.= -- too many args");
 
-    if (!stringp(car(args))) return nil;
-    s1 = string_contents(rcv);
-    s2 = string_contents(car(args));
+    if (!bytesp(car(args))) return nil;
+    s1 = bytes_contents(rcv);
+    s2 = bytes_contents(car(args));
 
     l1 = strlen(s1);
     l2 = strlen(s2);
@@ -81,7 +81,7 @@ def str ():
     if (cdr(args) == nil) die("str.substring -- not enough args");
     if (cddr(args) != nil) die("str.substring -- too many args");
 
-    s = string_contents(rcv);
+    s = bytes_contents(rcv);
     len = strlen(s);
 
     start = datum2int(car(args));
@@ -97,7 +97,7 @@ def str ():
             new[i] = s[j];
         }
         new[i] = '\0';
-        return make_string_init(new);
+        return make_bytes_init(new);
     }
   >>>>
 

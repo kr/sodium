@@ -137,7 +137,7 @@ init_bigint(uint value)
 }
 
 static char *
-read_string(FILE *f, size_t n)
+read_bytes(FILE *f, size_t n)
 {
     size_t r;
     char *s;
@@ -151,21 +151,21 @@ read_string(FILE *f, size_t n)
 }
 
 static datum
-load_string(FILE *f)
+load_bytes(FILE *f)
 {
     size_t n;
     char *s;
     n = read_int(f);
-    s = read_string(f, n);
-    return make_string_init(s);
+    s = read_bytes(f, n);
+    return make_bytes_init(s);
 }
 
 static datum
-init_string(uint value)
+init_bytes(uint value)
 {
     char *s = (char *) value;
 
-    return make_string_init(s);
+    return make_bytes_init(s);
 }
 
 char
@@ -269,7 +269,7 @@ load_datums(FILE *f, uint n)
         switch (type) {
             case '#': d = load_int(f); break;
             case '!': d = load_bigint(f); break;
-            case '@': d = load_string(f); break;
+            case '@': d = load_bytes(f); break;
             case '$': d = load_symbol(f); break;
             case '(': d = load_list(f); break;
             default:
@@ -291,7 +291,7 @@ init_datums(static_datums_info static_datums, uint n)
             case '>': d = init_pointer(static_datums->entries[i]); break;
             case '#': d = init_int(static_datums->entries[i]); break;
             case '!': d = init_bigint(static_datums->entries[i]); break;
-            case '@': d = init_string(static_datums->entries[i]); break;
+            case '@': d = init_bytes(static_datums->entries[i]); break;
             case '$': d = init_symbol(static_datums->entries[i]); break;
             case '(': d = init_list(static_datums->entries[i]); break;
             default:
