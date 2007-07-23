@@ -1,0 +1,11 @@
+pr '(a b c)
+pr '(a.foo.bar.baz b c)
+pr '(a.foo.bar.baz b c : x y z : p d q)
+pr '(a.foo.bar.baz b c : x y + a + b + z : p d q)
+
+pr ""
+
+pr '(o (a + b) (x y))
+pr '(o a + b : x y)
+
+pr '+
