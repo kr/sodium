@@ -1,3 +1,10 @@
 *.d
+*.lxc
+*.lxc.[ch]
+*.nac
+*.o
 *.pyc
 gmon.out
+module-index.c
+prelude.[ch]
+vm
