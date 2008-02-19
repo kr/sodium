@@ -61,7 +61,6 @@ static char *instr_names[32] = {
     "OP_LEXICAL_LOOKUP",
     "OP_LEXICAL_SETBANG",
     "OP_EXTEND_ENVIRONMENT",
-    "OP_LOOKUP_MODULE",
 };
 #endif
 
@@ -351,7 +350,6 @@ link(uint *insts, uint inst_count, uint *lab_offsets)
                 break;
             case OP_LOAD_IMM:
             case OP_MAKE_ARRAY:
-            case OP_LOOKUP_MODULE:
                 di = I_RD(inst);
                 di += static_datums_base;
                 if (di > 0x3fffff) die("too many datums");
@@ -463,16 +461,6 @@ extend_environment(datum env, datum argl, datum formals)
     return cons(argl, env);
 }
 
-datum
-lookup_module(datum name)
-{
-    datum p = assq(name, modules);
-    if (!p) die1("lookup_module -- module not found", name);
-
-    if (modules_available || !caddr(p)) return cadr(p);
-    return caaddr(p);
-}
-
 void
 start(uint *start_addr)
 {
@@ -548,11 +536,6 @@ start(uint *start_addr)
                 ra = I_R(inst);
                 di = I_RD(inst);
                 die("OP_MAKE_ARRAY -- implement me");
-                break;
-            case OP_LOOKUP_MODULE:
-                ra = I_R(inst);
-                di = I_RD(inst);
-                regs[ra] = lookup_module(static_datums[di]);
                 break;
             case OP_CONS:
                 ra = I_R(inst);
@@ -865,6 +848,18 @@ load_builtin(char *name, datum modules)
     return cons(x, modules);
 }
 
+datum
+compile_module(datum name)
+{
+    datum p;
+
+    p = assq(name, modules);
+    if (p) return cadr(p);
+
+    start_body(load_module(symbol2charstar(name)));
+    return regs[R_VAL]; /* return value from module */
+}
+
 int
 main(int argc, char **argv)
 {
@@ -922,6 +917,8 @@ main(int argc, char **argv)
         to_start = cdr(to_start);
         start_body(lib_addr);
         x = assq(import_name, modules);
+        printf("resolving module as ");
+        pr(regs[R_VAL]);
         resolve_module(x, regs[R_VAL]);
     }
 

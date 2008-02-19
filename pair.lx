@@ -58,6 +58,9 @@ def pair ():
       if ((pair.cdr) = (p.cdr)) true false
       . false
 
+  (assq name):
+    if (is? (pair.car.car) name) (pair.car) (pair.cdr.assq name)
+
 def install-pair ():
   inline C run <<<<
     if (args == nil) die("install-pair -- not enough args");

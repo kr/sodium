@@ -1,16 +1,6 @@
-def private 42
+import (ad-hoc-tests/c -> c)
 
-def y (load-module ad-hoc-tests/c)
+def (f):
+  c.x
 
-y :run
-
-def df ():
-    (a):
-        pr "wheee d"
-        (load-module ad-hoc-tests/c)
-        (load-module ad-hoc-tests/d) :b
-
-    (b):
-        pr "alt d"
-
-. df
+export f

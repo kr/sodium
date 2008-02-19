@@ -30,7 +30,6 @@
 #define OP_LEXICAL_LOOKUP 0x17
 #define OP_LEXICAL_SETBANG 0x18
 #define OP_EXTEND_ENVIRONMENT 0x19
-#define OP_LOOKUP_MODULE 0x1a
 
 #define REG_COUNT 11
 /*#define REG_COUNT 32*/
@@ -69,6 +68,7 @@ void setbang(datum env, datum val, datum name);
 void define(datum env, datum val, datum name);
 
 datum lookup(datum env, datum name);
+datum compile_module(datum name);
 datum lexical_lookup(datum env, uint level, uint index);
 datum lexical_setbang(datum env, uint level, uint index, datum val);
 datum extend_environment(datum env, datum argl, datum formals);

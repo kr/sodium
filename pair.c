@@ -11,6 +11,7 @@ int gc_in_progress = 0;
 struct pair *busy_pairs, *old_pairs;
 static struct pair *free_pairs;
 size_t free_index = 0, scan_index = 0, dead_index = 0;
+static datum become_a = nil, become_b = nil;
 
 // int /*bool*/
 // pairp(datum x) {
@@ -123,7 +124,7 @@ gc(int alen, datum x, datum y, int slen, int blen)
     int i, live = 0;
     pair np;
     free_index = 0;
-    datum new;
+    datum new, new_become_a, new_become_b;
 
     if (gc_in_progress) die("ran out of memory during GC");
     gc_in_progress = 1;
@@ -134,6 +135,13 @@ gc(int alen, datum x, datum y, int slen, int blen)
 
     free_pairs = malloc(sizeof(struct pair) * HEAP_SIZE);
     if (!free_pairs) die("gc -- out of memory");
+
+    if (become_a && become_b) {
+        new_become_a = relocate(become_a);
+        new_become_b = relocate(become_b);
+        if (become_a != new_become_a) car(become_a) = new_become_b;
+        if (become_b != new_become_b) car(become_b) = new_become_a;
+    }
 
     stack = relocate(stack);
     tasks = relocate(tasks);
@@ -244,6 +252,7 @@ scan_again:
     else if (blen > -1) new = make_obj(blen);
     else new = cons(x, y);
     gc_in_progress = 0;
+    become_a = become_b = nil;
     return new;
 }
 
@@ -276,6 +285,14 @@ make_array(uint len)
         p->datums[len] = nil;
     }
     return p;
+}
+
+void
+become(datum a, datum b)
+{
+    become_a = a;
+    become_b = b;
+    gc(-1, nil, nil, -1, -1);
 }
 
 datum

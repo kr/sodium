@@ -48,7 +48,6 @@ def compile(exp, target, linkage, cenv):
     if variablep(exp): return compile_variable(exp, target, linkage, cenv)
     if tagged_list(exp, set__s): return compile_assignment(exp, target, linkage, cenv)
     if tagged_list(exp, def_s): return compile_definition(exp, target, linkage, cenv)
-    if tagged_list(exp, load_module_s): return compile_import(exp, target, linkage, cenv)
     if tagged_list(exp, if_s): return compile_if(exp, target, linkage, cenv)
     if tagged_list(exp, fn_s): return compile_obj(fn2obj(exp), target, linkage, cenv)
     if tagged_list(exp, shfn_s): return compile_shfn(exp, target, linkage, cenv)
@@ -124,12 +123,6 @@ def compile_definition(exp, target, linkage, cenv):
                 make_ir_seq((env_r, val_r), (target,),
                     DEFINE(env_r, val_r, var),
                     LOAD_IMM(target, ok_s))))
-
-def compile_import(exp, target, linkage, cenv):
-    name = import_name(exp)
-    return end_with_linkage(linkage,
-            make_ir_seq((), (target),
-                LOOKUP_MODULE(target, name)))
 
 def import_name(exp):
     return exp.cadr()
@@ -646,8 +639,11 @@ def find_variable(var, cenv):
         return help(n + 1, cenv.cdr())
     return help(0, cenv)
 
+def make_quote(name):
+  return plist(quote_s, name)
+
 def make_load_module(name):
-  return plist(load_module_s, name)
+  return plist(load_module_s, make_quote(name))
 
 def make_def(name, exp):
   return plist(def_s, name, exp)
@@ -676,12 +672,8 @@ def expand_imports(seq):
       if symbolp(term): return term
       return term.caddr()
     def import_term2def(term):
-      nn = new_name(stmt.cadr())
-      on = old_name(term)
-      val = make_if(plist(promise__s, nn),
-                    make_send(nn, on),
-                    make_call(nn, on))
-      return make_def(new_name(term), val)
+      return make_def(new_name(term),
+                      make_call(new_name(stmt.cadr()), old_name(term)))
     def module2def(name):
       return make_def(new_name(name), make_load_module(old_name(name)))
     def replace(term):
@@ -692,14 +684,7 @@ def expand_imports(seq):
                        make_fn(plist(arg), plist(plist(set__s, name, arg))))
     if not tagged_list(stmt, import_s): return plist(stmt)
     terms = stmt.cddr()
-    pr(cons(module2def(stmt.cadr()),
-                terms.map(import_term2def)).append(
-                  plist(make_if(plist(promise__s, new_name(stmt.cadr())),
-                          make_do(*terms.map(replace))))))
-    return cons(module2def(stmt.cadr()),
-                terms.map(import_term2def)).append(
-                  plist(make_if(plist(promise__s, new_name(stmt.cadr())),
-                          make_do(*terms.map(replace)))))
+    return cons(module2def(stmt.cadr()), terms.map(import_term2def))
 
   if seq.nullp(): return seq
   return expand_import(seq.car()).append(expand_imports(seq.cdr()))
@@ -756,7 +741,7 @@ def scan_out_xyz(exp):
     if variablep(exp): return scan_out_xyz_variable(exp)
     if tagged_list(exp, set__s): return scan_out_xyz_assignment(exp)
     if tagged_list(exp, def_s): return scan_out_xyz_definition(exp)
-    if tagged_list(exp, load_module_s): return nil
+    #if tagged_list(exp, load_module_s): return nil
     if tagged_list(exp, if_s): return scan_out_xyz_if(exp)
     if tagged_list(exp, fn_s): return scan_out_xyz_obj(fn2obj(exp))
     if tagged_list(exp, shfn_s): return nil # impossible

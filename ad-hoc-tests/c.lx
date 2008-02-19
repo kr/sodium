@@ -1,6 +1,5 @@
-def x (load-module ad-hoc-tests/d)
+import (ad-hoc-tests/d -> d) f
 
-x :a
+def x "success!!!"
 
-def (cf) (pr "wheee c")
-. cf
+export x

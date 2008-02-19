@@ -11,7 +11,29 @@ def true 1
 
 def (not x) (if x false true)
 
-def open (load-module file)
+def (make-blank-module) (obj ())
+
+def compile-module ():
+  inline C run <<<<
+    datum name;
+    name = checked_car(args);
+    return compile_module(name);
+  >>>>
+
+def become ():
+  inline C run <<<<
+    datum a, b;
+    a = checked_car(args);
+    b = checked_cadr(args);
+    become(a, b);
+    return nil;
+  >>>>
+
+def (insert-module name module):
+  *modules* = (cons (cons name module) *modules*)
+  . module
+
+def *modules* '()
 
 def call ():
   inline C run <<<<
@@ -60,6 +82,16 @@ def cons ():
     return cons(car(args), cadr(args));
   >>>>
 
+def (load-module name):
+  def ent (*modules*.assq name)
+  if ent:
+    ent.cdr
+    do:
+      def new-module (make-blank-module)
+      *modules* :: (cons (cons name new-module) *modules*)
+      become new-module (compile-module name)
+      . new-module
+
 def list ():
   inline C run <<<<
     return args;
@@ -78,6 +110,9 @@ def pr ():
     pr(car(args));
     return ok_sym;
   >>>>
+
+def open (load-module (quote file))
+load-module (quote file)
 
 def prx ():
   inline C run <<<<

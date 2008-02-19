@@ -6,6 +6,7 @@ def nil ():
   (run f) 'ok
   (schedule f) 'ok
   (= x) (is? x nil)
+  (assq name) '()
 
 def install-nil ():
   inline C run <<<<

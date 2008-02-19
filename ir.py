@@ -449,12 +449,8 @@ def BPRIM(reg, label): return OP_RL(bprim_s, reg, label)
 
 load_imm_s = S('LOAD_IMM')
 make_array_s = S('MAKE_ARRAY')
-import_s = S('LOOKUP_MODULE')
 def LOAD_IMM(target_reg, val): return OP_RD(load_imm_s, target_reg, val)
 def MAKE_ARRAY(target_reg, len): return OP_RD(make_array_s, target_reg, len)
-def LOOKUP_MODULE(target_reg, name):
-    import_names.append(name)
-    return OP_RD(import_s, target_reg, name)
 
 # Three register instructions
 
@@ -528,7 +524,6 @@ all_ops = (
     lexical_lookup_s,
     lexical_setbang_s,
     extend_environment_s,
-    import_s,
 )
 all_ops_dict = dict([(k,i) for i,k in enumerate(all_ops)])
 

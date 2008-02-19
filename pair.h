@@ -79,4 +79,6 @@ int broken_heart_tag_matches(datum bh);
 
 void dump_obj(datum o);
 
+void become(datum a, datum b);
+
 #endif /*PAIR_H*/
