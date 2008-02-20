@@ -67,21 +67,15 @@ def re ():
         int erroffset, opts;
         datum d;
 
-        regs[R_VM0] = rcv;
-        regs[R_VM1] = args;
-        d = make_obj(3);
-        args = regs[R_VM1];
-        rcv = regs[R_VM0];
-
         if (args != nil) die("r.prepare -- too many args");
+
+        d = make_obj_with_extra(rcv, 1);
 
         pattern = bytes_contents(%(pat)s);
         opts = datum2int(%(opts)s);
         re = pcre_compile(pattern, opts, &error, &erroffset, NULL);
         if (re == NULL) return nil;
 
-        car(d) = car(rcv);
-        cdr(d) = cdr(rcv);
         ((pair) d)->datums[2] = (datum) re;
         return d;
       >>>>

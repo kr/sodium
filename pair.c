@@ -13,6 +13,8 @@ static struct pair *free_pairs;
 size_t free_index = 0, scan_index = 0, dead_index = 0;
 static datum become_a = nil, become_b = nil;
 
+static datum make_obj(uint len);
+
 // int /*bool*/
 // pairp(datum x) {
 //     return objp(x) &&
@@ -311,7 +313,7 @@ make_bytes(uint len)
     return p;
 }
 
-datum
+static datum
 make_obj(uint len)
 {
     pair p;
@@ -322,6 +324,24 @@ make_obj(uint len)
     p->info = DATUM_INFO(DATUM_TYPE_OBJ, len);
     free_index += len;
     return p;
+}
+
+datum
+make_obj_with_extra(datum o, uint len)
+{
+    int olen;
+    datum no;
+
+    if (!obj_tag_matches(o)) return nil;
+
+    olen = DATUM_LEN(((pair)o)->info);
+    if (olen != 2) return nil;
+    regs[R_VM0] = o;
+    no = make_obj(olen + len);
+    o = regs[R_VM0];
+    car(no) = car(o);
+    cdr(no) = cdr(o);
+    return no;
 }
 
 datum

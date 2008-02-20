@@ -87,16 +87,10 @@ def file ():
             return die1("f:prepare -- unknown mode", %(mode)s);
         }
 
-        regs[R_VM0] = rcv;
-        regs[R_VM1] = args;
-        d = make_obj(3);
+        d = make_obj_with_extra(rcv, 1);
         printf("made a blank object\n");
-        args = regs[R_VM1];
-        rcv = regs[R_VM0];
 
         ((pair) d)->datums[2] = fopen(bytes_contents(%(name)s), mode);
-        car(d) = car(rcv);
-        cdr(d) = cdr(rcv);
         return d;
       >>>>
 

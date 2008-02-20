@@ -15,8 +15,8 @@ datum make_array(uint len);
 datum make_bytes(uint len);
 datum make_bytes_init(const char *s);
 datum make_bytes_init_len(const char *s, int len);
-datum make_obj(uint len);
 datum make_compiled_obj(datum env, uint *table);
+datum make_obj_with_extra(datum o, uint len);
 
 
 datum array_get(datum arr, uint index);
