@@ -638,6 +638,17 @@ load_module_file(const char *name)
     FILE *f;
 
     f = fopen(name, "rb");
+
+    /* compile the library file if necessary */
+    if (!f) {
+        int namelen = strlen(name);
+        char cmd[namelen + 7];
+
+        snprintf(cmd, namelen + 7, "./lx1c %*s", namelen - 1, name);
+        system(cmd);
+        f = fopen(name, "rb");
+    }
+
     if (!f) {
         fprintf(stderr, "cannot open file %s\n", name);
         bail("cannot open file");
