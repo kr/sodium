@@ -266,8 +266,8 @@ internal_cons(unsigned char type, uint len, datum x, datum y)
     if ((free_index + (len + 1)) >= HEAP_SIZE) die("cons -- OOM after gc");
     p = &busy_pairs[free_index++];
     p->info = DATUM_INFO(type, len);
-    car(p) = x;
-    cdr(p) = y;
+    if (len > 0) car(p) = x;
+    if (len > 1) cdr(p) = y;
     free_index += len;
     return p;
 }
@@ -305,20 +305,12 @@ become(datum a, datum b)
 }
 
 datum
-make_bytes(uint len)
+make_bytes(uint bytes_len)
 {
-    pair p;
-    uint words;
+    uint words_len;
 
-    words = max((len + 3) / 4, 1);
-
-    if ((free_index + (words + 1)) >= HEAP_SIZE) gc(0);
-    if ((free_index + (words + 1)) >= HEAP_SIZE) die("make_bytes -- OOM after gc");
-
-    p = &busy_pairs[free_index++];
-    p->info = DATUM_INFO(DATUM_TYPE_BYTES, words);
-    free_index += words;
-    return p;
+    words_len = max((bytes_len + 3) / 4, 1);
+    return internal_cons(DATUM_TYPE_BYTES, words_len, 0, 0);
 }
 
 datum
