@@ -1,6 +1,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <stdarg.h>
 #include "pair.h"
 #include "vm.h"
 #include "obj.h"
@@ -121,12 +122,13 @@ relocate(pair p)
 }
 
 static datum
-gc(int alen, datum x, datum y, int slen, int blen)
+gc(int alen, datum x, datum y, int slen, int blen, int c, ...)
 {
     int i, live = 0;
     pair np;
     free_index = 0;
-    datum new, new_become_a, new_become_b;
+    datum new, new_become_a, new_become_b, *dp;
+    va_list ap;
 
     if (gc_in_progress) die("ran out of memory during GC");
     gc_in_progress = 1;
@@ -158,6 +160,12 @@ gc(int alen, datum x, datum y, int slen, int blen)
     symbol_surrogate = relocate(symbol_surrogate);
     x = relocate(x);
     y = relocate(y);
+    va_start(ap, c);
+    for (; c; --c) {
+        dp = va_arg(ap, datum *);
+        *dp = relocate(*dp);
+    }
+    va_end(ap);
     for (i = 0; i < REG_COUNT; ++i) {
         regs[i] = relocate(regs[i]);
     }
@@ -263,7 +271,7 @@ cons(datum x, datum y)
 {
     pair p;
 
-    if ((free_index + 3) >= HEAP_SIZE) return gc(-1, x, y, -1, -1);
+    if ((free_index + 3) >= HEAP_SIZE) return gc(-1, x, y, -1, -1, 0);
     p = &busy_pairs[free_index++];
     p->info = DATUM_INFO(DATUM_TYPE_ARRAY, 2);
     car(p) = x;
@@ -279,7 +287,7 @@ make_array(uint len)
 
     if (len < 1) return nil;
     if (len != CLIP_LEN(len)) die("make_array -- too big");
-    if ((free_index + (len + 1)) >= HEAP_SIZE) return gc(len, nil, nil, -1, -1);
+    if ((free_index + (len + 1)) >= HEAP_SIZE) return gc(len, nil, nil, -1, -1, 0);
     p = &busy_pairs[free_index++];
     p->info = DATUM_INFO(DATUM_TYPE_ARRAY, len);
     free_index += len;
@@ -294,7 +302,7 @@ become(datum a, datum b)
 {
     become_a = a;
     become_b = b;
-    gc(-1, nil, nil, -1, -1);
+    gc(-1, nil, nil, -1, -1, 0);
 }
 
 datum
@@ -305,7 +313,7 @@ make_bytes(uint len)
 
     words = max(len / 4 + ((len % 4) ? 1 : 0), 1);
 
-    if ((free_index + (words + 1)) >= HEAP_SIZE) return gc(-1, nil, nil, len, -1);
+    if ((free_index + (words + 1)) >= HEAP_SIZE) return gc(-1, nil, nil, len, -1, 0);
 
     p = &busy_pairs[free_index++];
     p->info = DATUM_INFO(DATUM_TYPE_BYTES, words);
@@ -318,7 +326,7 @@ make_obj(uint len)
 {
     pair p;
 
-    if ((free_index + (len + 1)) >= HEAP_SIZE) return gc(-1, nil, nil, -1, len);
+    if ((free_index + (len + 1)) >= HEAP_SIZE) return gc(-1, nil, nil, -1, len, 0);
 
     p = &busy_pairs[free_index++];
     p->info = DATUM_INFO(DATUM_TYPE_OBJ, len);
