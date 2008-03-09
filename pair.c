@@ -14,8 +14,6 @@ static struct pair *free_pairs;
 size_t free_index = 0, scan_index = 0, dead_index = 0;
 static datum become_a = nil, become_b = nil;
 
-static datum make_obj(uint len);
-
 // int /*bool*/
 // pairp(datum x) {
 //     return objp(x) &&
@@ -259,19 +257,25 @@ scan_again:
     become_a = become_b = nil;
 }
 
-datum
-cons(datum x, datum y)
+static datum
+internal_cons(unsigned char type, uint len, datum x, datum y)
 {
     pair p;
 
-    if ((free_index + 3) >= HEAP_SIZE) gc(2, &x, &y);
-    if ((free_index + 3) >= HEAP_SIZE) die("cons -- OOM after gc");
+    if ((free_index + (len + 1)) >= HEAP_SIZE) gc(2, &x, &y);
+    if ((free_index + (len + 1)) >= HEAP_SIZE) die("cons -- OOM after gc");
     p = &busy_pairs[free_index++];
-    p->info = DATUM_INFO(DATUM_TYPE_ARRAY, 2);
+    p->info = DATUM_INFO(type, len);
     car(p) = x;
     cdr(p) = y;
-    free_index += 2;
+    free_index += len;
     return p;
+}
+
+datum
+cons(datum x, datum y)
+{
+    return internal_cons(DATUM_TYPE_ARRAY, 2, x, y);
 }
 
 datum
@@ -317,44 +321,21 @@ make_bytes(uint len)
     return p;
 }
 
-static datum
-make_obj(uint len)
-{
-    pair p;
-
-    if ((free_index + (len + 1)) >= HEAP_SIZE) gc(0);
-    if ((free_index + (len + 1)) >= HEAP_SIZE) die("make_obj -- OOM after gc");
-
-    p = &busy_pairs[free_index++];
-    p->info = DATUM_INFO(DATUM_TYPE_OBJ, len);
-    free_index += len;
-    return p;
-}
-
 datum
 make_obj_with_extra(datum o, uint len)
 {
     int olen;
-    datum no;
 
     if (!obj_tag_matches(o)) return nil;
-
     olen = DATUM_LEN(((pair)o)->info);
     if (olen != 2) return nil;
-    regs[R_VM0] = o;
-    no = make_obj(olen + len);
-    o = regs[R_VM0];
-    car(no) = car(o);
-    cdr(no) = cdr(o);
-    return no;
+    return internal_cons(DATUM_TYPE_OBJ, olen + len, car(o), cdr(o));
 }
 
 datum
 make_compiled_obj(datum env, uint *table)
 {
-    pair p = cons(env, (datum) table);
-    p->info = DATUM_INFO(DATUM_TYPE_OBJ, 2);
-    return p;
+    return internal_cons(DATUM_TYPE_OBJ, 2, env, (datum) table);
 }
 
 datum
