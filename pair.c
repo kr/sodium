@@ -304,7 +304,7 @@ make_bytes(uint bytes_len)
     uint words_len;
 
     words_len = max((bytes_len + 3) / 4, 1);
-    return internal_cons(DATUM_TYPE_BYTES, words_len, 0, 0);
+    return internal_cons(DATUM_TYPE_BYTES, words_len, nil, nil);
 }
 
 datum
