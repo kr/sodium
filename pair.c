@@ -285,14 +285,8 @@ make_array(uint len)
 
     if (len < 1) return nil;
     if (len != CLIP_LEN(len)) die("make_array -- too big");
-    if ((free_index + (len + 1)) >= HEAP_SIZE) gc(0);
-    if ((free_index + (len + 1)) >= HEAP_SIZE) die("make_array -- OOM after gc");
-    p = &busy_pairs[free_index++];
-    p->info = DATUM_INFO(DATUM_TYPE_ARRAY, len);
-    free_index += len;
-    for (;len--;) {
-        p->datums[len] = nil;
-    }
+    p = internal_cons(DATUM_TYPE_ARRAY, len, nil, nil);
+    for (;len--;) p->datums[len] = nil;
     return p;
 }
 
