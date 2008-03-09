@@ -121,13 +121,13 @@ relocate(pair p)
     return car(p) = np;
 }
 
-static datum
+static void
 gc(int c, ...)
 {
     int i, live = 0;
     pair np;
     free_index = 0;
-    datum new, new_become_a, new_become_b, *dp;
+    datum new_become_a, new_become_b, *dp;
     va_list ap;
 
     if (gc_in_progress) die("ran out of memory during GC");
@@ -257,7 +257,6 @@ scan_again:
 
     gc_in_progress = 0;
     become_a = become_b = nil;
-    return new;
 }
 
 datum
