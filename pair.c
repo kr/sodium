@@ -310,7 +310,7 @@ make_bytes(uint len)
     pair p;
     uint words;
 
-    words = max(len / 4 + ((len % 4) ? 1 : 0), 1);
+    words = max((len + 3) / 4, 1);
 
     if ((free_index + (words + 1)) >= HEAP_SIZE) gc(0);
     if ((free_index + (words + 1)) >= HEAP_SIZE) die("make_bytes -- OOM after gc");
