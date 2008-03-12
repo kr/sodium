@@ -1,8 +1,7 @@
 
-def (f x):
-  obj () ((finalize!) (pr x))
+import fin f
 
-f "Three"
+f
 
 def (x) (x)
 

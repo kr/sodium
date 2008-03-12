@@ -31,7 +31,7 @@ int instr_sets = 0;
 datum to_import = nil, to_start = nil, modules = nil;
 int modules_available = 0;
 
-datum run_sym, ok_sym, emptyp_sym, remove_sym, finalize_sym;
+datum run_sym, ok_sym, emptyp_sym, remove_sym;
 
 #if VM_DEBUG > 0
 static char *instr_names[32] = {
@@ -887,7 +887,6 @@ main(int argc, char **argv)
     ok_sym = intern("ok");
     emptyp_sym = intern("empty?");
     remove_sym = intern("remove!");
-    finalize_sym = intern("finalize!");
 
     /* load the very basic builtin modules */
     start_body(load_module("int"));

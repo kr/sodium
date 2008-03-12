@@ -67,14 +67,13 @@ def file ():
 
         if (f) {
             fclose(f);
-            ((pair) rcv)->datums[2] = nil;
+            ((pair) rcv)->datums[2] = 0;
         }
         return ok_sym;
       >>>>
 
-      (finalize!) (f.close)
-
       inline C prepare <<<<
+        FILE *f;
         char *mode = "rb";
         datum d;
 
@@ -87,10 +86,12 @@ def file ():
             return die1("f:prepare -- unknown mode", %(mode)s);
         }
 
-        d = make_obj_with_extra(rcv, 1);
+        f = fopen(bytes_contents(%(name)s), mode);
+
+        d = make_obj_with_extra(rcv, 1, (na_fn_free) fclose);
         printf("made a blank object\n");
 
-        ((pair) d)->datums[2] = fopen(bytes_contents(%(name)s), mode);
+        ((pair) d)->datums[2] = f;
         return d;
       >>>>
 

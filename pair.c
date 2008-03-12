@@ -9,9 +9,9 @@
 #include "config.h"
 
 int gc_in_progress = 0, become_keep_b = 0;
-struct pair *busy_pairs, *old_pairs;
+struct pair *busy_pairs, *old_pairs, *fz_list = nil;
 static struct pair *free_pairs;
-size_t free_index = 0, scan_index = 0, dead_index = 0;
+size_t free_index = 0, scan_index = 0;
 static datum become_a = nil, become_b = nil;
 
 // int /*bool*/
@@ -32,6 +32,7 @@ init_mem(void)
     free_index = 0;
 }
 
+#define cgr(x) (((pair) (x))->datums[2])
 #define CLIP_LEN(l) ((l) & 0x00ffffff)
 #define DATUM_INFO(t,l) (((t)<<24)|CLIP_LEN(l))
 #define DATUM_TYPE(i) ((i) >> 24)
@@ -39,9 +40,13 @@ init_mem(void)
 #define DATUM_TYPE_BYTES 0x02
 #define DATUM_TYPE_OBJ 0x03
 #define DATUM_TYPE_UNDEAD 0x04
+#define DATUM_TYPE_FZ 0x05
 #define DATUM_TYPE_BROKEN_HEART 0xff
 #define DATUM_LEN(i) ((i) & 0x00ffffff)
 #define SET_DATUM_TYPE(o,t) {(o)->info = DATUM_INFO(t, DATUM_LEN((o)->info));}
+#define IS_BROKEN_HEART(o) (DATUM_TYPE((o)->info) == DATUM_TYPE_BROKEN_HEART)
+
+#define FZ_LEN 3
 
 void
 dump_obj(datum o)
@@ -77,12 +82,12 @@ relocate(pair p)
     if (!in_pair_range(p)) return p;
 
 #if GC_DEBUG_BH
-    if (DATUM_TYPE(p->info) == DATUM_TYPE_BROKEN_HEART) {
+    if (IS_BROKEN_HEART(p)) {
         printf("found broken heart %p -> %p\n", p, car(p));
     }
 #endif
 
-    if (DATUM_TYPE(p->info) == DATUM_TYPE_BROKEN_HEART) return car(p);
+    if (IS_BROKEN_HEART(p)) return car(p);
 
 #if GC_DEBUG
     printf("relocating pair (type %d) at %p\n", DATUM_TYPE(p->info), p);
@@ -123,7 +128,7 @@ static void
 gc(int c, ...)
 {
     int i, live = 0;
-    pair np;
+    pair np, fzp, *fz_prev;
     free_index = 0;
     datum new_become_a, new_become_b, *dp;
     va_list ap;
@@ -158,6 +163,7 @@ gc(int c, ...)
     pair_surrogate = relocate(pair_surrogate);
     nil_surrogate = relocate(nil_surrogate);
     symbol_surrogate = relocate(symbol_surrogate);
+    fz_list = relocate(fz_list);
     va_start(ap, c);
     for (; c; --c) {
         dp = va_arg(ap, datum *);
@@ -171,9 +177,8 @@ gc(int c, ...)
         static_datums[i] = relocate(static_datums[i]);
     }
 
-    scan_index = dead_index = 0;
+    scan_index = 0;
 
-scan_again:
 #if GC_DEBUG
     printf("scan_index is %d, free_index is %d\n", scan_index, free_index);
 #endif
@@ -182,46 +187,21 @@ scan_again:
         ++live;
         switch (DATUM_TYPE(np->info)) {
             case DATUM_TYPE_ARRAY:
-            case DATUM_TYPE_OBJ:
             case DATUM_TYPE_UNDEAD:
                 for (i = DATUM_LEN(np->info); i--;) {
                     np->datums[i] = relocate(np->datums[i]);
                     ++scan_index;
                 }
                 break;
+            case DATUM_TYPE_OBJ:
+            case DATUM_TYPE_FZ:
+                np->datums[0] = relocate(np->datums[0]);
+                np->datums[1] = relocate(np->datums[1]);
+                /* fall through */
             case DATUM_TYPE_BYTES:
                 scan_index += DATUM_LEN(np->info);
                 break;
         }
-    }
-
-    if (!dead_index) {
-#if GC_DEBUG
-        printf("resurrecting recently deceased\n");
-#endif
-        /* resurrect the recently deceased, if they have unfinished business */
-        while (dead_index < HEAP_SIZE) {
-            np = &busy_pairs[dead_index++];
-            switch (DATUM_TYPE(np->info)) {
-                case DATUM_TYPE_OBJ:
-#if GC_DEBUG
-                    printf("scanning dead object ");
-                    pr(np);
-                    printf("  with env ");
-                    pr(car(np));
-#endif
-                    if (compiled_obj_has_method(np, finalize_sym)) {
-                        np = relocate(np);
-                        SET_DATUM_TYPE(np, DATUM_TYPE_UNDEAD);
-                    }
-                    break;
-            }
-            dead_index += DATUM_LEN(np->info);
-        }
-#if GC_DEBUG
-        printf("scaning again\n");
-#endif
-        goto scan_again; /* relocate the undead and their dependencies */
     }
 
     old_pairs = busy_pairs;
@@ -234,22 +214,24 @@ scan_again:
     printf("gc done (%d live)\n", live);
 #endif /*GC_STATS*/
 
+    /* Now process the finalizer list. For each entry:
+     *  - if the object survived, update the finalizer's pointer
+     *  - else, call the free function and remove the finalizer
+     */
+    fz_prev = &fz_list;
+    for (fzp = fz_list; fzp != nil; fzp = cdr(fzp)) {
+        pair p = (pair) cgr(fzp);
+        if (IS_BROKEN_HEART(p)) {
+            fzp->datums[2] = car(p);
+            fz_prev = (pair *) &cdr(fzp); /* update the prev pointer */
+        } else {
+            ((na_fn_free) fzp->datums[0])(DATUM_LEN(p->info) > 2 ? cgr(p) : 0);
+            *fz_prev = cdr(fzp); /* remove fzp from the list */
+        }
+    }
+
     free(old_pairs);
     old_pairs = 0;
-
-    /* finalize all undead objects */
-    /* we can't do this earlier because we call in to LX code and that requres
-     * that the free/busy pointers are swapped back */
-    dead_index = 0;
-    while (dead_index < HEAP_SIZE) {
-        np = &busy_pairs[dead_index++];
-        switch (DATUM_TYPE(np->info)) {
-            case DATUM_TYPE_UNDEAD:
-                call(np, finalize_sym, nil);
-                break;
-        }
-        dead_index += DATUM_LEN(np->info);
-    }
 
 #if GC_DIE
     die("GC_DIE");
@@ -311,14 +293,26 @@ make_bytes(uint bytes_len)
 }
 
 datum
-make_obj_with_extra(datum o, uint len)
+make_obj_with_extra(datum o, uint len, na_fn_free fn)
 {
-    int olen;
+    pair fz;
+    int olen, ex = fn ? FZ_LEN : 0;
+    datum d;
 
     if (!obj_tag_matches(o)) return nil;
-    olen = DATUM_LEN(((pair)o)->info);
-    if (olen != 2) return nil;
-    return internal_cons(DATUM_TYPE_OBJ, olen + len, car(o), cdr(o));
+    olen = DATUM_LEN(((pair)o)->info) + len;
+    d = internal_cons(DATUM_TYPE_OBJ, olen + ex, car(o), cdr(o));
+    if (fn) {
+        ((pair) d)->info = DATUM_INFO(DATUM_TYPE_OBJ, olen);
+        fz = (pair) d + olen;
+        fz->info = DATUM_INFO(DATUM_TYPE_FZ, FZ_LEN);
+        fz->datums[0] = fn;
+        fz->datums[1] = fz_list;
+        fz->datums[2] = d;
+        fz_list = fz;
+    }
+
+    return d;
 }
 
 datum

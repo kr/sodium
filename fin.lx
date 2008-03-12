@@ -1,0 +1,21 @@
+inline C <<<<
+#include <stdio.h>
+
+static void
+fin_test_fn(void *x)
+{
+    printf("success\n");
+}
+
+>>>>
+
+def (f):
+  def x ():
+    inline C prepare <<<<
+      return make_obj_with_extra(rcv, 0, fin_test_fn);
+    >>>>
+
+  x :: (x.prepare)
+  . x
+
+export f

@@ -55,11 +55,6 @@ def re ():
         return make_bytes_init_len(res, res_len);
       >>>>
 
-      inline C finalize! <<<<
-        free(((pair) rcv)->datums[2]);
-        return ok_sym;
-      >>>>
-
       inline C prepare <<<<
         pcre *re;
         const char *error;
@@ -69,12 +64,12 @@ def re ():
 
         if (args != nil) die("r.prepare -- too many args");
 
-        d = make_obj_with_extra(rcv, 1);
-
         pattern = bytes_contents(%(pat)s);
         opts = datum2int(%(opts)s);
         re = pcre_compile(pattern, opts, &error, &erroffset, NULL);
         if (re == NULL) return nil;
+
+        d = make_obj_with_extra(rcv, 1, free);
 
         ((pair) d)->datums[2] = (datum) re;
         return d;
