@@ -12,7 +12,7 @@ fin_test_fn(void *x)
 def (f):
   def x ():
     inline C prepare <<<<
-      return grow_obj(&rcv, 0, fin_test_fn);
+      return grow_obj(&rcv, 0, fin_test_fn, NULL);
     >>>>
 
   x.prepare

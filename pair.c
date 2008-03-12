@@ -293,7 +293,7 @@ make_bytes(uint bytes_len)
 }
 
 datum
-grow_obj(datum *op, uint len, na_fn_free fn)
+grow_obj(datum *op, uint len, na_fn_free fn, void *data)
 {
     pair fz;
     int olen, ex = fn ? FZ_LEN : 0;
@@ -302,6 +302,7 @@ grow_obj(datum *op, uint len, na_fn_free fn)
     if (!obj_tag_matches(o)) return nil;
     olen = DATUM_LEN(((pair)o)->info) + len;
     d = internal_cons(DATUM_TYPE_OBJ, olen + ex, car(o), cdr(o));
+    if (len) ((pair) d)->datums[2] = data;
     if (fn) {
         ((pair) d)->info = DATUM_INFO(DATUM_TYPE_OBJ, olen);
         fz = (pair) d + olen;

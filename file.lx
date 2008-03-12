@@ -87,11 +87,7 @@ def file ():
 
         f = fopen(bytes_contents(%(name)s), mode);
 
-        grow_obj(&rcv, 1, (na_fn_free) fclose);
-        printf("made a blank object\n");
-
-        ((pair) rcv)->datums[2] = f;
-        return rcv;
+        return grow_obj(&rcv, 1, (na_fn_free) fclose, f);
       >>>>
 
     f.prepare

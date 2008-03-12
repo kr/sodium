@@ -68,10 +68,7 @@ def re ():
         re = pcre_compile(pattern, opts, &error, &erroffset, NULL);
         if (re == NULL) return nil;
 
-        grow_obj(&rcv, 1, free);
-
-        ((pair) rcv)->datums[2] = (datum) re;
-        return rcv;
+        return grow_obj(&rcv, 1, free, re);
       >>>>
 
     r.prepare
