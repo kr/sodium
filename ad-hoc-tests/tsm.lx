@@ -1,4 +1,4 @@
-def x (load-module re)
+import (re -> x)
 
 def p (x "boo")
 

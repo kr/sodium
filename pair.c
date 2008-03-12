@@ -8,7 +8,7 @@
 #include "prim.h"
 #include "config.h"
 
-int gc_in_progress = 0;
+int gc_in_progress = 0, become_keep_b = 0;
 struct pair *busy_pairs, *old_pairs;
 static struct pair *free_pairs;
 size_t free_index = 0, scan_index = 0, dead_index = 0;
@@ -142,7 +142,9 @@ gc(int c, ...)
         new_become_a = relocate(become_a);
         new_become_b = relocate(become_b);
         if (become_a != new_become_a) car(become_a) = new_become_b;
-        if (become_b != new_become_b) car(become_b) = new_become_a;
+        if (become_b != new_become_b && !become_keep_b) {
+            car(become_b) = new_become_a;
+        }
     }
 
     stack = relocate(stack);
@@ -291,10 +293,11 @@ make_array(uint len)
 }
 
 void
-become(datum a, datum b)
+become(datum a, datum b, int keep_b)
 {
     become_a = a;
     become_b = b;
+    become_keep_b = keep_b;
     gc(0);
 }
 
