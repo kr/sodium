@@ -26,7 +26,7 @@ def become ():
     a = checked_car(args);
     b = checked_cadr(args);
     keep_b = checked_caddr(args);
-    become(a, b, datum2int(keep_b));
+    become(&a, &b, datum2int(keep_b));
     return nil;
   >>>>
 

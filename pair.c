@@ -275,12 +275,12 @@ make_array(uint len)
 }
 
 void
-become(datum a, datum b, int keep_b)
+become(datum *a, datum *b, int keep_b)
 {
-    become_a = a;
-    become_b = b;
+    become_a = *a;
+    become_b = *b;
     become_keep_b = keep_b;
-    gc(0);
+    gc(2, a, b);
 }
 
 datum
