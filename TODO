@@ -9,7 +9,7 @@
 [ ] C function pointers are not datums -- treat them accordingly
 [+] fix finalization
 [+] fix return linkage for the "call" function
-[ ] use become() in C prepare methods
+[+] use become() in C prepare methods
 [ ] add debugging info to byte code files
 [ ] exceptions
 [ ] unit testing

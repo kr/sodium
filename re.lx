@@ -60,7 +60,6 @@ def re ():
         const char *error;
         char *pattern;
         int erroffset, opts;
-        datum d;
 
         if (args != nil) die("r.prepare -- too many args");
 
@@ -69,13 +68,12 @@ def re ():
         re = pcre_compile(pattern, opts, &error, &erroffset, NULL);
         if (re == NULL) return nil;
 
-        d = make_obj_with_extra(rcv, 1, free);
+        grow_obj(&rcv, 1, free);
 
-        ((pair) d)->datums[2] = (datum) re;
-        return d;
+        ((pair) rcv)->datums[2] = (datum) re;
+        return rcv;
       >>>>
 
-    r :: (r.prepare)
-    . r
+    r.prepare
 
 . re

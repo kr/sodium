@@ -293,11 +293,11 @@ make_bytes(uint bytes_len)
 }
 
 datum
-make_obj_with_extra(datum o, uint len, na_fn_free fn)
+grow_obj(datum *op, uint len, na_fn_free fn)
 {
     pair fz;
     int olen, ex = fn ? FZ_LEN : 0;
-    datum d;
+    datum d, o = *op;
 
     if (!obj_tag_matches(o)) return nil;
     olen = DATUM_LEN(((pair)o)->info) + len;
@@ -312,6 +312,7 @@ make_obj_with_extra(datum o, uint len, na_fn_free fn)
         fz_list = fz;
     }
 
+    become(op, &d, 1);
     return d;
 }
 

@@ -12,10 +12,9 @@ fin_test_fn(void *x)
 def (f):
   def x ():
     inline C prepare <<<<
-      return make_obj_with_extra(rcv, 0, fin_test_fn);
+      return grow_obj(&rcv, 0, fin_test_fn);
     >>>>
 
-  x :: (x.prepare)
-  . x
+  x.prepare
 
 export f

@@ -75,7 +75,6 @@ def file ():
       inline C prepare <<<<
         FILE *f;
         char *mode = "rb";
-        datum d;
 
         if (args != nil) die("f:prepare -- too many args");
 
@@ -88,15 +87,14 @@ def file ():
 
         f = fopen(bytes_contents(%(name)s), mode);
 
-        d = make_obj_with_extra(rcv, 1, (na_fn_free) fclose);
+        grow_obj(&rcv, 1, (na_fn_free) fclose);
         printf("made a blank object\n");
 
-        ((pair) d)->datums[2] = f;
-        return d;
+        ((pair) rcv)->datums[2] = f;
+        return rcv;
       >>>>
 
-    f :: (f.prepare)
-    . f
+    f.prepare
 
 intern-syms
 . file

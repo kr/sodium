@@ -18,7 +18,7 @@ datum make_bytes(uint len);
 datum make_bytes_init(const char *s);
 datum make_bytes_init_len(const char *s, int len);
 datum make_compiled_obj(datum env, uint *table);
-datum make_obj_with_extra(datum o, uint len, na_fn_free fn);
+datum grow_obj(datum *o, uint len, na_fn_free fn);
 
 
 datum array_get(datum arr, uint index);
