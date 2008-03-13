@@ -16,10 +16,8 @@ class Parser:
     def __repr__(self): return '[parser]'
 
     def next(self):
-        try:
-            self.peek, self.lexeme, self.p = self.tokens.next()
-        except StopIteration, e:
-            self.peek, self.lexeme, self.p = T.EOF, '', 'EOF'
+        if not self.tokens: return
+        self.peek, self.lexeme, self.p = self.tokens.pop(0)
 
     def xmatch(self, *types):
         peek, lexeme = self.peek, self.lexeme
@@ -226,5 +224,5 @@ def make_invoke(op, first, lexeme, tail):
 def parse(tokens):
     return Parser(tokens).parse()
 
-def read(s):
-    return parse(T.lex(s))
+def read(s, name='<string>'):
+    return parse(T.lex(s, name))

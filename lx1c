@@ -8,7 +8,7 @@ import reader
 import lx
 
 def read_file(n):
-    return reader.read(open(n).read())
+    return reader.read(open(n).read(), n)
 
 opts, args = getopt(sys.argv[1:], 'mco:', [
         'module',
