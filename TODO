@@ -12,6 +12,7 @@
 [+] use become() in C prepare methods
 [ ] add debugging info to byte code files
 [ ] exceptions
+[ ] macros
 [ ] unit testing
 [ ] change name to "sodium"
 [ ] flesh out str methods
@@ -43,5 +44,6 @@
 [ ] reimplement CISCy operations (e.g. variable lookup, call) in bytecode
 [ ] PIC optimization
 [ ] use qhasm or similar to produce native binaries
+[ ] lexer macros
 
 [ ] redesign punctuation messages
