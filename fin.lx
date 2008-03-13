@@ -2,9 +2,13 @@ inline C <<<<
 #include <stdio.h>
 
 static void
-fin_test_fn(void *x)
+fin_test_fn(void *i)
 {
-    printf("success\n");
+    if (i == (void *) 3) {
+        printf("success\n");
+    } else {
+        printf("FAIL %p\n", i);
+    }
 }
 
 >>>>
@@ -12,7 +16,7 @@ fin_test_fn(void *x)
 def (f):
   def x ():
     inline C prepare <<<<
-      return grow_obj(&rcv, 0, fin_test_fn, NULL);
+      return grow_obj(&rcv, 1, (na_fn_free) fin_test_fn, (void *) 3);
     >>>>
 
   x.prepare

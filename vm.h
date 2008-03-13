@@ -31,7 +31,7 @@
 #define OP_LEXICAL_SETBANG 0x18
 #define OP_EXTEND_ENVIRONMENT 0x19
 
-#define REG_COUNT 11
+#define REG_COUNT 12
 /*#define REG_COUNT 32*/
 #define R_NIL 0
 #define R_GLOBAL 1
@@ -44,6 +44,7 @@
 #define R_TMP 8
 #define R_VM0 9
 #define R_VM1 10
+#define R_GC0 11
 
 #define I_OP(i) (((i) >> 27) & 0x1f)
 #define I_D(i) ((i) & 0x7ffffff)

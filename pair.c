@@ -296,16 +296,20 @@ datum
 grow_obj(datum *op, uint len, na_fn_free fn, void *data)
 {
     pair fz;
-    int olen, ex = fn ? FZ_LEN : 0;
+    int olen, ex = fn ? 1 + FZ_LEN : 0;
     datum d, o = *op;
 
-    if (!obj_tag_matches(o)) return nil;
+    if (!obj_tag_matches(o)) die("grow_obj -- *op is not a datum");
+
     olen = DATUM_LEN(((pair)o)->info) + len;
+    regs[R_GC0] = o;
     d = internal_cons(DATUM_TYPE_OBJ, olen + ex, car(o), cdr(o));
+    o = *op = regs[R_GC0];
+    regs[R_GC0] = nil;
     if (len) ((pair) d)->datums[2] = data;
     if (fn) {
         ((pair) d)->info = DATUM_INFO(DATUM_TYPE_OBJ, olen);
-        fz = (pair) d + olen;
+        fz = (pair) d + 1 + olen;
         fz->info = DATUM_INFO(DATUM_TYPE_FZ, FZ_LEN);
         fz->datums[0] = fn;
         fz->datums[1] = fz_list;
