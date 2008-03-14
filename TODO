@@ -10,6 +10,7 @@
 [+] fix finalization
 [+] fix return linkage for the "call" function
 [+] use become() in C prepare methods
+[ ] IMESS and SMESS shouldn't show through into eval
 [ ] add debugging info to byte code files
 [ ] exceptions
 [ ] macros
