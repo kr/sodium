@@ -277,3 +277,12 @@ def (send rcv msg args):
         make-and-schedule-task [call rcv msg args]
 
 def *tasks* (make-queue)
+
+def (process-tasks):
+  if (not *tasks*.empty?): do:
+      def task (*tasks*.remove!)
+      task
+      # if there was an error
+      # task.break!
+      process-tasks
+

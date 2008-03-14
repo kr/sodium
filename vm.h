@@ -78,7 +78,7 @@ datum report_error(datum args);
 
 extern datum regs[REG_COUNT];
 extern pair stack;
-extern datum genv, tasks;
+extern datum genv, task_processor;
 extern datum to_import, to_start, modules;
 
 extern datum run_sym, ok_sym, emptyp_sym, remove_sym;

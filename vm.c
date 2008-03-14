@@ -21,7 +21,7 @@ size_t static_datums_cap = 0, static_datums_fill = 0, static_datums_base;
 
 uint quit_inst[1] = {0x30000000};
 
-datum genv, tasks, regs[REG_COUNT];
+datum genv, task_processor, regs[REG_COUNT];
 pair stack = nil;
 
 #define MAX_INSTR_SETS 50
@@ -755,45 +755,19 @@ call(datum o, datum m, pair a)
     }
 }
 
-static int
-tasks_empty()
-{
-    return truep(call(tasks, emptyp_sym, nil));
-}
-
-static datum
-next_task()
-{
-    return call(tasks, remove_sym, nil);
-}
-
-static jmp_buf jb;
-static datum break_sym;
-
 datum
 report_error(datum args)
 {
-    if (jb) longjmp(jb, (uint) args);
-    return die1("error outside of a promise fulfilment", args);
-    /*
-    printf("error outside of a promise fulfilment");
+    printf("error ");
     pr(args);
+    die("error");
     return nil;
-    */
 }
 
 static void
 process_tasks()
 {
-    while (!tasks_empty()) {
-        datum err_args, task = next_task();
-        if ((err_args = (datum) setjmp(jb))) {
-            call(task, break_sym, err_args);
-        } else {
-            call(task, run_sym, nil);
-            setjmp(jb);
-        }
-    }
+    call(task_processor, run_sym, nil);
 }
 
 static datum
@@ -883,7 +857,6 @@ main(int argc, char **argv)
     genv = cons(nil, nil);
 
     run_sym = intern("run");
-    break_sym = intern("break!");
     ok_sym = intern("ok");
     emptyp_sym = intern("empty?");
     remove_sym = intern("remove!");
@@ -902,7 +875,7 @@ main(int argc, char **argv)
 
     /* must do this lookup before loading any other modules, because they might
      * use it */
-    tasks = lookup(genv, intern("*tasks*"));
+    task_processor = lookup(genv, intern("process-tasks"));
 
     /* load the main file */
     main_addr = load_module_file(argv[1]);

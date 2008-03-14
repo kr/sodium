@@ -153,7 +153,7 @@ gc(int c, ...)
     }
 
     stack = relocate(stack);
-    tasks = relocate(tasks);
+    task_processor = relocate(task_processor);
     genv = relocate(genv);
     to_import = relocate(to_import);
     to_start = relocate(to_start);
