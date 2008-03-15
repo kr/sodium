@@ -13,7 +13,7 @@
 #define OP_QUIT 0x06
 #define OP_GOTO_LABEL 0x07
 #define OP_MOV 0x08
-#define OP_COMPILED_OBJ_ENV 0x09
+#define OP_CLOSURE_ENV 0x09
 #define OP_LIST 0x0a
 #define OP_LOAD_ADDR 0x0b
 #define OP_BF 0x0c
@@ -21,8 +21,8 @@
 #define OP_LOAD_IMM 0x0e
 #define OP_CONS 0x0f
 #define OP_APPLY_PRIM_METH 0x10
-#define OP_MAKE_COMPILED_OBJ 0x11
-#define OP_COMPILED_OBJECT_METHOD 0x12
+#define OP_MAKE_CLOSURE 0x11
+#define OP_CLOSURE_METHOD 0x12
 #define OP_SETBANG 0x13
 #define OP_MAKE_ARRAY 0x14
 #define OP_DEFINE 0x15

@@ -11,14 +11,14 @@ datum int_surrogate, str_surrogate, pair_surrogate, nil_surrogate,
       symbol_surrogate;
 
 static datum
-get_primitive_surrogate(datum obj)
+get_primitive_surrogate(datum d)
 {
-    if (obj == nil) return nil_surrogate;
-    if (intp(obj)) return int_surrogate;
-    if (symbolp(obj)) return symbol_surrogate;
+    if (d == nil) return nil_surrogate;
+    if (intp(d)) return int_surrogate;
+    if (symbolp(d)) return symbol_surrogate;
 
-    if (bytesp(obj)) return str_surrogate;
-    if (pairp(obj)) return pair_surrogate;
+    if (bytesp(d)) return str_surrogate;
+    if (pairp(d)) return pair_surrogate;
     return nil;
 }
 
@@ -33,53 +33,53 @@ replace_1st_of_1st(datum env, datum x)
 }
 
 datum
-compiled_obj_env(datum obj)
+closure_env(datum d)
 {
     datum surrogate;
 
-    if ((surrogate = get_primitive_surrogate(obj))) {
-        datum env = compiled_obj_env(surrogate);
-        return replace_1st_of_1st(env, obj);
+    if ((surrogate = get_primitive_surrogate(d))) {
+        datum env = closure_env(surrogate);
+        return replace_1st_of_1st(env, d);
     }
 
-    if (!objp(obj)) die1("not a compiled object", obj);
-    return car(obj);
+    if (!closurep(d)) die1("not a closure", d);
+    return car(d);
 }
 
 uint *
-compiled_obj_method(datum obj, datum name)
+closure_method(datum d, datum name)
 {
     int n;
     datum *table;
     datum surrogate;
 
-    if ((surrogate = get_primitive_surrogate(obj))) {
-        return compiled_obj_method(surrogate, name);
+    if ((surrogate = get_primitive_surrogate(d))) {
+        return closure_method(surrogate, name);
     }
 
-    table = (datum *) cdr(obj);
+    table = (datum *) cdr(d);
 
     n = datum2int(*(table++));
     for (; n--; table += 2) {
         if (*table == name) return (uint *) *(table + 1);
     }
-    return die1("compiled_obj_method -- no such method", name);
+    return die1("closure_method -- no such method", name);
 }
 
 int
-compiled_obj_has_method(datum obj, datum name)
+closure_has_method(datum d, datum name)
 {
     int n;
     datum *table;
     datum surrogate;
 
-    if ((surrogate = get_primitive_surrogate(obj))) {
-        return compiled_obj_has_method(surrogate, name);
+    if ((surrogate = get_primitive_surrogate(d))) {
+        return closure_has_method(surrogate, name);
     }
 
-    if (!objp(obj)) die1("compiled_obj_has_method -- bad object", obj);
+    if (!closurep(d)) die1("closure_has_method -- bad closure", d);
 
-    table = (datum *) cdr(obj);
+    table = (datum *) cdr(d);
 
     n = datum2int(*(table++));
     for (; n--; table += 2) {
@@ -89,36 +89,36 @@ compiled_obj_has_method(datum obj, datum name)
 }
 
 int
-compiled_objs_same_type(datum obj1, datum obj2)
+closures_same_type(datum a, datum b)
 {
     datum surrogate;
 
-    if ((surrogate = get_primitive_surrogate(obj1))) {
-      return compiled_objs_same_type(surrogate, obj2);
+    if ((surrogate = get_primitive_surrogate(a))) {
+      return closures_same_type(surrogate, b);
     }
 
-    if ((surrogate = get_primitive_surrogate(obj2))) {
-      return compiled_objs_same_type(obj1, surrogate);
+    if ((surrogate = get_primitive_surrogate(b))) {
+      return closures_same_type(a, surrogate);
     }
 
-    return cdr(obj1) == cdr(obj2);
+    return cdr(a) == cdr(b);
 }
 
 datum
-compiled_obj_methods(datum obj)
+closure_methods(datum d)
 {
     int n;
     datum *table;
     datum surrogate, methods = nil;
 
-    if ((surrogate = get_primitive_surrogate(obj))) {
-        return compiled_obj_methods(surrogate);
+    if ((surrogate = get_primitive_surrogate(d))) {
+        return closure_methods(surrogate);
     }
 
-    if (!objp(obj)) die1("compiled_obj_methods -- bad object", obj);
+    if (!closurep(d)) die1("closure_methods -- bad closure", d);
 
     /* This pointer is stable. A garbage collection will not invalidate it */
-    table = (datum *) cdr(obj);
+    table = (datum *) cdr(d);
 
     n = datum2int(*(table++));
     for (; n--; table += 2) methods = cons(*table, methods);

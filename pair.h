@@ -17,8 +17,8 @@ datum make_array(uint len);
 datum make_bytes(uint len);
 datum make_bytes_init(const char *s);
 datum make_bytes_init_len(const char *s, int len);
-datum make_compiled_obj(datum env, uint *table);
-datum grow_obj(datum *o, uint len, na_fn_free fn, void *data);
+datum make_closure(datum env, uint *table);
+datum grow_closure(datum *o, uint len, na_fn_free fn, void *data);
 
 
 datum array_get(datum arr, uint index);
@@ -63,7 +63,7 @@ void init_mem(void);
 /*bool*/
 int array_tag_matches(datum arr);
 int bytes_tag_matches(datum str);
-int obj_tag_matches(datum o);
+int closure_tag_matches(datum o);
 int broken_heart_tag_matches(datum bh);
 
 /*bool*/
@@ -71,13 +71,11 @@ int broken_heart_tag_matches(datum bh);
 
 #define bytesp(x) (in_pair_range(x) && bytes_tag_matches(x))
 
-#define objp(x) (in_pair_range(x) && obj_tag_matches(x))
+#define closurep(x) (in_pair_range(x) && closure_tag_matches(x))
 
 #define broken_heartp(x) (in_old_pair_range(x) && broken_heart_tag_matches(x))
 
 #define nil ((pair)0)
-
-void dump_obj(datum o);
 
 void become(datum *a, datum *b, int keep_b);
 

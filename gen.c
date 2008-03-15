@@ -30,20 +30,20 @@ die1(const char *m, datum d)
 }
 
 datum
-memq(datum obj, datum list)
+memq(datum d, datum list)
 {
     for (; list; list = cdr(list)) {
-        if (car(list) == obj) return list;
+        if (car(list) == d) return list;
     }
     return nil; /* false */
 }
 
 datum
-assq(datum obj, datum alist)
+assq(datum d, datum alist)
 {
     for (; alist; alist = cdr(alist)) {
         if (!pairp(car(alist))) die("assq -- alist must be a list of pairs");
-        if (caar(alist) == obj) return car(alist);
+        if (caar(alist) == d) return car(alist);
     }
     return nil; /* false */
 }

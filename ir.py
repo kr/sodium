@@ -428,11 +428,11 @@ def GOTO_LABEL(target_label): return OP_L(goto_label_s, target_label)
 # Two register instructions
 
 mov_s = S('MOV')
-compiled_obj_env_s = S('COMPILED_OBJ_ENV')
+closure_env_s = S('CLOSURE_ENV')
 list_s = S('LIST')
 def MOV(target_reg, src_reg): return OP_RR(mov_s, target_reg, src_reg)
-def COMPILED_OBJ_ENV(target_reg, proc_reg):
-    return OP_RR(compiled_obj_env_s, target_reg, proc_reg)
+def CLOSURE_ENV(target_reg, proc_reg):
+    return OP_RR(closure_env_s, target_reg, proc_reg)
 def LIST(target_reg, val_reg): return OP_RR(list_s, target_reg, val_reg)
 
 
@@ -455,21 +455,21 @@ def MAKE_ARRAY(target_reg, len): return OP_RD(make_array_s, target_reg, len)
 # Three register instructions
 
 cons_s = S('CONS')
-make_compiled_obj_s = S('MAKE_COMPILED_OBJ')
+make_closure_s = S('MAKE_CLOSURE')
 def CONS(target_reg, car_reg, cdr_reg):
     return OP_RRR(cons_s, target_reg, car_reg, cdr_reg)
-def MAKE_COMPILED_OBJ(target_reg, env_reg, label_reg):
-    return OP_RRR(make_compiled_obj_s, target_reg, env_reg, label_reg)
+def MAKE_CLOSURE(target_reg, env_reg, label_reg):
+    return OP_RRR(make_closure_s, target_reg, env_reg, label_reg)
 
 
 # Two register, one symbol instructions
 
-compiled_object_method_s = S('COMPILED_OBJECT_METHOD')
+closure_method_s = S('CLOSURE_METHOD')
 set__s = S('SET_')
 define_s = S('DEFINE')
 lookup_s = S('LOOKUP')
-def COMPILED_OBJECT_METHOD(target_reg, obj_reg, name):
-    return OP_RRD(compiled_object_method_s, target_reg, obj_reg, name)
+def CLOSURE_METHOD(target_reg, obj_reg, name):
+    return OP_RRD(closure_method_s, target_reg, obj_reg, name)
 def SET_(env_reg, val_reg, name):
     return OP_RRD(set__s, env_reg, val_reg, name)
 def DEFINE(env_reg, val_reg, name):
@@ -507,7 +507,7 @@ all_ops = (
     quit_s,
     goto_label_s,
     mov_s,
-    compiled_obj_env_s,
+    closure_env_s,
     list_s,
     load_addr_s,
     bf_s,
@@ -515,8 +515,8 @@ all_ops = (
     load_imm_s,
     cons_s,
     apply_prim_meth_s,
-    make_compiled_obj_s,
-    compiled_object_method_s,
+    make_closure_s,
+    closure_method_s,
     set__s,
     make_array_s,
     define_s,

@@ -44,7 +44,7 @@ static char *instr_names[32] = {
     "OP_QUIT",
     "OP_GOTO_LABEL",
     "OP_MOV",
-    "OP_COMPILED_OBJ_ENV",
+    "OP_CLOSURE_ENV",
     "OP_LIST",
     "OP_LOAD_ADDR",
     "OP_BF",
@@ -52,8 +52,8 @@ static char *instr_names[32] = {
     "OP_LOAD_IMM",
     "OP_CONS",
     "OP_APPLY_PRIM_METH",
-    "OP_MAKE_COMPILED_OBJ",
-    "OP_COMPILED_OBJECT_METHOD",
+    "OP_MAKE_CLOSURE",
+    "OP_CLOSURE_METHOD",
     "OP_SETBANG",
     "OP_MAKE_ARRAY",
     "OP_DEFINE",
@@ -339,7 +339,7 @@ link(uint *insts, uint inst_count, uint *lab_offsets)
     for (pc = &insts[0]; pc < &insts[inst_count]; ++pc) {
         register uint inst = *pc;
         switch (I_OP(inst)) {
-            case OP_COMPILED_OBJECT_METHOD:
+            case OP_CLOSURE_METHOD:
             case OP_SETBANG:
             case OP_DEFINE:
             case OP_LOOKUP:
@@ -502,10 +502,10 @@ start(uint *start_addr)
                 rb = I_RR(inst);
                 regs[ra] = regs[rb];
                 break;
-            case OP_COMPILED_OBJ_ENV:
+            case OP_CLOSURE_ENV:
                 ra = I_R(inst);
                 rb = I_RR(inst);
-                regs[ra] = compiled_obj_env(regs[rb]);
+                regs[ra] = closure_env(regs[rb]);
                 break;
             case OP_LIST:
                 ra = I_R(inst);
@@ -524,7 +524,7 @@ start(uint *start_addr)
             case OP_BPRIM:
                 ra = I_R(inst);
                 tmp = (uint *) *++pc;
-                //if (!objp(regs[ra])) pc = tmp - 1;
+                //if (!closurep(regs[ra])) pc = tmp - 1;
                 if (!addrp(regs[ra])) pc = tmp - 1;
                 break;
             case OP_LOAD_IMM:
@@ -551,18 +551,18 @@ start(uint *start_addr)
                 /*regs[ra] = apply_prim_meth((prim_meth) regs[rb], regs[rc], regs[rd]);*/
                 regs[ra] = ((prim_meth) regs[rb])(regs[rc], regs[rd]);
                 break;
-            case OP_MAKE_COMPILED_OBJ:
+            case OP_MAKE_CLOSURE:
                 ra = I_R(inst);
                 rb = I_RR(inst);
                 rc = I_RRR(inst);
-                regs[ra] = make_compiled_obj(regs[rb], regs[rc]);
+                regs[ra] = make_closure(regs[rb], regs[rc]);
                 break;
-            case OP_COMPILED_OBJECT_METHOD:
+            case OP_CLOSURE_METHOD:
                 ra = I_R(inst);
                 rb = I_RR(inst);
                 di = I_RRD(inst);
                 d = static_datums[di];
-                regs[ra] = (datum) compiled_obj_method(regs[rb], d);
+                regs[ra] = (datum) closure_method(regs[rb], d);
                 break;
             case OP_SETBANG:
                 ra = I_R(inst);
@@ -743,7 +743,7 @@ call(datum o, datum m, pair a)
     if (!symbolp(m)) die1("call -- not a symbol", m);
     regs[R_PROC] = o;
     regs[R_ARGL] = a;
-    regs[R_VM0] = compiled_obj_method(regs[R_PROC], m);
+    regs[R_VM0] = closure_method(regs[R_PROC], m);
     if (addrp(regs[R_VM0])) {
         stack = cons(regs[R_CONTINUE], stack); // save
         regs[R_CONTINUE] = quit_inst;
@@ -792,7 +792,7 @@ make_modules_available()
     modules_available = 1;
 }
 
-/* a module entry: (name obj (promise . sink)) */
+/* a module entry: (name datum (promise . sink)) */
 static datum
 make_module_entry(datum name)
 {
@@ -806,12 +806,12 @@ make_module_entry(datum name)
 }
 
 static datum
-make_resolved_module_entry(datum name, datum obj)
+make_resolved_module_entry(datum name, datum d)
 {
     datum x;
 
     x = cons(nil, nil);
-    x = cons(obj, x);
+    x = cons(d, x);
     x = cons(name, x);
     return x;
 }

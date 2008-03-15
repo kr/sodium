@@ -179,7 +179,7 @@ def compile_obj(exp, target, linkage, cenv):
             end_with_linkage(meth_linkage,
                 make_ir_seq((env_r,), (target, val_r),
                     LOAD_ADDR(val_r, obj_table),
-                    MAKE_COMPILED_OBJ(target, env_r, val_r))),
+                    MAKE_CLOSURE(target, env_r, val_r))),
             tack_on_ir_seq(m_tabl_code, m_body_code)),
         after_obj)
 
@@ -217,7 +217,7 @@ def compile_meth_body(meth, meth_entry, cenv):
     return append_ir_seqs(
         make_ir_seq((env_r, proc_r, argl_r), (env_r, tmp_r),
             meth_entry,
-            COMPILED_OBJ_ENV(env_r, proc_r),
+            CLOSURE_ENV(env_r, proc_r),
             LOAD_IMM(tmp_r, formals),
             EXTEND_ENVIRONMENT(env_r, env_r, argl_r, tmp_r)),
         compile_sequence(body, val_r, return_s, cenv))
@@ -228,7 +228,7 @@ def compile_inline_meth_body(meth, entry, cenv):
             self.cenv = cenv
         def __getitem__(self, k):
             addr = find_variable(S(k), self.cenv)
-            return 'lexical_lookup(compiled_obj_env(rcv), %d, %d)' % addr
+            return 'lexical_lookup(closure_env(rcv), %d, %d)' % addr
 
     c_def = '''static datum
 %(name)s(datum rcv, datum args)
@@ -324,7 +324,7 @@ def compile_procedure_call(target, linkage, cenv, message):
   if linkage is next_s: compiled_linkage = after_call
   return \
   append_ir_seqs(make_ir_seq((proc_r,), (addr_r,),
-                      COMPILED_OBJECT_METHOD(addr_r, proc_r, message),
+                      CLOSURE_METHOD(addr_r, proc_r, message),
                       BPRIM(addr_r, primitive_branch)),
                  parallel_ir_seqs(
                      append_ir_seqs(

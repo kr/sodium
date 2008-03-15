@@ -38,11 +38,11 @@ def *modules* '()
 
 def call ():
   inline C run <<<<
-    datum obj, msg, argl;
-    obj = checked_car(args);
+    datum d, msg, argl;
+    d = checked_car(args);
     msg = checked_cadr(args);
     argl = checked_caddr(args);
-    return call(obj, msg, argl);
+    return call(d, msg, argl);
   >>>>
 
 def error ():
@@ -52,13 +52,13 @@ def error ():
 
 def inspect ():
   inline C has-method? <<<<
-    return (datum) compiled_obj_has_method(car(args), cadr(args));
+    return (datum) closure_has_method(car(args), cadr(args));
   >>>>
   inline C same-type? <<<<
-    return (datum) compiled_objs_same_type(car(args), cadr(args));
+    return (datum) closures_same_type(car(args), cadr(args));
   >>>>
   inline C methods <<<<
-    return (datum) compiled_obj_methods(car(args));
+    return (datum) closure_methods(car(args));
   >>>>
 
 # TODO replace this with 

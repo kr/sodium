@@ -8,10 +8,10 @@
 extern datum int_surrogate, str_surrogate, pair_surrogate, nil_surrogate,
              symbol_surrogate;
 
-datum compiled_obj_env(datum obj);
-uint *compiled_obj_method(datum obj, datum name);
-int compiled_obj_has_method(datum obj, datum name);
-int compiled_objs_same_type(datum obj1, datum obj2);
-datum compiled_obj_methods(datum obj);
+datum closure_env(datum d);
+uint *closure_method(datum d, datum name);
+int closure_has_method(datum d, datum name);
+int closures_same_type(datum a, datum b);
+datum closure_methods(datum d);
 
 #endif /*obj_h*/

@@ -16,7 +16,7 @@ fin_test_fn(void *i)
 def (f):
   def x ():
     inline C prepare <<<<
-      return grow_obj(&rcv, 1, (na_fn_free) fin_test_fn, (void *) 3);
+      return grow_closure(&rcv, 1, (na_fn_free) fin_test_fn, (void *) 3);
     >>>>
 
   x.prepare

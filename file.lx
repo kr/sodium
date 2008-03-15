@@ -87,7 +87,7 @@ def file ():
 
         f = fopen(bytes_contents(%(name)s), mode);
 
-        return grow_obj(&rcv, 1, (na_fn_free) fclose, f);
+        return grow_closure(&rcv, 1, (na_fn_free) fclose, f);
       >>>>
 
     f.prepare

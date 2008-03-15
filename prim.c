@@ -44,8 +44,8 @@ prx(datum d)
         printf("(");
         pr_bare(d, "");
         printf(")");
-    } else if (objp(d)) {
-        printf("<obj %p>", d);
+    } else if (closurep(d)) {
+        printf("<closure %p>", d);
     } else if (broken_heartp(d)) {
         printf("<broken heart %p>:\n", car(d));
         prx(car(d));

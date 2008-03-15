@@ -68,7 +68,7 @@ def re ():
         re = pcre_compile(pattern, opts, &error, &erroffset, NULL);
         if (re == NULL) return nil;
 
-        return grow_obj(&rcv, 1, free, re);
+        return grow_closure(&rcv, 1, free, re);
       >>>>
 
     r.prepare

@@ -16,7 +16,7 @@ static datum become_a = nil, become_b = nil;
 
 // int /*bool*/
 // pairp(datum x) {
-//     return objp(x) &&
+//     return closurep(x) &&
 //         (((pair)x) >= busy_pairs) &&
 //         (((pair)x) < &busy_pairs[HEAP_SIZE]);
 // }
@@ -38,7 +38,7 @@ init_mem(void)
 #define DATUM_TYPE(i) ((i) >> 24)
 #define DATUM_TYPE_ARRAY 0x01
 #define DATUM_TYPE_BYTES 0x02
-#define DATUM_TYPE_OBJ 0x03
+#define DATUM_TYPE_CLOSURE 0x03
 #define DATUM_TYPE_FZ 0x05
 #define DATUM_TYPE_BROKEN_HEART 0xff
 #define DATUM_LEN(i) ((i) & 0x00ffffff)
@@ -46,31 +46,6 @@ init_mem(void)
 #define IS_BROKEN_HEART(o) (DATUM_TYPE((o)->info) == DATUM_TYPE_BROKEN_HEART)
 
 #define FZ_LEN 3
-
-void
-dump_obj(datum o)
-{
-    static int rec = 0;
-    int i, len = DATUM_LEN(((pair) o)->info);
-    printf("\nbusy_pair base: %p    busy_pair top: %p\n",
-           busy_pairs, &busy_pairs[HEAP_SIZE]);
-    if (old_pairs) {
-        printf("old_pair base: %p    old_pair top: %p\n",
-               old_pairs, &old_pairs[HEAP_SIZE]);
-    } else {
-        printf("no old_pair\n");
-    }
-
-    printf("  tag: %d   len: %d\n", DATUM_TYPE(((pair) o)->info), len);
-    if (rec) return;
-    rec = 1;
-    if (len > 10) len = 10;
-    for (i = 0; i < len; i++) {
-        printf("  # item %d: ", i);
-        pr(((pair) o)->datums[i]);
-    }
-    rec = 0;
-}
 
 inline pair
 relocate(pair p)
@@ -191,7 +166,7 @@ gc(int c, ...)
                     ++scan_index;
                 }
                 break;
-            case DATUM_TYPE_OBJ:
+            case DATUM_TYPE_CLOSURE:
             case DATUM_TYPE_FZ:
                 np->datums[0] = relocate(np->datums[0]);
                 np->datums[1] = relocate(np->datums[1]);
@@ -291,22 +266,22 @@ make_bytes(uint bytes_len)
 }
 
 datum
-grow_obj(datum *op, uint len, na_fn_free fn, void *data)
+grow_closure(datum *op, uint len, na_fn_free fn, void *data)
 {
     pair fz;
     int olen, ex = fn ? 1 + FZ_LEN : 0;
     datum d, o = *op;
 
-    if (!obj_tag_matches(o)) die("grow_obj -- *op is not a datum");
+    if (!closure_tag_matches(o)) die("grow_closure -- *op is not a datum");
 
     olen = DATUM_LEN(((pair)o)->info) + len;
     regs[R_GC0] = o;
-    d = internal_cons(DATUM_TYPE_OBJ, olen + ex, car(o), cdr(o));
+    d = internal_cons(DATUM_TYPE_CLOSURE, olen + ex, car(o), cdr(o));
     o = *op = regs[R_GC0];
     regs[R_GC0] = nil;
     if (len) ((pair) d)->datums[2] = data;
     if (fn) {
-        ((pair) d)->info = DATUM_INFO(DATUM_TYPE_OBJ, olen);
+        ((pair) d)->info = DATUM_INFO(DATUM_TYPE_CLOSURE, olen);
         fz = (pair) d + 1 + olen;
         fz->info = DATUM_INFO(DATUM_TYPE_FZ, FZ_LEN);
         fz->datums[0] = fn;
@@ -320,9 +295,9 @@ grow_obj(datum *op, uint len, na_fn_free fn, void *data)
 }
 
 datum
-make_compiled_obj(datum env, uint *table)
+make_closure(datum env, uint *table)
 {
-    return internal_cons(DATUM_TYPE_OBJ, 2, env, (datum) table);
+    return internal_cons(DATUM_TYPE_CLOSURE, 2, env, (datum) table);
 }
 
 datum
@@ -408,10 +383,10 @@ bytes_tag_matches(datum arr)
 }
 
 int
-obj_tag_matches(datum o)
+closure_tag_matches(datum o)
 {
     pair p = (pair) o;
-    return DATUM_TYPE(p->info) == DATUM_TYPE_OBJ;
+    return DATUM_TYPE(p->info) == DATUM_TYPE_CLOSURE;
 }
 
 int
