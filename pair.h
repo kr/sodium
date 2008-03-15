@@ -64,7 +64,6 @@ void init_mem(void);
 int array_tag_matches(datum arr);
 int bytes_tag_matches(datum str);
 int obj_tag_matches(datum o);
-int undead_tag_matches(datum o);
 int broken_heart_tag_matches(datum bh);
 
 /*bool*/
@@ -73,7 +72,6 @@ int broken_heart_tag_matches(datum bh);
 #define bytesp(x) (in_pair_range(x) && bytes_tag_matches(x))
 
 #define objp(x) (in_pair_range(x) && obj_tag_matches(x))
-#define undeadp(x) (in_pair_range(x) && undead_tag_matches(x))
 
 #define broken_heartp(x) (in_old_pair_range(x) && broken_heart_tag_matches(x))
 

@@ -42,7 +42,7 @@ compiled_obj_env(datum obj)
         return replace_1st_of_1st(env, obj);
     }
 
-    if (!objp(obj) && !undeadp(obj)) die1("not a compiled object", obj);
+    if (!objp(obj)) die1("not a compiled object", obj);
     return car(obj);
 }
 
