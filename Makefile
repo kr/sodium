@@ -1,5 +1,5 @@
-lxmodules := int.lx str.lx pair.lx nil.lx symbol.lx re.lx file.lx fin.lx
-cmodules := vm.c pair.c obj.c gen.c prim.c st.c
+lxmodules := int.lx str.lx array.lx nil.lx symbol.lx re.lx file.lx fin.lx
+cmodules := vm.c mem.c obj.c gen.c prim.c st.c
 sources := $(cmodules) module-index.c prelude.c $(lxmodules:.lx=.lxc.c)
 
 export CFLAGS := -g -pg -Wall -Werror

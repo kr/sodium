@@ -2,7 +2,7 @@
 #define vm_h
 
 #include <stdlib.h>
-#include "pair.h"
+#include "mem.h"
 
 #define OP_NOP 0x00
 #define OP_DATUM 0x01
@@ -73,11 +73,11 @@ datum compile_module(datum name);
 datum lexical_lookup(datum env, uint level, uint index);
 datum lexical_setbang(datum env, uint level, uint index, datum val);
 datum extend_environment(datum env, datum argl, datum formals);
-datum call(datum o, datum m, pair a);
+datum call(datum o, datum m, chunk a);
 datum report_error(datum args);
 
 extern datum regs[REG_COUNT];
-extern pair stack;
+extern chunk stack;
 extern datum genv, task_processor;
 extern datum to_import, to_start, modules;
 

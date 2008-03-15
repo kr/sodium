@@ -1,13 +1,13 @@
 #include <stdio.h>
 #include "gen.h"
 #include "obj.h"
-#include "pair.h"
+#include "mem.h"
 #include "st.h"
 #include "prim.h"
 
 #include "vm.h"
 
-datum int_surrogate, str_surrogate, pair_surrogate, nil_surrogate,
+datum int_surrogate, str_surrogate, array_surrogate, nil_surrogate,
       symbol_surrogate;
 
 static datum
@@ -18,7 +18,7 @@ get_primitive_surrogate(datum d)
     if (symbolp(d)) return symbol_surrogate;
 
     if (bytesp(d)) return str_surrogate;
-    if (pairp(d)) return pair_surrogate;
+    if (arrayp(d)) return array_surrogate;
     return nil;
 }
 

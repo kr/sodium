@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "gen.h"
-#include "pair.h"
+#include "mem.h"
 #include "obj.h"
 #include "st.h"
 #include "prim.h"
@@ -42,7 +42,7 @@ datum
 assq(datum d, datum alist)
 {
     for (; alist; alist = cdr(alist)) {
-        if (!pairp(car(alist))) die("assq -- alist must be a list of pairs");
+        if (!arrayp(car(alist))) die("assq -- alist must be a list of pairs");
         if (caar(alist) == d) return car(alist);
     }
     return nil; /* false */

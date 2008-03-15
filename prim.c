@@ -17,7 +17,7 @@ pr_bare(datum d, char *sp)
     fputs(sp, stdout);
     prx(car(d));
     len = array_len(d);
-    if ((len == 2) && (pairp(cdr(d)) || cdr(d) == nil)) {
+    if ((len == 2) && (arrayp(cdr(d)) || cdr(d) == nil)) {
         pr_bare(cdr(d), " ");
     } else {
         for (i = 1; i < len; i++) {
@@ -40,7 +40,7 @@ prx(datum d)
         pr_symbol(d);
     } else if (bytesp(d)) {
         printf("%s", bytes_contents(d));
-    } else if (pairp(d)) {
+    } else if (arrayp(d)) {
         printf("(");
         pr_bare(d, "");
         printf(")");

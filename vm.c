@@ -6,7 +6,7 @@
 #include <setjmp.h>
 #include "vm.h"
 #include "gen.h"
-#include "pair.h"
+#include "mem.h"
 #include "obj.h"
 #include "prim.h"
 #include "st.h"
@@ -22,7 +22,7 @@ size_t static_datums_cap = 0, static_datums_fill = 0, static_datums_base;
 uint quit_inst[1] = {0x30000000};
 
 datum genv, task_processor, regs[REG_COUNT];
-pair stack = nil;
+chunk stack = nil;
 
 #define MAX_INSTR_SETS 50
 uint *instr_bases[MAX_INSTR_SETS], *instr_ends[MAX_INSTR_SETS];
@@ -206,7 +206,7 @@ static datum
 load_list(FILE *f)
 {
     int i = 0;
-    pair l = nil;
+    chunk l = nil;
     char c = readc(f);
     while (c != ')') {
         int n = read_int(f);
@@ -222,7 +222,7 @@ static datum
 init_list(uint value)
 {
     spair p = (spair) value;
-    pair l = nil;
+    chunk l = nil;
     datum x;
 
     while (p) {
@@ -398,7 +398,7 @@ setbang(datum env, datum val, datum name)
 void
 define(datum env, datum val, datum name)
 {
-    pair p;
+    chunk p;
     datum vals, names;
     if (env != genv) die("define -- env ought to be the global env\n");
     vals = car(env);
@@ -738,7 +738,7 @@ start_body(uint *start_addr)
 }
 
 datum
-call(datum o, datum m, pair a)
+call(datum o, datum m, chunk a)
 {
     if (!symbolp(m)) die1("call -- not a symbol", m);
     regs[R_PROC] = o;
@@ -864,7 +864,7 @@ main(int argc, char **argv)
     /* load the very basic builtin modules */
     start_body(load_module("int"));
     start_body(load_module("str"));
-    start_body(load_module("pair"));
+    start_body(load_module("array"));
     start_body(load_module("nil"));
     start_body(load_module("symbol"));
 

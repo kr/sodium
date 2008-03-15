@@ -1,0 +1,73 @@
+
+def array ():
+  inline C set-cdr! <<<<
+    chunk p = rcv;
+
+    if (args == nil) die("array.set-cdr! -- not enough args");
+    cdr(p) = car(args);
+    return ok_sym;
+  >>>>
+
+  inline C car <<<<
+    if (args != nil) die("array.car -- too many args");
+    return car(rcv);
+  >>>>
+
+  inline C cdr <<<<
+    if (args != nil) die("array.cdr -- too many args");
+    return cdr(rcv);
+  >>>>
+
+  inline C get <<<<
+    int i;
+
+    if (args == nil) die("array.get -- not enough args");
+    if (!intp(car(args))) die1("array.get -- not an int", car(args));
+
+    i = datum2int(car(args));
+    return array_get(rcv, i);
+  >>>>
+
+  inline C put! <<<<
+    int i;
+
+    if (args == nil) die("array.put! -- not enough args");
+    if (!intp(car(args))) die1("array.put! -- not an int", car(args));
+
+    i = datum2int(car(args));
+    array_put(rcv, i, cadr(args));
+    return ok_sym;
+  >>>>
+
+  (map f):
+    cons (f (array.car)) ((array.cdr).map f)
+
+  (filter f):
+    def rest ((array.cdr).filter f)
+    if (f (array.car)):
+      cons (array.car) rest
+      . rest
+
+  (run f):
+    f (array.car)
+    (array.cdr) f
+    . 'ok
+
+  (= p):
+    if ((array.car) = (p.car)):
+      if ((array.cdr) = (p.cdr)) true false
+      . false
+
+  (assq name):
+    if (is? (array.car.car) name) (array.car) (array.cdr.assq name)
+
+def install-array ():
+  inline C run <<<<
+    if (args == nil) die("install-array -- not enough args");
+    array_surrogate = car(args);
+    return ok_sym;
+  >>>>
+
+install-array array
+
+. '()

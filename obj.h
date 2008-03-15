@@ -3,9 +3,9 @@
 
 #include <stdlib.h>
 #include "gen.h"
-#include "pair.h"
+#include "mem.h"
 
-extern datum int_surrogate, str_surrogate, pair_surrogate, nil_surrogate,
+extern datum int_surrogate, str_surrogate, array_surrogate, nil_surrogate,
              symbol_surrogate;
 
 datum closure_env(datum d);

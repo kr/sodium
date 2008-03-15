@@ -2,37 +2,37 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
-#include "pair.h"
+#include "mem.h"
 #include "vm.h"
 #include "obj.h"
 #include "prim.h"
 #include "config.h"
 
 int gc_in_progress = 0, become_keep_b = 0;
-struct pair *busy_pairs, *old_pairs, *fz_list = nil;
-static struct pair *free_pairs;
+struct chunk *busy_chunks, *old_chunks, *fz_list = nil;
+static struct chunk *free_chunks;
 size_t free_index = 0, scan_index = 0;
 static datum become_a = nil, become_b = nil;
 
 // int /*bool*/
-// pairp(datum x) {
+// arrayp(datum x) {
 //     return closurep(x) &&
-//         (((pair)x) >= busy_pairs) &&
-//         (((pair)x) < &busy_pairs[HEAP_SIZE]);
+//         (((chunk)x) >= busy_chunks) &&
+//         (((chunk)x) < &busy_chunks[HEAP_SIZE]);
 // }
 
 void
 init_mem(void)
 {
-    busy_pairs = malloc(sizeof(struct pair) * HEAP_SIZE);
+    busy_chunks = malloc(sizeof(struct chunk) * HEAP_SIZE);
 #if GC_DEBUG
-    printf("busy_pairs = %p\n", busy_pairs);
+    printf("busy_chunks = %p\n", busy_chunks);
 #endif
-    if (!busy_pairs) die("init_mem -- out of memory");
+    if (!busy_chunks) die("init_mem -- out of memory");
     free_index = 0;
 }
 
-#define cgr(x) (((pair) (x))->datums[2])
+#define cgr(x) (((chunk) (x))->datums[2])
 #define CLIP_LEN(l) ((l) & 0x00ffffff)
 #define DATUM_INFO(t,l) (((t)<<24)|CLIP_LEN(l))
 #define DATUM_TYPE(i) ((i) >> 24)
@@ -47,13 +47,13 @@ init_mem(void)
 
 #define FZ_LEN 3
 
-inline pair
-relocate(pair p)
+inline chunk
+relocate(chunk p)
 {
-    pair np;
+    chunk np;
     int len;
 
-    if (!in_pair_range(p)) return p;
+    if (!in_chunk_range(p)) return p;
 
 #if GC_DEBUG_BH
     if (IS_BROKEN_HEART(p)) {
@@ -64,7 +64,7 @@ relocate(pair p)
     if (IS_BROKEN_HEART(p)) return car(p);
 
 #if GC_DEBUG
-    printf("relocating pair (type %d) at %p\n", DATUM_TYPE(p->info), p);
+    printf("relocating chunk (type %d) at %p\n", DATUM_TYPE(p->info), p);
 #endif
 
 #if GC_DEBUG_STR
@@ -73,7 +73,7 @@ relocate(pair p)
     }
 #endif
 
-    np = &free_pairs[free_index++];
+    np = &free_chunks[free_index++];
     np->info = p->info;
     if (DATUM_TYPE(p->info) == DATUM_TYPE_BYTES) {
         np->info = DATUM_INFO(DATUM_TYPE_BYTES, DATUM_LEN(p->info));
@@ -102,7 +102,7 @@ static void
 gc(int c, ...)
 {
     int i, live = 0;
-    pair np, fzp, *fz_prev;
+    chunk np, fzp, *fz_prev;
     free_index = 0;
     datum new_become_a, new_become_b, *dp;
     va_list ap;
@@ -114,8 +114,8 @@ gc(int c, ...)
     printf("BEGIN GC\n");
 #endif
 
-    free_pairs = malloc(sizeof(struct pair) * HEAP_SIZE);
-    if (!free_pairs) die("gc -- out of memory");
+    free_chunks = malloc(sizeof(struct chunk) * HEAP_SIZE);
+    if (!free_chunks) die("gc -- out of memory");
 
     if (become_a && become_b) {
         new_become_a = relocate(become_a);
@@ -134,7 +134,7 @@ gc(int c, ...)
     modules = relocate(modules);
     int_surrogate = relocate(int_surrogate);
     str_surrogate = relocate(str_surrogate);
-    pair_surrogate = relocate(pair_surrogate);
+    array_surrogate = relocate(array_surrogate);
     nil_surrogate = relocate(nil_surrogate);
     symbol_surrogate = relocate(symbol_surrogate);
     fz_list = relocate(fz_list);
@@ -157,7 +157,7 @@ gc(int c, ...)
     printf("scan_index is %d, free_index is %d\n", scan_index, free_index);
 #endif
     while (scan_index < free_index) {
-        np = &free_pairs[scan_index++];
+        np = &free_chunks[scan_index++];
         ++live;
         switch (DATUM_TYPE(np->info)) {
             case DATUM_TYPE_ARRAY:
@@ -177,10 +177,10 @@ gc(int c, ...)
         }
     }
 
-    old_pairs = busy_pairs;
-    busy_pairs = free_pairs;
+    old_chunks = busy_chunks;
+    busy_chunks = free_chunks;
 #if GC_DEBUG
-    printf("busy_pairs = %p\n", busy_pairs);
+    printf("busy_chunks = %p\n", busy_chunks);
 #endif
     if (free_index >= HEAP_SIZE) die("gc -- no progress");
 #if GC_STATS
@@ -193,18 +193,18 @@ gc(int c, ...)
      */
     fz_prev = &fz_list;
     for (fzp = fz_list; fzp != nil; fzp = cdr(fzp)) {
-        pair p = (pair) cgr(fzp);
+        chunk p = (chunk) cgr(fzp);
         if (IS_BROKEN_HEART(p)) {
             fzp->datums[2] = car(p);
-            fz_prev = (pair *) &cdr(fzp); /* update the prev pointer */
+            fz_prev = (chunk *) &cdr(fzp); /* update the prev pointer */
         } else {
             ((na_fn_free) fzp->datums[0])(DATUM_LEN(p->info) > 2 ? cgr(p) : 0);
             *fz_prev = cdr(fzp); /* remove fzp from the list */
         }
     }
 
-    free(old_pairs);
-    old_pairs = 0;
+    free(old_chunks);
+    old_chunks = 0;
 
 #if GC_DIE
     die("GC_DIE");
@@ -217,11 +217,11 @@ gc(int c, ...)
 static datum
 internal_cons(unsigned char type, uint len, datum x, datum y)
 {
-    pair p;
+    chunk p;
 
     if ((free_index + (len + 1)) >= HEAP_SIZE) gc(2, &x, &y);
     if ((free_index + (len + 1)) >= HEAP_SIZE) die("cons -- OOM after gc");
-    p = &busy_pairs[free_index++];
+    p = &busy_chunks[free_index++];
     p->info = DATUM_INFO(type, len);
     if (len > 0) car(p) = x;
     if (len > 1) cdr(p) = y;
@@ -238,7 +238,7 @@ cons(datum x, datum y)
 datum
 make_array(uint len)
 {
-    pair p;
+    chunk p;
 
     if (len < 1) return nil;
     if (len != CLIP_LEN(len)) die("make_array -- too big");
@@ -268,21 +268,21 @@ make_bytes(uint bytes_len)
 datum
 grow_closure(datum *op, uint len, na_fn_free fn, void *data)
 {
-    pair fz;
+    chunk fz;
     int olen, ex = fn ? 1 + FZ_LEN : 0;
     datum d, o = *op;
 
     if (!closure_tag_matches(o)) die("grow_closure -- *op is not a datum");
 
-    olen = DATUM_LEN(((pair)o)->info) + len;
+    olen = DATUM_LEN(((chunk)o)->info) + len;
     regs[R_GC0] = o;
     d = internal_cons(DATUM_TYPE_CLOSURE, olen + ex, car(o), cdr(o));
     o = *op = regs[R_GC0];
     regs[R_GC0] = nil;
-    if (len) ((pair) d)->datums[2] = data;
+    if (len) ((chunk) d)->datums[2] = data;
     if (fn) {
-        ((pair) d)->info = DATUM_INFO(DATUM_TYPE_CLOSURE, olen);
-        fz = (pair) d + 1 + olen;
+        ((chunk) d)->info = DATUM_INFO(DATUM_TYPE_CLOSURE, olen);
+        fz = (chunk) d + 1 + olen;
         fz->info = DATUM_INFO(DATUM_TYPE_FZ, FZ_LEN);
         fz->datums[0] = fn;
         fz->datums[1] = fz_list;
@@ -318,9 +318,9 @@ make_bytes_init(const char *s)
 char *
 bytes_contents(datum str)
 {
-    pair p;
+    chunk p;
     if (!bytesp(str)) die1("bytes_contents -- not an instance of bytes", str);
-    p = (pair) str;
+    p = (chunk) str;
     return (char *) p->datums;
 }
 
@@ -336,19 +336,19 @@ copy_bytes_contents(datum str)
     return s;
 }
 
-static pair
-datum2pair(datum arr)
+static chunk
+datum2chunk(datum arr)
 {
-    if (!pairp(arr)) die1("datum2pair -- not an array", arr);
-    return (pair) arr;
+    if (!arrayp(arr)) die1("datum2chunk -- not an array", arr);
+    return (chunk) arr;
 }
 
-#define acc(x,i) (((pair)(x))->datums[(uint)(i)])
+#define acc(x,i) (((chunk)(x))->datums[(uint)(i)])
 
 datum
 array_get(datum arr, uint index)
 {
-    pair p = datum2pair(arr);
+    chunk p = datum2chunk(arr);
     if (index >= DATUM_LEN(p->info)) die("array_get -- index out of bounds");
     return acc(arr, index);
 }
@@ -356,7 +356,7 @@ array_get(datum arr, uint index)
 void
 array_put(datum arr, uint index, datum val)
 {
-    pair p = datum2pair(arr);
+    chunk p = datum2chunk(arr);
     if (index >= DATUM_LEN(p->info)) die("array_put -- index out of bounds");
     acc(arr, index) = val;
 }
@@ -364,34 +364,34 @@ array_put(datum arr, uint index, datum val)
 uint
 array_len(datum arr)
 {
-    pair p = datum2pair(arr);
+    chunk p = datum2chunk(arr);
     return DATUM_LEN(p->info);
 }
 
 int
 array_tag_matches(datum arr)
 {
-    pair p = (pair) arr;
+    chunk p = (chunk) arr;
     return DATUM_TYPE(p->info) == DATUM_TYPE_ARRAY;
 }
 
 int
 bytes_tag_matches(datum arr)
 {
-    pair p = (pair) arr;
+    chunk p = (chunk) arr;
     return DATUM_TYPE(p->info) == DATUM_TYPE_BYTES;
 }
 
 int
 closure_tag_matches(datum o)
 {
-    pair p = (pair) o;
+    chunk p = (chunk) o;
     return DATUM_TYPE(p->info) == DATUM_TYPE_CLOSURE;
 }
 
 int
 broken_heart_tag_matches(datum bh)
 {
-    pair p = (pair) bh;
+    chunk p = (chunk) bh;
     return DATUM_TYPE(p->info) == DATUM_TYPE_BROKEN_HEART;
 }

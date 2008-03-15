@@ -1,16 +1,16 @@
-/* pair.h - lisp-style data structure support */
+/* mem.h - lisp-style data structure support */
 
-#ifndef PAIR_H
-#define PAIR_H
+#ifndef mem_h
+#define mem_h
 
 #include "gen.h"
 
 typedef void(*na_fn_free)(void *);
 
-typedef struct pair {
+typedef struct chunk {
     uint info;
     datum datums[];
-} *pair;
+} *chunk;
 
 datum cons(datum x, datum y);
 datum make_array(uint len);
@@ -36,9 +36,9 @@ char *copy_bytes_contents(datum str);
 #define checked_cddr(x) checked_cdr(checked_cdr(x))
 #define checked_caddr(x) checked_car(checked_cddr(x))
 
-// int /*bool*/ pairp(datum x);
-#define car(x) (((pair) (x))->datums[0])
-#define cdr(x) (((pair) (x))->datums[1])
+// int /*bool*/ arrayp(datum x);
+#define car(x) (((chunk) (x))->datums[0])
+#define cdr(x) (((chunk) (x))->datums[1])
 #define caar(x) car(car(x))
 #define cadr(x) car(cdr(x))
 #define cdar(x) cdr(car(x))
@@ -49,16 +49,16 @@ char *copy_bytes_contents(datum str);
 
 #define HEAP_SIZE (2 * 1024 * 1024)
 
-extern struct pair *busy_pairs, *old_pairs;
+extern struct chunk *busy_chunks, *old_chunks;
 
 void init_mem(void);
 
 /*bool*/
-#define in_busy_pair_range(x) ((((pair)(x)) >= busy_pairs) && \
-                               (((pair)(x)) < &busy_pairs[HEAP_SIZE]))
-#define in_old_pair_range(x) (old_pairs && (((pair)(x)) >= old_pairs) && \
-                              (((pair)(x)) < &old_pairs[HEAP_SIZE]))
-#define in_pair_range(x) (in_busy_pair_range(x) || in_old_pair_range(x))
+#define in_busy_chunk_range(x) ((((chunk)(x)) >= busy_chunks) && \
+                               (((chunk)(x)) < &busy_chunks[HEAP_SIZE]))
+#define in_old_chunk_range(x) (old_chunks && (((chunk)(x)) >= old_chunks) && \
+                              (((chunk)(x)) < &old_chunks[HEAP_SIZE]))
+#define in_chunk_range(x) (in_busy_chunk_range(x) || in_old_chunk_range(x))
 
 /*bool*/
 int array_tag_matches(datum arr);
@@ -67,16 +67,16 @@ int closure_tag_matches(datum o);
 int broken_heart_tag_matches(datum bh);
 
 /*bool*/
-#define pairp(x) (in_pair_range(x) && array_tag_matches(x))
+#define arrayp(x) (in_chunk_range(x) && array_tag_matches(x))
 
-#define bytesp(x) (in_pair_range(x) && bytes_tag_matches(x))
+#define bytesp(x) (in_chunk_range(x) && bytes_tag_matches(x))
 
-#define closurep(x) (in_pair_range(x) && closure_tag_matches(x))
+#define closurep(x) (in_chunk_range(x) && closure_tag_matches(x))
 
-#define broken_heartp(x) (in_old_pair_range(x) && broken_heart_tag_matches(x))
+#define broken_heartp(x) (in_old_chunk_range(x) && broken_heart_tag_matches(x))
 
-#define nil ((pair)0)
+#define nil ((chunk)0)
 
 void become(datum *a, datum *b, int keep_b);
 
-#endif /*PAIR_H*/
+#endif /*mem_h*/
