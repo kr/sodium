@@ -29,7 +29,7 @@ prelude.c prelude.h: prelude.lx
 	./lx1c --module --generate-c --output=$@ $<
 
 clean:
-	rm -f vm *.o core gmon.out
+	rm -f vm *.o core core.* gmon.out
 
 distclean: clean
 	rm -f *.d *.pyc *.lxc ad-hoc-tests/*.lxc lib/*.lxc tests/*.lxc
