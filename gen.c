@@ -7,6 +7,8 @@
 #include "prim.h"
 #include "vm.h"
 
+#define DUMP_CORE (*(int*)0=0)
+
 int
 truep(datum d)
 {
@@ -17,7 +19,7 @@ void
 die(const char *m)
 {
     fprintf(stderr, "\n%s\n", m);
-    exit(1);
+    DUMP_CORE;
 }
 
 datum
@@ -25,7 +27,7 @@ die1(const char *m, datum d)
 {
     fprintf(stderr, "\n%s: ", m);
     pr(d);
-    exit(1);
+    DUMP_CORE;
     return nil;
 }
 
