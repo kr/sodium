@@ -384,11 +384,11 @@ setbang(datum env, datum val, datum name)
 {
     datum vals, names;
     if (env != genv) die("set! -- env ought to be the global env\n");
-    vals = car(env);
-    names = cdr(env);
-    for (; names != nil; vals = cdr(vals), names = cdr(names)) {
-        if (car(names) == name) {
-            car(vals) = val;
+    vals = item0(env);
+    names = item1(env);
+    for (; names != nil; vals = item1(vals), names = item1(names)) {
+        if (item0(names) == name) {
+            setitem0(vals, val);
             return;
         }
     }
@@ -401,22 +401,22 @@ define(datum env, datum val, datum name)
     chunk p;
     datum vals, names;
     if (env != genv) die("define -- env ought to be the global env\n");
-    vals = car(env);
-    names = cdr(env);
-    for (; names != nil; vals = cdr(vals), names = cdr(names)) {
-        if (car(names) == name) {
-            car(vals) = val;
+    vals = item0(env);
+    names = item1(env);
+    for (; names != nil; vals = item1(vals), names = item1(names)) {
+        if (item0(names) == name) {
+            setitem0(vals, val);
             return;
         }
     }
 
     /* make sure that these get updated properly during a garbage collection */
     regs[R_VM0] = env;
-    regs[R_VM1] = cdr(env);
-    p = cons(val, car(env));
-    car(regs[R_VM0]) = p;
+    regs[R_VM1] = item1(env);
+    p = cons(val, item0(env));
+    setitem0(regs[R_VM0], p);
     p = cons(name, regs[R_VM1]);
-    cdr(regs[R_VM0]) = p;
+    setitem1(regs[R_VM0], p);
 }
 
 datum
@@ -424,10 +424,10 @@ lookup(datum env, datum name)
 {
     datum vals, names;
     if (env != genv) die("lookup -- env ought to be the global env\n");
-    vals = car(env);
-    names = cdr(env);
-    for (; names != nil; vals = cdr(vals), names = cdr(names)) {
-        if (car(names) == name) return car(vals);
+    vals = item0(env);
+    names = item1(env);
+    for (; names != nil; vals = item1(vals), names = item1(names)) {
+        if (item0(names) == name) return item0(vals);
     }
     return die1("lookup -- no such variable", name);
 }
@@ -437,10 +437,10 @@ lexical_lookup(datum env, uint level, uint index)
 {
     datum cell;
 
-    for (;level--;) env = cdr(env);
-    cell = car(env);
-    for (;index--;) cell = cdr(cell);
-    return car(cell);
+    for (;level--;) env = item1(env);
+    cell = item0(env);
+    for (;index--;) cell = item1(cell);
+    return item0(cell);
 }
 
 datum
@@ -448,10 +448,10 @@ lexical_setbang(datum env, uint level, uint index, datum val)
 {
     datum cell;
 
-    for (;level--;) env = cdr(env);
-    cell = car(env);
-    for (;index--;) cell = cdr(cell);
-    car(cell) = val;
+    for (;level--;) env = item1(env);
+    cell = item0(env);
+    for (;index--;) cell = item1(cell);
+    setitem0(cell, val);
     return ok_sym;
 }
 
@@ -490,8 +490,8 @@ start(uint *start_addr)
             case OP_POP:
                 if (stack == nil) die("cannot pop; stack is empty");
                 ra = I_R(inst);
-                regs[ra] = car(stack);
-                stack = cdr(stack);
+                regs[ra] = item0(stack);
+                stack = item1(stack);
                 break;
             case OP_GOTO_LABEL:
                 tmp = (uint *) *++pc;
@@ -748,7 +748,7 @@ call(datum o, datum m, chunk a)
         stack = cons(regs[R_CONTINUE], stack); // save
         regs[R_CONTINUE] = quit_inst;
         start(regs[R_VM0]);
-        regs[R_CONTINUE] = car(stack); stack = cdr(stack); // restore
+        regs[R_CONTINUE] = item0(stack); stack = item1(stack); // restore
         return regs[R_VAL];
     } else {
         return ((prim_meth) regs[R_VM0])(regs[R_PROC], regs[R_ARGL]);
@@ -819,8 +819,8 @@ make_resolved_module_entry(datum name, datum d)
 static void
 resolve_module(datum entry, datum val)
 {
-    cadr(entry) = val;
-    resolve_promise(cdaddr(entry), val);
+    setitem0(item1(entry), val);
+    resolve_promise(item1011(entry), val);
 }
 
 static datum
@@ -839,7 +839,7 @@ compile_module(datum name)
     datum p;
 
     p = assq(name, modules);
-    if (p) return cadr(p);
+    if (p) return item01(p);
 
     start_body(load_module(symbol2charstar(name)));
     return regs[R_VAL]; /* return value from module */
@@ -882,11 +882,11 @@ main(int argc, char **argv)
 
     /* load all the library files */
     while (to_import) {
-        import_name = car(to_import);
+        import_name = item0(to_import);
         x = make_module_entry(import_name);
 
         modules = cons(x, modules);
-        to_import = cdr(to_import);
+        to_import = item1(to_import);
 
         insts = load_module(symbol2charstar(import_name));
         x = cons(import_name, insts);
@@ -895,9 +895,9 @@ main(int argc, char **argv)
 
     /* execute the library bodies */
     while (to_start) {
-        import_name = caar(to_start);
-        lib_addr = cdar(to_start);
-        to_start = cdr(to_start);
+        import_name = item00(to_start);
+        lib_addr = item10(to_start);
+        to_start = item1(to_start);
         start_body(lib_addr);
         x = assq(import_name, modules);
         printf("resolving module as ");

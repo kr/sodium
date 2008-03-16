@@ -17,10 +17,10 @@ def str ():
     char *s1, *s2, *s;
 
     if (args == nil) die("str./ -- not enough args");
-    if (cdr(args) != nil) die("str./ -- too many args");
+    if (item1(args) != nil) die("str./ -- too many args");
 
     s1 = copy_bytes_contents(rcv);
-    s2 = copy_bytes_contents(car(args));
+    s2 = copy_bytes_contents(item0(args));
     l1 = strlen(s1);
     l2 = strlen(s2);
     new_str = make_bytes(l1 + l2 + 1);
@@ -40,8 +40,8 @@ def str ():
     char s[2];
 
     if (args == nil) die("str -- not enough args");
-    if (!intp(car(args))) die("str -- expected int");
-    i = datum2int(car(args));
+    if (!intp(item0(args))) die("str -- expected int");
+    i = datum2int(item0(args));
     s[0] = bytes_contents(rcv)[i];
     s[1] = '\0';
     return make_bytes_init(s);
@@ -57,11 +57,11 @@ def str ():
     int i, l1, l2;
 
     if (args == nil) die("str.= -- not enough args");
-    if (cdr(args) != nil) die("str.= -- too many args");
+    if (item1(args) != nil) die("str.= -- too many args");
 
-    if (!bytesp(car(args))) return nil;
+    if (!bytesp(item0(args))) return nil;
     s1 = bytes_contents(rcv);
-    s2 = bytes_contents(car(args));
+    s2 = bytes_contents(item0(args));
 
     l1 = strlen(s1);
     l2 = strlen(s2);
@@ -78,16 +78,16 @@ def str ():
     int start, end, len;
 
     if (args == nil) die("str.substring -- not enough args");
-    if (cdr(args) == nil) die("str.substring -- not enough args");
-    if (cddr(args) != nil) die("str.substring -- too many args");
+    if (item1(args) == nil) die("str.substring -- not enough args");
+    if (item11(args) != nil) die("str.substring -- too many args");
 
     s = bytes_contents(rcv);
     len = strlen(s);
 
-    start = datum2int(car(args));
+    start = datum2int(item0(args));
     if (start < 0) start = 0;
 
-    end = datum2int(cadr(args));
+    end = datum2int(item01(args));
     if (end > len) end = len;
 
     {
@@ -155,7 +155,7 @@ def intern-syms ():
 def install-str ():
   inline C run <<<<
     if (args == nil) die("install-str -- not enough args");
-    str_surrogate = car(args);
+    str_surrogate = item0(args);
     return ok_sym;
   >>>>
 

@@ -35,13 +35,13 @@ def re ():
         pcre *re = (pcre *) ((chunk) rcv)->datums[2];
 
         if (args == nil) die("r.match -- not enough args");
-        subj = bytes_contents(car(args));
+        subj = bytes_contents(item0(args));
         subj_len = strlen(subj);
-        args = cdr(args);
+        args = item1(args);
 
         if (args == nil) die("r.match -- not enough args");
-        opts = datum2int(car(args));
-        args = cdr(args);
+        opts = datum2int(item0(args));
+        args = item1(args);
 
         if (args != nil) die("r.match -- too many args");
 

@@ -57,11 +57,11 @@ relocate(chunk p)
 
 #if GC_DEBUG_BH
     if (IS_BROKEN_HEART(p)) {
-        printf("found broken heart %p -> %p\n", p, car(p));
+        printf("found broken heart %p -> %p\n", p, item0(p));
     }
 #endif
 
-    if (IS_BROKEN_HEART(p)) return car(p);
+    if (IS_BROKEN_HEART(p)) return item0(p);
 
 #if GC_DEBUG
     printf("relocating chunk (type %d) at %p\n", DATUM_TYPE(p->info), p);
@@ -95,7 +95,7 @@ relocate(chunk p)
 #endif
 
     p->info = DATUM_INFO(DATUM_TYPE_BROKEN_HEART, DATUM_LEN(p->info));
-    return car(p) = np;
+    return setitem0(p, np);
 }
 
 static void
@@ -120,9 +120,9 @@ gc(int c, ...)
     if (become_a && become_b) {
         new_become_a = relocate(become_a);
         new_become_b = relocate(become_b);
-        if (become_a != new_become_a) car(become_a) = new_become_b;
+        if (become_a != new_become_a) setitem0(become_a, new_become_b);
         if (become_b != new_become_b && !become_keep_b) {
-            car(become_b) = new_become_a;
+            setitem0(become_b, new_become_a);
         }
     }
 
@@ -192,14 +192,14 @@ gc(int c, ...)
      *  - else, call the free function and remove the finalizer
      */
     fz_prev = &fz_list;
-    for (fzp = fz_list; fzp != nil; fzp = cdr(fzp)) {
+    for (fzp = fz_list; fzp != nil; fzp = item1(fzp)) {
         chunk p = (chunk) cgr(fzp);
         if (IS_BROKEN_HEART(p)) {
-            fzp->datums[2] = car(p);
-            fz_prev = (chunk *) &cdr(fzp); /* update the prev pointer */
+            fzp->datums[2] = item0(p);
+            fz_prev = (chunk *) &fzp->datums[1]; /* update the prev pointer */
         } else {
             ((na_fn_free) fzp->datums[0])(DATUM_LEN(p->info) > 2 ? cgr(p) : 0);
-            *fz_prev = cdr(fzp); /* remove fzp from the list */
+            *fz_prev = item1(fzp); /* remove fzp from the list */
         }
     }
 
@@ -223,8 +223,8 @@ internal_cons(unsigned char type, uint len, datum x, datum y)
     if ((free_index + (len + 1)) >= HEAP_SIZE) die("cons -- OOM after gc");
     p = &busy_chunks[free_index++];
     p->info = DATUM_INFO(type, len);
-    if (len > 0) car(p) = x;
-    if (len > 1) cdr(p) = y;
+    if (len > 0) p->datums[0] = x;
+    if (len > 1) p->datums[1] = y;
     free_index += len;
     return p;
 }
@@ -276,7 +276,7 @@ grow_closure(datum *op, uint len, na_fn_free fn, void *data)
 
     olen = DATUM_LEN(((chunk)o)->info) + len;
     regs[R_GC0] = o;
-    d = internal_cons(DATUM_TYPE_CLOSURE, olen + ex, car(o), cdr(o));
+    d = internal_cons(DATUM_TYPE_CLOSURE, olen + ex, item0(o), item1(o));
     o = *op = regs[R_GC0];
     regs[R_GC0] = nil;
     if (len) ((chunk) d)->datums[2] = data;
@@ -337,10 +337,10 @@ copy_bytes_contents(datum str)
 }
 
 static chunk
-datum2chunk(datum arr)
+datum2chunk(datum d)
 {
-    if (!arrayp(arr)) die1("datum2chunk -- not an array", arr);
-    return (chunk) arr;
+    if (!in_chunk_range(d)) die1("datum2chunk -- not an array", d);
+    return (chunk) d;
 }
 
 #define acc(x,i) (((chunk)(x))->datums[(uint)(i)])
@@ -353,12 +353,12 @@ array_get(datum arr, uint index)
     return acc(arr, index);
 }
 
-void
+datum
 array_put(datum arr, uint index, datum val)
 {
     chunk p = datum2chunk(arr);
     if (index >= DATUM_LEN(p->info)) die("array_put -- index out of bounds");
-    acc(arr, index) = val;
+    return acc(arr, index) = val;
 }
 
 uint

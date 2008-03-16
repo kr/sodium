@@ -34,8 +34,8 @@ die1(const char *m, datum d)
 datum
 memq(datum d, datum list)
 {
-    for (; list; list = cdr(list)) {
-        if (car(list) == d) return list;
+    for (; list; list = item1(list)) {
+        if (item0(list) == d) return list;
     }
     return nil; /* false */
 }
@@ -43,9 +43,9 @@ memq(datum d, datum list)
 datum
 assq(datum d, datum alist)
 {
-    for (; alist; alist = cdr(alist)) {
-        if (!arrayp(car(alist))) die("assq -- alist must be a list of pairs");
-        if (caar(alist) == d) return car(alist);
+    for (; alist; alist = item1(alist)) {
+        if (!arrayp(item0(alist))) die("assq -- alist must be a list of pairs");
+        if (item00(alist) == d) return item0(alist);
     }
     return nil; /* false */
 }

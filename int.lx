@@ -12,7 +12,7 @@ def int ():
 
     if (args == nil) die("int.cmp -- not enough args");
     a = datum2int(rcv);
-    b = datum2int(car(args));
+    b = datum2int(item0(args));
     return (a < b) ? int2datum(-1) : (a > b) ? int2datum(1) : int2datum(0);
   >>>>
 
@@ -25,7 +25,7 @@ def int ():
 
     if (args == nil) die("int.+ -- not enough args");
     a = datum2int(rcv);
-    b = datum2int(car(args));
+    b = datum2int(item0(args));
     r = a + b;
     if (r >= MAX_LX_INT || r <= MIN_LX_INT) return bigint(r);
     return int2datum(r);
@@ -36,7 +36,7 @@ def int ():
 
     if (args == nil) die("int.- -- not enough args");
     a = datum2int(rcv);
-    b = datum2int(car(args));
+    b = datum2int(item0(args));
     r = a - b;
     if (r >= MAX_LX_INT || r <= MIN_LX_INT) return bigint(r);
     return int2datum(r);
@@ -47,7 +47,7 @@ def int ():
 
     if (args == nil) die("int.* -- not enough args");
     a = datum2int(rcv);
-    b = datum2int(car(args));
+    b = datum2int(item0(args));
     if (b == 0) die("int.* -- modulo by zero");
     r = a * b;
     if (b == 0 || (r / b) == a) {
@@ -63,7 +63,7 @@ def int ():
 
     if (args == nil) die("int./ -- not enough args");
     a = datum2int(rcv);
-    b = datum2int(car(args));
+    b = datum2int(item0(args));
     if (b == 0) die("int./ -- division by zero");
     r = a / b;
     if (r == MAX_LX_INT + 1) return bigint(r);
@@ -75,7 +75,7 @@ def int ():
 
     if (args == nil) die("int.%% -- not enough args");
     a = datum2int(rcv);
-    b = datum2int(car(args));
+    b = datum2int(item0(args));
     if (b == 0) die("int.%% -- modulo by zero");
     r = a %% b;
     return int2datum(r);
@@ -94,7 +94,7 @@ def int ():
 def install-int ():
   inline C run <<<<
     if (args == nil) die("install-int -- not enough args");
-    int_surrogate = car(args);
+    int_surrogate = item0(args);
     return ok_sym;
   >>>>
 

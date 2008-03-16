@@ -22,7 +22,7 @@ datum grow_closure(datum *o, uint len, na_fn_free fn, void *data);
 
 
 datum array_get(datum arr, uint index);
-void array_put(datum arr, uint index, datum val);
+datum array_put(datum arr, uint index, datum val);
 uint array_len(datum arr);
 
 char *bytes_contents(datum str);
@@ -30,22 +30,18 @@ char *bytes_contents(datum str);
 /* caller must free the bytes returned by this function */
 char *copy_bytes_contents(datum str);
 
-#define checked_car(x) array_get((x),0)
-#define checked_cdr(x) array_get((x),1)
-#define checked_cadr(x) checked_car(checked_cdr(x))
-#define checked_cddr(x) checked_cdr(checked_cdr(x))
-#define checked_caddr(x) checked_car(checked_cddr(x))
+#define item0(x) (array_get((x),0))
+#define item1(x) (array_get((x),1))
+#define item00(x) (item0(item0(x)))
+#define item01(x) (item0(item1(x)))
+#define item10(x) (item1(item0(x)))
+#define item11(x) (item1(item1(x)))
+#define item011(x) (item0(item11(x)))
+#define item0011(x) (item0(item011(x)))
+#define item1011(x) (item1(item011(x)))
 
-// int /*bool*/ arrayp(datum x);
-#define car(x) (((chunk) (x))->datums[0])
-#define cdr(x) (((chunk) (x))->datums[1])
-#define caar(x) car(car(x))
-#define cadr(x) car(cdr(x))
-#define cdar(x) cdr(car(x))
-#define cddr(x) cdr(cdr(x))
-#define caddr(x) car(cdr(cdr(x)))
-#define caaddr(x) car(car(cdr(cdr(x))))
-#define cdaddr(x) cdr(car(cdr(cdr(x))))
+#define setitem0(x,y) (array_put((x),0,(y)))
+#define setitem1(x,y) (array_put((x),1,(y)))
 
 #define HEAP_SIZE (2 * 1024 * 1024)
 

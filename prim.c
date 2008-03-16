@@ -15,10 +15,10 @@ pr_bare(datum d, char *sp)
     uint i, len;
     if (d == nil) return;
     fputs(sp, stdout);
-    prx(car(d));
+    prx(item0(d));
     len = array_len(d);
-    if ((len == 2) && (arrayp(cdr(d)) || cdr(d) == nil)) {
-        pr_bare(cdr(d), " ");
+    if ((len == 2) && (arrayp(item1(d)) || item1(d) == nil)) {
+        pr_bare(item1(d), " ");
     } else {
         for (i = 1; i < len; i++) {
             fputs(" . ", stdout);
@@ -47,8 +47,8 @@ prx(datum d)
     } else if (closurep(d)) {
         printf("<closure %p>", d);
     } else if (broken_heartp(d)) {
-        printf("<broken heart %p>:\n", car(d));
-        prx(car(d));
+        printf("<broken heart %p>:\n", item0(d));
+        prx(item0(d));
     } else {
         printf("<unknown-object %p>", d);
     }

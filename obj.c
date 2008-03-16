@@ -27,8 +27,8 @@ replace_1st_of_1st(datum env, datum x)
 {
   datum frame;
 
-  regs[R_VM0] = cdr(env);
-  frame = cons(x, cdar(env));
+  regs[R_VM0] = item1(env);
+  frame = cons(x, item10(env));
   return cons(frame, regs[R_VM0]);
 }
 
@@ -43,7 +43,7 @@ closure_env(datum d)
     }
 
     if (!closurep(d)) die1("not a closure", d);
-    return car(d);
+    return item0(d);
 }
 
 uint *
@@ -57,7 +57,7 @@ closure_method(datum d, datum name)
         return closure_method(surrogate, name);
     }
 
-    table = (datum *) cdr(d);
+    table = (datum *) item1(d);
 
     n = datum2int(*(table++));
     for (; n--; table += 2) {
@@ -79,7 +79,7 @@ closure_has_method(datum d, datum name)
 
     if (!closurep(d)) die1("closure_has_method -- bad closure", d);
 
-    table = (datum *) cdr(d);
+    table = (datum *) item1(d);
 
     n = datum2int(*(table++));
     for (; n--; table += 2) {
@@ -101,7 +101,7 @@ closures_same_type(datum a, datum b)
       return closures_same_type(a, surrogate);
     }
 
-    return cdr(a) == cdr(b);
+    return item1(a) == item1(b);
 }
 
 datum
@@ -118,7 +118,7 @@ closure_methods(datum d)
     if (!closurep(d)) die1("closure_methods -- bad closure", d);
 
     /* This pointer is stable. A garbage collection will not invalidate it */
-    table = (datum *) cdr(d);
+    table = (datum *) item1(d);
 
     n = datum2int(*(table++));
     for (; n--; table += 2) methods = cons(*table, methods);
