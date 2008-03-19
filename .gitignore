@@ -5,6 +5,8 @@
 *.o
 *.pyc
 gmon.out
+core
+core.*
 module-index.c
 prelude.[ch]
 vm
