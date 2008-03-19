@@ -32,6 +32,7 @@ char *copy_bytes_contents(datum str);
 
 #define item0(x) (array_get((x),0))
 #define item1(x) (array_get((x),1))
+#define item2(x) (array_get((x),2))
 #define item00(x) (item0(item0(x)))
 #define item01(x) (item0(item1(x)))
 #define item10(x) (item1(item0(x)))

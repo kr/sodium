@@ -32,7 +32,6 @@ init_mem(void)
     free_index = 0;
 }
 
-#define cgr(x) (((chunk) (x))->datums[2])
 #define CLIP_LEN(l) ((l) & 0x00ffffff)
 #define DATUM_INFO(t,l) (((t)<<24)|CLIP_LEN(l))
 #define DATUM_TYPE(i) ((i) >> 24)
@@ -193,12 +192,12 @@ gc(int c, ...)
      */
     fz_prev = &fz_list;
     for (fzp = fz_list; fzp != nil; fzp = item1(fzp)) {
-        chunk p = (chunk) cgr(fzp);
+        chunk p = (chunk) item2(fzp);
         if (IS_BROKEN_HEART(p)) {
             fzp->datums[2] = item0(p);
             fz_prev = (chunk *) &fzp->datums[1]; /* update the prev pointer */
         } else {
-            ((na_fn_free) fzp->datums[0])(DATUM_LEN(p->info) > 2 ? cgr(p) : 0);
+            ((na_fn_free) fzp->datums[0])(DATUM_LEN(p->info) > 2 ? item2(p) : 0);
             *fz_prev = item1(fzp); /* remove fzp from the list */
         }
     }
