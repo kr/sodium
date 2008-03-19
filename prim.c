@@ -10,20 +10,29 @@
 /* global functions */
 
 static void
-pr_bare(datum d, char *sp)
+pr_array(datum d)
 {
     uint i, len;
     if (d == nil) return;
-    fputs(sp, stdout);
     prx(item0(d));
     len = array_len(d);
-    if ((len == 2) && (arrayp(item1(d)) || item1(d) == nil)) {
-        pr_bare(item1(d), " ");
+    for (i = 1; i < len; i++) {
+        fputs(" ", stdout);
+        prx(array_get(d, i));
+    }
+}
+
+static void
+pr_pair(datum d, char *sp)
+{
+    if (d == nil) return;
+    fputs(sp, stdout);
+    prx(car(d));
+    if (pairp(cdr(d)) || cdr(d) == nil) {
+        pr_pair(cdr(d), " ");
     } else {
-        for (i = 1; i < len; i++) {
-            fputs(" . ", stdout);
-            prx(array_get(d, i));
-        }
+        fputs(" . ", stdout);
+        prx(cdr(d));
     }
 }
 
@@ -40,15 +49,19 @@ prx(datum d)
         pr_symbol(d);
     } else if (bytesp(d)) {
         printf("%s", bytes_contents(d));
-    } else if (arrayp(d)) {
+    } else if (pairp(d)) {
         printf("(");
-        pr_bare(d, "");
+        pr_pair(d, "");
+        printf(")");
+    } else if (arrayp(d)) {
+        printf("(array ");
+        pr_array(d);
         printf(")");
     } else if (closurep(d)) {
         printf("<closure %p>", d);
     } else if (broken_heartp(d)) {
-        printf("<broken heart %p>:\n", item0(d));
-        prx(item0(d));
+        printf("<broken heart %p>:\n", ((chunk) d)->datums[0]);
+        prx(((chunk) d)->datums[0]);
     } else {
         printf("<unknown-object %p>", d);
     }

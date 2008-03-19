@@ -1,0 +1,52 @@
+
+def pair ():
+  inline C set-cdr! <<<<
+    chunk p = rcv;
+
+    if (args == nil) die("pair.set-cdr! -- not enough args");
+    cdr(p) = car(args);
+    return ok_sym;
+  >>>>
+
+  inline C car <<<<
+    if (args != nil) die("pair.car -- too many args");
+    return car(rcv);
+  >>>>
+
+  inline C cdr <<<<
+    if (args != nil) die("pair.cdr -- too many args");
+    return cdr(rcv);
+  >>>>
+
+  (map f):
+    cons (f (pair.car)) ((pair.cdr).map f)
+
+  (filter f):
+    def rest ((pair.cdr).filter f)
+    if (f (pair.car)):
+      cons (pair.car) rest
+      . rest
+
+  (run f):
+    f (pair.car)
+    (pair.cdr) f
+    . 'ok
+
+  (= p):
+    if ((pair.car) = (p.car)):
+      if ((pair.cdr) = (p.cdr)) true false
+      . false
+
+  (assq name):
+    if (is? (pair.car.car) name) (pair.car) (pair.cdr.assq name)
+
+def init ():
+  inline C run <<<<
+    if (args == nil) die("install-pair -- not enough args");
+    pair_surrogate = car(args);
+    return ok_sym;
+  >>>>
+
+init pair
+
+. '()

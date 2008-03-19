@@ -16,16 +16,16 @@ def (make-blank-module) (obj ())
 def compile-module ():
   inline C run <<<<
     datum name;
-    name = item0(args);
+    name = car(args);
     return compile_module(name);
   >>>>
 
 def become ():
   inline C run <<<<
     datum a, b, keep_b;
-    a = item0(args);
-    b = item01(args);
-    keep_b = item011(args);
+    a = car(args);
+    b = cadr(args);
+    keep_b = caddr(args);
     become(&a, &b, datum2int(keep_b));
     return nil;
   >>>>
@@ -39,9 +39,9 @@ def *modules* '()
 def call ():
   inline C run <<<<
     datum d, msg, argl;
-    d = item0(args);
-    msg = item01(args);
-    argl = item011(args);
+    d = car(args);
+    msg = cadr(args);
+    argl = caddr(args);
     return call(d, msg, argl);
   >>>>
 
@@ -52,13 +52,13 @@ def error ():
 
 def inspect ():
   inline C has-method? <<<<
-    return (datum) closure_has_method(item0(args), item01(args));
+    return (datum) closure_has_method(car(args), cadr(args));
   >>>>
   inline C same-type? <<<<
-    return (datum) closures_same_type(item0(args), item01(args));
+    return (datum) closures_same_type(car(args), cadr(args));
   >>>>
   inline C methods <<<<
-    return (datum) closure_methods(item0(args));
+    return (datum) closure_methods(car(args));
   >>>>
 
 # TODO replace this with 
@@ -72,15 +72,15 @@ def (ensure try finally):
 def is? ():
   inline C run <<<<
     if (args == nil) die("is? -- not enough args");
-    if (item1(args) == nil) die("is? -- not enough args");
-    return (datum) (item0(args) == item01(args));
+    if (cdr(args) == nil) die("is? -- not enough args");
+    return (datum) (car(args) == cadr(args));
   >>>>
 
 def cons ():
   inline C run <<<<
     if (args == nil) die("cons -- not enough args");
-    if (item1(args) == nil) die("cons -- not enough args");
-    return cons(item0(args), item01(args));
+    if (cdr(args) == nil) die("cons -- not enough args");
+    return cons(car(args), cadr(args));
   >>>>
 
 def (load-module name):
@@ -101,14 +101,14 @@ def list ():
 def make-array ():
   inline C run <<<<
     if (args == nil) die("make-array -- not enough args");
-    if (!intp(item0(args))) die1("make-array -- not an int", item0(args));
-    return make_array(datum2int(item0(args)));
+    if (!intp(car(args))) die1("make-array -- not an int", car(args));
+    return make_array(datum2int(car(args)));
   >>>>
 
 def pr ():
   inline C run <<<<
     if (args == nil) die("pr -- not enough args");
-    pr(item0(args));
+    pr(car(args));
     return ok_sym;
   >>>>
 
@@ -118,7 +118,7 @@ load-module (quote file)
 def prx ():
   inline C run <<<<
     if (args == nil) die("prx -- not enough args");
-    prx(item0(args));
+    prx(car(args));
     return ok_sym;
   >>>>
 

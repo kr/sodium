@@ -35,6 +35,7 @@ init_mem(void)
 #define CLIP_LEN(l) ((l) & 0x00ffffff)
 #define DATUM_INFO(t,l) (((t)<<24)|CLIP_LEN(l))
 #define DATUM_TYPE(i) ((i) >> 24)
+#define DATUM_TYPE_PAIR 0x01
 #define DATUM_TYPE_CLOSURE 0x02
 #define DATUM_TYPE_ARRAY 0x03
 #define DATUM_TYPE_BYTES 0x04
@@ -56,11 +57,11 @@ relocate(chunk p)
 
 #if GC_DEBUG_BH
     if (IS_BROKEN_HEART(p)) {
-        printf("found broken heart %p -> %p\n", p, item0(p));
+        printf("found broken heart %p -> %p\n", p, p->datums[0]);
     }
 #endif
 
-    if (IS_BROKEN_HEART(p)) return item0(p);
+    if (IS_BROKEN_HEART(p)) return p->datums[0];
 
 #if GC_DEBUG
     printf("relocating chunk (type %d) at %p\n", DATUM_TYPE(p->info), p);
@@ -94,7 +95,7 @@ relocate(chunk p)
 #endif
 
     p->info = DATUM_INFO(DATUM_TYPE_BROKEN_HEART, DATUM_LEN(p->info));
-    return setitem0(p, np);
+    return p->datums[0] = np;
 }
 
 static void
@@ -119,9 +120,11 @@ gc(int c, ...)
     if (become_a && become_b) {
         new_become_a = relocate(become_a);
         new_become_b = relocate(become_b);
-        if (become_a != new_become_a) setitem0(become_a, new_become_b);
+        if (become_a != new_become_a) {
+            ((chunk) become_a)->datums[0] = new_become_b;
+        }
         if (become_b != new_become_b && !become_keep_b) {
-            setitem0(become_b, new_become_a);
+            ((chunk) become_b)->datums[0] = new_become_a;
         }
     }
 
@@ -133,6 +136,7 @@ gc(int c, ...)
     modules = relocate(modules);
     int_surrogate = relocate(int_surrogate);
     str_surrogate = relocate(str_surrogate);
+    pair_surrogate = relocate(pair_surrogate);
     array_surrogate = relocate(array_surrogate);
     nil_surrogate = relocate(nil_surrogate);
     symbol_surrogate = relocate(symbol_surrogate);
@@ -165,6 +169,7 @@ gc(int c, ...)
                     ++scan_index;
                 }
                 break;
+            case DATUM_TYPE_PAIR:
             case DATUM_TYPE_CLOSURE:
             case DATUM_TYPE_FZ:
                 np->datums[0] = relocate(np->datums[0]);
@@ -191,14 +196,14 @@ gc(int c, ...)
      *  - else, call the free function and remove the finalizer
      */
     fz_prev = &fz_list;
-    for (fzp = fz_list; fzp != nil; fzp = item1(fzp)) {
-        chunk p = (chunk) item2(fzp);
+    for (fzp = fz_list; fzp != nil; fzp = fzp->datums[1]) {
+        chunk p = (chunk) fzp->datums[2];
         if (IS_BROKEN_HEART(p)) {
-            fzp->datums[2] = item0(p);
+            fzp->datums[2] = p->datums[0];
             fz_prev = (chunk *) &fzp->datums[1]; /* update the prev pointer */
         } else {
-            ((na_fn_free) fzp->datums[0])(DATUM_LEN(p->info) > 2 ? item2(p) : 0);
-            *fz_prev = item1(fzp); /* remove fzp from the list */
+            ((na_fn_free) fzp->datums[0])(DATUM_LEN(p->info) > 2 ? p->datums[2] : 0);
+            *fz_prev = fzp->datums[1]; /* remove fzp from the list */
         }
     }
 
@@ -231,7 +236,7 @@ internal_cons(unsigned char type, uint len, datum x, datum y)
 datum
 cons(datum x, datum y)
 {
-    return internal_cons(DATUM_TYPE_ARRAY, 2, x, y);
+    return internal_cons(DATUM_TYPE_PAIR, 2, x, y);
 }
 
 datum
@@ -268,15 +273,14 @@ datum
 grow_closure(datum *op, uint len, na_fn_free fn, void *data)
 {
     chunk fz;
+    closure c = datum2closure(*op);
     int olen, ex = fn ? 1 + FZ_LEN : 0;
-    datum d, o = *op;
+    datum d;
 
-    if (!closure_tag_matches(o)) die("grow_closure -- *op is not a datum");
-
-    olen = DATUM_LEN(((chunk)o)->info) + len;
-    regs[R_GC0] = o;
-    d = internal_cons(DATUM_TYPE_CLOSURE, olen + ex, item0(o), item1(o));
-    o = *op = regs[R_GC0];
+    olen = DATUM_LEN(c->info) + len;
+    regs[R_GC0] = *op;
+    d = internal_cons(DATUM_TYPE_CLOSURE, olen + ex, c->env, c->table);
+    *op = regs[R_GC0];
     regs[R_GC0] = nil;
     if (len) ((chunk) d)->datums[2] = data;
     if (fn) {
@@ -336,9 +340,9 @@ copy_bytes_contents(datum str)
 }
 
 static chunk
-datum2chunk(datum d)
+datum2arraychunk(datum d)
 {
-    if (!in_chunk_range(d)) die1("datum2chunk -- not an array", d);
+    if (!arrayp(d)) die1("datum2arraychunk -- not an array", d);
     return (chunk) d;
 }
 
@@ -347,7 +351,7 @@ datum2chunk(datum d)
 datum
 array_get(datum arr, uint index)
 {
-    chunk p = datum2chunk(arr);
+    chunk p = datum2arraychunk(arr);
     if (index >= DATUM_LEN(p->info)) die("array_get -- index out of bounds");
     return acc(arr, index);
 }
@@ -355,7 +359,7 @@ array_get(datum arr, uint index)
 datum
 array_put(datum arr, uint index, datum val)
 {
-    chunk p = datum2chunk(arr);
+    chunk p = datum2arraychunk(arr);
     if (index >= DATUM_LEN(p->info)) die("array_put -- index out of bounds");
     return acc(arr, index) = val;
 }
@@ -363,8 +367,22 @@ array_put(datum arr, uint index, datum val)
 uint
 array_len(datum arr)
 {
-    chunk p = datum2chunk(arr);
+    chunk p = datum2arraychunk(arr);
     return DATUM_LEN(p->info);
+}
+
+int
+pair_tag_matches(datum o)
+{
+    chunk p = (chunk) o;
+    return DATUM_TYPE(p->info) == DATUM_TYPE_PAIR;
+}
+
+int
+closure_tag_matches(datum o)
+{
+    chunk p = (chunk) o;
+    return DATUM_TYPE(p->info) == DATUM_TYPE_CLOSURE;
 }
 
 int
@@ -382,15 +400,24 @@ bytes_tag_matches(datum arr)
 }
 
 int
-closure_tag_matches(datum o)
-{
-    chunk p = (chunk) o;
-    return DATUM_TYPE(p->info) == DATUM_TYPE_CLOSURE;
-}
-
-int
 broken_heart_tag_matches(datum bh)
 {
     chunk p = (chunk) bh;
     return DATUM_TYPE(p->info) == DATUM_TYPE_BROKEN_HEART;
+}
+
+inline pair
+datum2pair(datum d)
+{
+    if (!in_chunk_range(d)) die1("not a pair", d);
+    if (!pair_tag_matches(d)) die1("not a pair", d);
+    return (pair) d;
+}
+
+inline closure
+datum2closure(datum d)
+{
+    if (!in_chunk_range(d)) die1("not a closure", d);
+    if (!closure_tag_matches(d)) die1("not a closure", d);
+    return (closure) d;
 }

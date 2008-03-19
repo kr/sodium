@@ -7,8 +7,8 @@
 
 #include "vm.h"
 
-datum int_surrogate, str_surrogate, array_surrogate, nil_surrogate,
-      symbol_surrogate;
+datum int_surrogate, str_surrogate, pair_surrogate, array_surrogate,
+      nil_surrogate, symbol_surrogate;
 
 static datum
 get_primitive_surrogate(datum d)
@@ -17,8 +17,9 @@ get_primitive_surrogate(datum d)
     if (intp(d)) return int_surrogate;
     if (symbolp(d)) return symbol_surrogate;
 
-    if (bytesp(d)) return str_surrogate;
+    if (pairp(d)) return pair_surrogate;
     if (arrayp(d)) return array_surrogate;
+    if (bytesp(d)) return str_surrogate;
     return nil;
 }
 
@@ -27,8 +28,8 @@ replace_1st_of_1st(datum env, datum x)
 {
   datum frame;
 
-  regs[R_VM0] = item1(env);
-  frame = cons(x, item10(env));
+  regs[R_VM0] = cdr(env);
+  frame = cons(x, cdar(env));
   return cons(frame, regs[R_VM0]);
 }
 
@@ -43,25 +44,27 @@ closure_env(datum d)
     }
 
     if (!closurep(d)) die1("not a closure", d);
-    return item0(d);
+    return datum2closure(d)->env;
 }
 
 uint *
 closure_method(datum d, datum name)
 {
-    int n;
-    datum *table;
+    int i, n;
+    method_table table;
     datum surrogate;
 
     if ((surrogate = get_primitive_surrogate(d))) {
         return closure_method(surrogate, name);
     }
 
-    table = (datum *) item1(d);
+    if (!closurep(d)) die1("closure_method -- bad closure", d);
 
-    n = datum2int(*(table++));
-    for (; n--; table += 2) {
-        if (*table == name) return (uint *) *(table + 1);
+    table = datum2closure(d)->table;
+
+    n = datum2int(table->size);
+    for (i = 0; i < n; ++i) {
+        if (table->items[i].name == name) return table->items[i].addr;
     }
     return die1("closure_method -- no such method", name);
 }
@@ -69,8 +72,8 @@ closure_method(datum d, datum name)
 int
 closure_has_method(datum d, datum name)
 {
-    int n;
-    datum *table;
+    int i, n;
+    method_table table;
     datum surrogate;
 
     if ((surrogate = get_primitive_surrogate(d))) {
@@ -79,11 +82,11 @@ closure_has_method(datum d, datum name)
 
     if (!closurep(d)) die1("closure_has_method -- bad closure", d);
 
-    table = (datum *) item1(d);
+    table = datum2closure(d)->table;
 
-    n = datum2int(*(table++));
-    for (; n--; table += 2) {
-        if (*table == name) return 1;
+    n = datum2int(table->size);
+    for (i = 0; i < n; ++i) {
+        if (table->items[i].name == name) return 1;
     }
     return 0;
 }
@@ -101,14 +104,14 @@ closures_same_type(datum a, datum b)
       return closures_same_type(a, surrogate);
     }
 
-    return item1(a) == item1(b);
+    return cdr(a) == cdr(b);
 }
 
 datum
 closure_methods(datum d)
 {
-    int n;
-    datum *table;
+    int i, n;
+    method_table table;
     datum surrogate, methods = nil;
 
     if ((surrogate = get_primitive_surrogate(d))) {
@@ -118,9 +121,9 @@ closure_methods(datum d)
     if (!closurep(d)) die1("closure_methods -- bad closure", d);
 
     /* This pointer is stable. A garbage collection will not invalidate it */
-    table = (datum *) item1(d);
+    table = datum2closure(d)->table;
 
-    n = datum2int(*(table++));
-    for (; n--; table += 2) methods = cons(*table, methods);
+    n = datum2int(table->size);
+    for (i = 0; i < n; ++i) methods = cons(table->items[i].name, methods);
     return methods;
 }

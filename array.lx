@@ -1,30 +1,12 @@
 
 def array ():
-  inline C set-cdr! <<<<
-    chunk p = rcv;
-
-    if (args == nil) die("array.set-cdr! -- not enough args");
-    setitem1(p, item0(args));
-    return ok_sym;
-  >>>>
-
-  inline C car <<<<
-    if (args != nil) die("array.car -- too many args");
-    return item0(rcv);
-  >>>>
-
-  inline C cdr <<<<
-    if (args != nil) die("array.cdr -- too many args");
-    return item1(rcv);
-  >>>>
-
   inline C get <<<<
     int i;
 
     if (args == nil) die("array.get -- not enough args");
-    if (!intp(item0(args))) die1("array.get -- not an int", item0(args));
+    if (!intp(car(args))) die1("array.get -- not an int", car(args));
 
-    i = datum2int(item0(args));
+    i = datum2int(car(args));
     return array_get(rcv, i);
   >>>>
 
@@ -32,10 +14,10 @@ def array ():
     int i;
 
     if (args == nil) die("array.put! -- not enough args");
-    if (!intp(item0(args))) die1("array.put! -- not an int", item0(args));
+    if (!intp(car(args))) die1("array.put! -- not an int", car(args));
 
-    i = datum2int(item0(args));
-    array_put(rcv, i, item01(args));
+    i = datum2int(car(args));
+    array_put(rcv, i, car(args));
     return ok_sym;
   >>>>
 
@@ -64,7 +46,7 @@ def array ():
 def install-array ():
   inline C run <<<<
     if (args == nil) die("install-array -- not enough args");
-    array_surrogate = item0(args);
+    array_surrogate = car(args);
     return ok_sym;
   >>>>
 

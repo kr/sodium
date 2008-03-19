@@ -11,7 +11,7 @@ def nil ():
 def install-nil ():
   inline C run <<<<
     if (args == nil) die("install-nil -- not enough args");
-    nil_surrogate = item0(args);
+    nil_surrogate = car(args);
     return ok_sym;
   >>>>
 

@@ -12,6 +12,27 @@ typedef struct chunk {
     datum datums[];
 } *chunk;
 
+typedef struct pair {
+    uint info;
+    datum car, cdr;
+} *pair;
+
+typedef struct method_item {
+    datum name;
+    datum addr;
+} *method_item;
+
+typedef struct method_table {
+    datum size;
+    struct method_item items[];
+} *method_table;
+
+typedef struct closure {
+    uint info;
+    datum env;
+    method_table table;
+} *closure;
+
 datum cons(datum x, datum y);
 datum make_array(uint len);
 datum make_bytes(uint len);
@@ -29,6 +50,22 @@ char *bytes_contents(datum str);
 
 /* caller must free the bytes returned by this function */
 char *copy_bytes_contents(datum str);
+
+inline pair datum2pair(datum d);
+
+inline closure datum2closure(datum d);
+
+#define car(x) (datum2pair(x)->car)
+#define cdr(x) (datum2pair(x)->cdr)
+
+#define caar(x) (car(car(x)))
+#define cadr(x) (car(cdr(x)))
+#define cdar(x) (cdr(car(x)))
+#define cddr(x) (cdr(cdr(x)))
+
+#define caddr(x) (car(cddr(x)))
+
+#define cdaddr(x) (cdr(caddr(x)))
 
 #define item0(x) (array_get((x),0))
 #define item1(x) (array_get((x),1))
@@ -58,12 +95,15 @@ void init_mem(void);
 #define in_chunk_range(x) (in_busy_chunk_range(x) || in_old_chunk_range(x))
 
 /*bool*/
+int pair_tag_matches(datum o);
+int closure_tag_matches(datum o);
 int array_tag_matches(datum arr);
 int bytes_tag_matches(datum str);
-int closure_tag_matches(datum o);
 int broken_heart_tag_matches(datum bh);
 
 /*bool*/
+#define pairp(x) (in_chunk_range(x) && pair_tag_matches(x))
+
 #define arrayp(x) (in_chunk_range(x) && array_tag_matches(x))
 
 #define bytesp(x) (in_chunk_range(x) && bytes_tag_matches(x))

@@ -11,7 +11,7 @@ def symbol ():
 def install-symbol ():
   inline C run <<<<
     if (args == nil) die("install-symbol -- not enough args");
-    symbol_surrogate = item0(args);
+    symbol_surrogate = car(args);
     return ok_sym;
   >>>>
 
