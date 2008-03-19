@@ -11,7 +11,9 @@
 [+] fix return linkage for the "call" function
 [+] use become() in C prepare methods
 [ ] IMESS and SMESS shouldn't show through into eval
-[ ] map out and fix type names in vm and language (e.g. pair, obj, etc.)
+[+] map out and fix type names in vm and language (e.g. pair, obj, etc.)
+[ ] fix line numbers in generated C files
+[ ] generate C macros for sodium variable access
 [ ] proper (unicode) string and bytes types
 [ ] proper file i/o
 [ ] move bytecode loading into sodium code
@@ -23,7 +25,7 @@
 [ ] flesh out str methods
 [ ] flesh out other primitive type methods
 [+] Make input "x:y" or "x.y" lex as 2 tokens
-[ ] Lex with maximum munch rather than a priority order
+[+] Lex with maximum munch rather than a priority order
 [+] change single-expr stmt form from "ex ." to ". ex"
 [+] allow chaining of indentation tokens "f : g : EOL INDENT ... DEDENT"
 [+] square brackets for super-shorthand lambda exprs
