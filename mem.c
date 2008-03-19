@@ -36,9 +36,9 @@ init_mem(void)
 #define CLIP_LEN(l) ((l) & 0x00ffffff)
 #define DATUM_INFO(t,l) (((t)<<24)|CLIP_LEN(l))
 #define DATUM_TYPE(i) ((i) >> 24)
-#define DATUM_TYPE_ARRAY 0x01
-#define DATUM_TYPE_BYTES 0x02
-#define DATUM_TYPE_CLOSURE 0x03
+#define DATUM_TYPE_CLOSURE 0x02
+#define DATUM_TYPE_ARRAY 0x03
+#define DATUM_TYPE_BYTES 0x04
 #define DATUM_TYPE_FZ 0x05
 #define DATUM_TYPE_BROKEN_HEART 0xff
 #define DATUM_LEN(i) ((i) & 0x00ffffff)
