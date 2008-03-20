@@ -56,10 +56,11 @@ def bef(l, s, name, lexeme):
     return tuple(res)
 
 def aft(l, s, name, lexeme):
-    if name == EOL:
-        l.bol, l.line, l.col = True, l.line + 1, 1
-    else:
-        l.bol, l.col = False, l.col + len(lexeme)
+    nlc = lexeme.count('\n')
+    l.line += nlc
+    if nlc == 0: l.col = 1
+    l.col += len(lexeme) - lexeme.rfind('\n')
+    l.bol = (name == EOL)
 
 def eol(l, s, name, lexeme):
     if l.bol or l.nesting: return ()
@@ -74,12 +75,9 @@ def inest(l, s, name, lexeme):
 def dnest(l, s, name, lexeme):
     l.nesting -= 1
 
-def foreign(l, s, name, lexeme):
-    l.line += lexeme.count('\n')
-
 # special chars are . : ( ) '
 lexer = slex.Lexer((
-    (FOREIGN, r'<<<<.*?>>>>', foreign),
+    (FOREIGN, r'<<<<.*?>>>>'),
     (DEC,     r'-?([0-9]*\.[0-9]+|[0-9]+)'),
     (INT,     r'-?[0-9]+',             ),
     (SMESS,   ':' + name_class + '+',  ),
