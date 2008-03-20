@@ -52,7 +52,9 @@ setattr(Decimal, '=', op_eq)
 
 
 class String(str):
-    pass
+    def setpos(self, pos):
+        self.pos = pos
+        return self
 setattr(String, '+', op_add)
 setattr(String, '-', op_sub)
 setattr(String, '%', op_smod)

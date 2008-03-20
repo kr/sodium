@@ -1,9 +1,10 @@
 import re
 
 def nop(*a, **k): pass
+def I(a): return a
 
 class Lexer:
-    def __init__(self, rules, init=nop, before=nop, after=nop):
+    def __init__(self, rules, init=nop, before=nop, after=nop, filter=I):
         def compile(rules):
             def even_out(rules):
                 res = []
@@ -21,11 +22,17 @@ class Lexer:
         self.init = init
         self.before = before
         self.after = after
+        self.filter = filter
         self.rules = compile(rules)
         self.ruled = dict(((n,(r,a)) for n,r,a in self.rules))
 
-    def pos(self):
-        return self.fname, self.line, self.col
+    def add_rule(self, name, pat, action):
+        t = (re.compile(pat, re.DOTALL), action)
+        self.rules.append((name,) + t)
+        self.ruled[name] = t
+
+    def rm_rule(self, name):
+        self.rules.remove((name,) + self.ruled.pop(name))
 
     def lex(self, s, fname='<string>'):
         def more(s):
@@ -57,25 +64,28 @@ class Lexer:
             def decorate(toks, p):
                 return [(n,l,p) for n,l in toks]
 
+            def pos():
+                return self.fname, self.line, self.col
+
             name, lexeme = choose(s)
             rest = s[len(lexeme):]
 
-            prepend = self.before(self, rest, name, lexeme)
+            prepend = self.before(self, rest, name, lexeme, pos())
             if prepend is None: prepend = ()
-            prepend = decorate(prepend, self.pos())
+            prepend = decorate(prepend, pos())
 
             r, action = self.ruled[name]
-            res = action(self, rest, name, lexeme)
+            res = action(self, rest, name, lexeme, pos())
             if res is None: res = ((name, lexeme),)
-            res = decorate(res, self.pos())
+            res = decorate(res, pos())
 
             update_line_count(lexeme)
 
-            append = self.after(self, rest, name, lexeme)
+            append = self.after(self, rest, name, lexeme, pos())
             if append is None: append = ()
-            append = decorate(append, self.pos())
+            append = decorate(append, pos())
 
-            return prepend + res + append, rest
+            return self.filter(prepend + res + append), rest
 
         self.fname = fname
         self.line, self.col = 1, 1

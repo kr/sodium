@@ -171,15 +171,17 @@ atom : NAME
      | STR
      | FOREIGN
         '''
-        type, lexeme, pos = self.xmatch(T.INT, T.DEC, T.NAME, T.STR, T.FOREIGN)
+        type, lexeme, pos = self.xmatch(T.INT, T.DEC, T.NAME, T.STR, T.HEREDOC, T.FOREIGN)
         if type == T.INT:
             return lx.Integer(lexeme)
         if type == T.NAME:
             return lx.S(lexeme)
         if type == T.STR:
-            return lx.String(unescape(lexeme[1:-1]))
+            return lx.String(unescape(lexeme[1:-1])).setpos(pos)
         if type == T.DEC:
             return lx.Decimal(lexeme)
+        if type == T.HEREDOC:
+            return lx.ForeignString(lexeme).setpos(pos)
         if type == T.FOREIGN:
             return lx.ForeignString(lexeme[4:-4]).setpos(pos)
 
