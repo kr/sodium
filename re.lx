@@ -21,29 +21,23 @@ def re ():
       (run subj) (r.match subj (r.runopts))
       (find subj) (r.match subj (r.findopts))
 
-      inline C runopts <<end
+      inline C (runopts) <<end
         return int2datum(PCRE_ANCHORED);
       end
 
-      inline C findopts <<end
+      inline C (findopts) <<end
         return int2datum(0);
       end
 
-      inline C match <<end
+      inline C (match subj opts) <<end
         char *subj, *res;
         int rc, subj_len, res_len, opts;
         pcre *re = (pcre *) ((chunk) rcv)->datums[2];
 
-        if (args == nil) die("r.match -- not enough args");
-        subj = bytes_contents(car(args));
+        subj = bytes_contents(n_subj);
         subj_len = strlen(subj);
-        args = cdr(args);
 
-        if (args == nil) die("r.match -- not enough args");
-        opts = datum2int(car(args));
-        args = cdr(args);
-
-        if (args != nil) die("r.match -- too many args");
+        opts = datum2int(n_opts);
 
         rc = pcre_exec(re, NULL, subj, subj_len, 0, opts, ovector, OVECCOUNT);
 
@@ -55,13 +49,11 @@ def re ():
         return make_bytes_init_len(res, res_len);
       end
 
-      inline C prepare <<end
+      inline C (prepare) <<end
         pcre *re;
         const char *error;
         char *pattern;
         int erroffset, opts;
-
-        if (args != nil) die("r.prepare -- too many args");
 
         pattern = bytes_contents(n_pat);
         opts = datum2int(n_opts);

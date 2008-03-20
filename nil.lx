@@ -9,9 +9,8 @@ def nil ():
   (assq name) '()
 
 def install-nil ():
-  inline C run <<end
-    if (args == nil) die("install-nil -- not enough args");
-    nil_surrogate = car(args);
+  inline C (run sur) <<end
+    nil_surrogate = n_sur;
     return ok_sym;
   end
 

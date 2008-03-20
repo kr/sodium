@@ -9,9 +9,8 @@ def symbol ():
   (str) "this-is-a-symbol"
 
 def install-symbol ():
-  inline C run <<end
-    if (args == nil) die("install-symbol -- not enough args");
-    symbol_surrogate = car(args);
+  inline C (run sur) <<end
+    symbol_surrogate = n_sur;
     return ok_sym;
   end
 

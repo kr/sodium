@@ -10,17 +10,14 @@ static datum percent_star_sym;
 end
 
 def str ():
-  inline C / <<end
+  inline C (/ x) <<end
     /* concatenate */
     datum new_str;
     int l1, l2;
     char *s1, *s2, *s;
 
-    if (args == nil) die("str./ -- not enough args");
-    if (cdr(args) != nil) die("str./ -- too many args");
-
     s1 = copy_bytes_contents(rcv);
-    s2 = copy_bytes_contents(car(args));
+    s2 = copy_bytes_contents(n_x);
     l1 = strlen(s1);
     l2 = strlen(s2);
     new_str = make_bytes(l1 + l2 + 1);
@@ -34,34 +31,29 @@ def str ():
     return new_str;
   end
 
-  inline C run <<end
+  inline C (run i) <<end
     /* index a single char */
     int i;
     char s[2];
 
-    if (args == nil) die("str -- not enough args");
-    if (!intp(car(args))) die("str -- expected int");
-    i = datum2int(car(args));
+    if (!intp(n_i)) die("str -- expected int");
+    i = datum2int(n_i);
     s[0] = bytes_contents(rcv)[i];
     s[1] = '\0';
     return make_bytes_init(s);
   end
 
-  inline C length <<end
-    if (args != nil) die("str.length -- too many args");
+  inline C (length) <<end
     return int2datum(strlen(bytes_contents(rcv)));
   end
 
-  inline C = <<end
+  inline C (= x) <<end
     char *s1, *s2;
     int i, l1, l2;
 
-    if (args == nil) die("str.= -- not enough args");
-    if (cdr(args) != nil) die("str.= -- too many args");
-
-    if (!bytesp(car(args))) return nil;
+    if (!bytesp(n_x)) return nil;
     s1 = bytes_contents(rcv);
-    s2 = bytes_contents(car(args));
+    s2 = bytes_contents(n_x);
 
     l1 = strlen(s1);
     l2 = strlen(s2);
@@ -73,21 +65,17 @@ def str ():
     return int2datum(1);
   end
 
-  inline C substring <<end
+  inline C (substring start end) <<end
     char *s;
     int start, end, len;
-
-    if (args == nil) die("str.substring -- not enough args");
-    if (cdr(args) == nil) die("str.substring -- not enough args");
-    if (cdr(args) != nil) die("str.substring -- too many args");
 
     s = bytes_contents(rcv);
     len = strlen(s);
 
-    start = datum2int(car(args));
+    start = datum2int(n_start);
     if (start < 0) start = 0;
 
-    end = datum2int(cadr(args));
+    end = datum2int(n_end);
     if (end > len) end = len;
 
     {
@@ -153,9 +141,8 @@ def intern-syms ():
   end
 
 def install-str ():
-  inline C run <<end
-    if (args == nil) die("install-str -- not enough args");
-    str_surrogate = car(args);
+  inline C (run sur) <<end
+    str_surrogate = n_sur;
     return ok_sym;
   end
 

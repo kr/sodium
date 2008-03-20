@@ -14,19 +14,16 @@ def (not x) (if x false true)
 def (make-blank-module) (obj ())
 
 def compile-module ():
-  inline C run <<end
-    datum name;
-    name = car(args);
-    return compile_module(name);
+  inline C (run name) <<end
+    return compile_module(n_name);
   end
 
 def become ():
-  inline C run <<end
-    datum a, b, keep_b;
-    a = car(args);
-    b = cadr(args);
-    keep_b = caddr(args);
-    become(&a, &b, datum2int(keep_b));
+  inline C (run x y keep_y) <<end
+    datum x, y;
+    x = n_x;
+    y = n_y;
+    become(&x, &y, datum2int(n_keep_y));
     return nil;
   end
 
@@ -37,12 +34,8 @@ def (insert-module name module):
 def *modules* '()
 
 def call ():
-  inline C run <<end
-    datum d, msg, argl;
-    d = car(args);
-    msg = cadr(args);
-    argl = caddr(args);
-    return call(d, msg, argl);
+  inline C (run d msg argl) <<end
+    return call(n_d, n_msg, n_argl);
   end
 
 def error ():
@@ -51,14 +44,14 @@ def error ():
   end
 
 def inspect ():
-  inline C has-method? <<end
-    return (datum) closure_has_method(car(args), cadr(args));
+  inline C (has-method? c m) <<end
+    return (datum) closure_has_method(n_c, n_m);
   end
-  inline C same-type? <<end
-    return (datum) closures_same_type(car(args), cadr(args));
+  inline C (same-type? x y) <<end
+    return (datum) closures_same_type(n_x, n_y);
   end
-  inline C methods <<end
-    return (datum) closure_methods(car(args));
+  inline C (methods c) <<end
+    return (datum) closure_methods(n_c);
   end
 
 # TODO replace this with 
@@ -70,17 +63,13 @@ def (ensure try finally):
   try:run.wait+ success failure
 
 def is? ():
-  inline C run <<end
-    if (args == nil) die("is? -- not enough args");
-    if (cdr(args) == nil) die("is? -- not enough args");
-    return (datum) (car(args) == cadr(args));
+  inline C (run x y) <<end
+    return (datum) (n_x == n_y);
   end
 
 def cons ():
-  inline C run <<end
-    if (args == nil) die("cons -- not enough args");
-    if (cdr(args) == nil) die("cons -- not enough args");
-    return cons(car(args), cadr(args));
+  inline C (run x y) <<end
+    return cons(n_x, n_y);
   end
 
 def (load-module name):
@@ -99,16 +88,14 @@ def list ():
   end
 
 def make-array ():
-  inline C run <<end
-    if (args == nil) die("make-array -- not enough args");
-    if (!intp(car(args))) die1("make-array -- not an int", car(args));
-    return make_array(datum2int(car(args)));
+  inline C (run size) <<end
+    if (!intp(n_size)) die1("make-array -- not an int", n_size);
+    return make_array(datum2int(n_size));
   end
 
 def pr ():
-  inline C run <<end
-    if (args == nil) die("pr -- not enough args");
-    pr(car(args));
+  inline C (run x) <<end
+    pr(n_x);
     return ok_sym;
   end
 
@@ -116,9 +103,8 @@ def open (load-module (quote file))
 load-module (quote file)
 
 def prx ():
-  inline C run <<end
-    if (args == nil) die("prx -- not enough args");
-    prx(car(args));
+  inline C (run x) <<end
+    prx(n_x);
     return ok_sym;
   end
 
