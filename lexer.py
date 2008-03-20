@@ -62,7 +62,10 @@ def bef(l, s, name, lexeme, pos):
 
 
 def eol(l, s, name, lexeme, pos):
-    if cork: l.add_rule(HEREDOC_BODY, r'.*?\n *' + heredoc_tok + r'\n', heredoc_body)
+    if cork:
+        pat = r'.*?\n' + heredoc_tok + r'\n'
+        if hd_strip: pat = r'.*?\n *' + heredoc_tok + r'\n'
+        l.add_rule(HEREDOC_BODY, pat, heredoc_body)
     if l.bol or l.nesting: return ()
     return (name, lexeme),
 
@@ -85,9 +88,12 @@ def dnest(l, s, name, lexeme, pos):
     l.nesting -= 1
 
 def heredoc(l, s, name, lexeme, pos):
-    global cork, heredoc_tok
+    global cork, hd_strip, heredoc_tok
     cork = True
-    heredoc_tok = lexeme[2:]
+    if lexeme.startswith('<<:'):
+        hd_strip, heredoc_tok = False, lexeme[3:]
+    else:
+        hd_strip, heredoc_tok = True, lexeme[2:]
 
 def aft(l, s, name, lexeme, pos):
     l.bol = (name in (EOL, HEREDOC_BODY))
@@ -104,7 +110,7 @@ def filter(seq):
 
 # special chars are . : ( ) '
 lexer = slex.Lexer((
-    (HEREDOC, r'<<[a-zA-Z0-9]+', heredoc),
+    (HEREDOC, r'<<:?[a-zA-Z0-9]+', heredoc),
     (DEC,     r'-?([0-9]*\.[0-9]+|[0-9]+)'),
     (INT,     r'-?[0-9]+',             ),
     (SMESS,   ':' + name_class + '+',  ),
