@@ -13,7 +13,7 @@
 [ ] IMESS and SMESS shouldn't show through into eval
 [+] map out and fix type names in vm and language (e.g. pair, obj, etc.)
 [+] fix line numbers in generated C files
-[ ] generate C macros for sodium variable access
+[+] generate C macros for sodium variable access
 [ ] proper (unicode) string and bytes types
 [ ] proper file i/o
 [ ] move bytecode loading into sodium code
