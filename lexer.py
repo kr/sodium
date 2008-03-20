@@ -22,7 +22,6 @@ QUOTE   = 'QUOTE'
 STR     = 'STR'
 SPACE   = 'SPACE'
 EOL     = 'EOL'
-FOREIGN = 'FOREIGN'
 HEREDOC = 'HEREDOC'
 HEREDOC_BODY = 'HEREDOC_BODY'
 
@@ -105,7 +104,6 @@ def filter(seq):
 
 # special chars are . : ( ) '
 lexer = slex.Lexer((
-    (FOREIGN, r'<<<<.*?>>>>'),
     (HEREDOC, r'<<[a-zA-Z0-9]+', heredoc),
     (DEC,     r'-?([0-9]*\.[0-9]+|[0-9]+)'),
     (INT,     r'-?[0-9]+',             ),

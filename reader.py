@@ -169,9 +169,9 @@ atom : NAME
      | INT
      | DEC
      | STR
-     | FOREIGN
+     | HEREDOC
         '''
-        type, lexeme, pos = self.xmatch(T.INT, T.DEC, T.NAME, T.STR, T.HEREDOC, T.FOREIGN)
+        type, lexeme, pos = self.xmatch(T.INT, T.DEC, T.NAME, T.STR, T.HEREDOC)
         if type == T.INT:
             return lx.Integer(lexeme)
         if type == T.NAME:
@@ -182,8 +182,6 @@ atom : NAME
             return lx.Decimal(lexeme)
         if type == T.HEREDOC:
             return lx.ForeignString(lexeme).setpos(pos)
-        if type == T.FOREIGN:
-            return lx.ForeignString(lexeme[4:-4]).setpos(pos)
 
     def match_loop(self, parse, *sentinels):
         rl = nil
