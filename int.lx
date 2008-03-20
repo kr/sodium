@@ -73,11 +73,11 @@ def int ():
   inline C % <<end
     register long a, b, r;
 
-    if (args == nil) die("int.%% -- not enough args");
+    if (args == nil) die("int.% -- not enough args");
     a = datum2int(rcv);
     b = datum2int(car(args));
-    if (b == 0) die("int.%% -- modulo by zero");
-    r = a %% b;
+    if (b == 0) die("int.% -- modulo by zero");
+    r = a % b;
     return int2datum(r);
   end
 

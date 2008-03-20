@@ -79,13 +79,13 @@ def file ():
         if (args != nil) die("f:prepare -- too many args");
 
         // Get mode
-        if (%(mode)s == write_sym) {
+        if (n_mode == write_sym) {
             mode = "wb";
-        } else if (%(mode)s != read_sym) {
-            return die1("f:prepare -- unknown mode", %(mode)s);
+        } else if (n_mode != read_sym) {
+            return die1("f:prepare -- unknown mode", n_mode);
         }
 
-        f = fopen(bytes_contents(%(name)s), mode);
+        f = fopen(bytes_contents(n_name), mode);
 
         return grow_closure(&rcv, 1, (na_fn_free) fclose, f);
       end

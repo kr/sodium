@@ -63,8 +63,8 @@ def re ():
 
         if (args != nil) die("r.prepare -- too many args");
 
-        pattern = bytes_contents(%(pat)s);
-        opts = datum2int(%(opts)s);
+        pattern = bytes_contents(n_pat);
+        opts = datum2int(n_opts);
         re = pcre_compile(pattern, opts, &error, &erroffset, NULL);
         if (re == NULL) return nil;
 

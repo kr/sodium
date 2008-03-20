@@ -253,13 +253,6 @@ def make_c_undefines(cenv):
     return help(cenv)
 
 def compile_inline_meth_body(meth, entry, cenv):
-    class lexical_scanner(object):
-        def __init__(self, cenv):
-            self.cenv = cenv
-        def __getitem__(self, k):
-            addr = find_variable(S(k), self.cenv)
-            return 'lexical_lookup(closure_env(rcv), %d, %d)' % addr
-
     c_def = '''static datum
 %(name)s(datum rcv, datum args)
 {
@@ -270,7 +263,7 @@ def compile_inline_meth_body(meth, entry, cenv):
 }
 '''
     lexeme = meth.cadddr()
-    body = lexeme % lexical_scanner(cenv)
+    body = lexeme
     defines = make_c_defines(cenv)
     undefines = make_c_undefines(cenv)
     c_def %= { 'name':str(entry), 'body':body, 'file':lexeme.pos[0],
