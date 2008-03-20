@@ -196,8 +196,18 @@ def make_meth_entry(meth):
         return InlineMethEntry(make_label('inline_meth_entry'))
     return make_label('method-entry')
 
+def inline_meth_name(meth):
+    x = meth.caddr()
+    if pairp(x): return x.car()
+    return x
+
+def inline_meth_params(meth):
+    x = meth.caddr()
+    if pairp(x): return x.cdr()
+    return nil
+
 def meth_name(meth):
-    if is_inline_meth(meth): return meth.caddr()
+    if is_inline_meth(meth): return inline_meth_name(meth)
     return meth.caar()
 
 def meth_params(meth):
@@ -227,10 +237,14 @@ def compile_meth_body(meth, meth_entry, cenv):
 def munge_sym_to_c(name):
     return 'n_' + str(name).translate(maketrans('-', '_'))
 
-def make_c_defines(cenv):
+def make_c_undefine(name):
+    return '#undef %s /* %s */\n' % (munge_sym_to_c(name), name)
+
+def make_lexical_c_defines(cenv):
     def make_c_define(name, i, j):
         p = munge_sym_to_c(name), i, j, name
-        return '#define %s (lexical_lookup(closure_env(rcv), %d, %d)) /* %s */\n' % p
+        return (make_c_undefine(name) +
+                '#define %s (lexical_lookup(closure_env(rcv), %d, %d)) /* %s */\n' % p)
     def help(i, env):
         def hhelp(j, names):
             if names.nullp(): return ''
@@ -240,17 +254,31 @@ def make_c_defines(cenv):
         return hhelp(0, env.car()) + help(i + 1, env.cdr())
     return help(0, cenv)
 
-def make_c_undefines(cenv):
-    def make_c_define(name):
-        return '#undef %s /* %s */\n' % (munge_sym_to_c(name), name)
+def make_lexical_c_undefines(cenv):
     def help(env):
         def hhelp(names):
             if names.nullp(): return ''
             name = names.car()
-            return make_c_define(name) + hhelp(names.cdr())
+            return make_c_undefine(name) + hhelp(names.cdr())
         if env.nullp(): return ''
         return hhelp(env.car()) + help(env.cdr())
     return help(cenv)
+
+def make_param_c_defines(params):
+    def carcode(c): return 'car(%s)' % (c,)
+    def cdrcode(c): return 'cdr(%s)' % (c,)
+    def make(code, name):
+        return (make_c_undefine(name) +
+                '#define %s (%s) /* %s */\n' % (munge_sym_to_c(name), code, name))
+    def help(code, params):
+        if params.nullp(): return ''
+        return (make(carcode(code), params.car()) +
+                help(cdrcode(code), params.cdr()))
+    return help('args', params)
+
+def make_param_c_undefines(params):
+    if params.nullp(): return ''
+    return make_c_undefine(params.car()) + make_param_c_undefines(params.cdr())
 
 def compile_inline_meth_body(meth, entry, cenv):
     c_def = '''static datum
@@ -263,8 +291,9 @@ def compile_inline_meth_body(meth, entry, cenv):
 }
 '''
     body = meth.cadddr()
-    defines = make_c_defines(cenv)
-    undefines = make_c_undefines(cenv)
+    params = inline_meth_params(meth)
+    defines = make_lexical_c_defines(cenv) + make_param_c_defines(params)
+    undefines = make_lexical_c_undefines(cenv) + make_param_c_undefines(params)
     c_def %= { 'name':str(entry), 'body':body, 'file':body.pos[0],
                'line':body.pos[1], 'defines':defines, 'undefines':undefines }
     seq = empty_instruction_seq()
