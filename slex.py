@@ -48,6 +48,12 @@ class Lexer:
                 if not best: raise 'lexical error'
                 return best
 
+            def update_line_count(lexeme):
+                nlc = lexeme.count('\n')
+                self.line += nlc
+                if nlc == 0: self.col = 1
+                self.col += len(lexeme) - lexeme.rfind('\n')
+
             name, lexeme = choose(s)
             rest = s[len(lexeme):]
 
@@ -57,6 +63,8 @@ class Lexer:
             r, action = self.ruled[name]
             res = action(self, rest, name, lexeme)
             if res is None: res = ((name, lexeme, self.pos()),)
+
+            update_line_count(lexeme)
 
             append = self.after(self, rest, name, lexeme)
             if append is None: append = ()

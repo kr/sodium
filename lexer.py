@@ -56,10 +56,6 @@ def bef(l, s, name, lexeme):
     return tuple(res)
 
 def aft(l, s, name, lexeme):
-    nlc = lexeme.count('\n')
-    l.line += nlc
-    if nlc == 0: l.col = 1
-    l.col += len(lexeme) - lexeme.rfind('\n')
     l.bol = (name == EOL)
 
 def eol(l, s, name, lexeme):
