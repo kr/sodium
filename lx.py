@@ -262,12 +262,11 @@ def compile_inline_meth_body(meth, entry, cenv):
 %(undefines)s
 }
 '''
-    lexeme = meth.cadddr()
-    body = lexeme
+    body = meth.cadddr()
     defines = make_c_defines(cenv)
     undefines = make_c_undefines(cenv)
-    c_def %= { 'name':str(entry), 'body':body, 'file':lexeme.pos[0],
-               'line':lexeme.pos[1], 'defines':defines, 'undefines':undefines }
+    c_def %= { 'name':str(entry), 'body':body, 'file':body.pos[0],
+               'line':body.pos[1], 'defines':defines, 'undefines':undefines }
     seq = empty_instruction_seq()
     seq.add_c_defs(c_def)
     return seq
