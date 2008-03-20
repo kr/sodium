@@ -54,20 +54,26 @@ class Lexer:
                 if nlc == 0: self.col = 1
                 self.col += len(lexeme) - lexeme.rfind('\n')
 
+            def decorate(toks, p):
+                return [(n,l,p) for n,l in toks]
+
             name, lexeme = choose(s)
             rest = s[len(lexeme):]
 
             prepend = self.before(self, rest, name, lexeme)
             if prepend is None: prepend = ()
+            prepend = decorate(prepend, self.pos())
 
             r, action = self.ruled[name]
             res = action(self, rest, name, lexeme)
-            if res is None: res = ((name, lexeme, self.pos()),)
+            if res is None: res = ((name, lexeme),)
+            res = decorate(res, self.pos())
 
             update_line_count(lexeme)
 
             append = self.after(self, rest, name, lexeme)
             if append is None: append = ()
+            append = decorate(append, self.pos())
 
             return prepend + res + append, rest
 

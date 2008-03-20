@@ -45,12 +45,12 @@ def bef(l, s, name, lexeme):
 
     if col > l.levels[-1]:
         l.levels.append(col)
-        return (INDENT, spaces(col - l.levels[-2]), l.pos()),
+        return (INDENT, spaces(col - l.levels[-2])),
 
     res = []
     while col < l.levels[-1]:
         l.levels.pop()
-        res.append((DEDENT, '', l.pos()))
+        res.append((DEDENT, ''))
     if col > l.levels[-1]:
         raise '%d:%d: indent levels do not match' % (0, 0)
     return tuple(res)
@@ -60,7 +60,7 @@ def aft(l, s, name, lexeme):
 
 def eol(l, s, name, lexeme):
     if l.bol or l.nesting: return ()
-    return (name, lexeme, l.pos()),
+    return (name, lexeme),
 
 def space(l, s, name, lexeme):
     return ()
