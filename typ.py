@@ -58,6 +58,10 @@ setattr(String, '-', op_sub)
 setattr(String, '%', op_smod)
 setattr(String, '=', op_eq)
 
+class ForeignString(str):
+    def setpos(self, pos):
+        self.pos = pos
+        return self
 
 class InlineMethEntry(object):
     def __init__(self, name):

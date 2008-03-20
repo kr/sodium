@@ -25,7 +25,7 @@ class Lexer:
         self.ruled = dict(((n,(r,a)) for n,r,a in self.rules))
 
     def pos(self):
-        return '%s:%d:%d' % (self.fname, self.line, self.col)
+        return self.fname, self.line, self.col
 
     def lex(self, s, fname='<string>'):
         def more(s):

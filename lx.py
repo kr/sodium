@@ -233,11 +233,14 @@ def compile_inline_meth_body(meth, entry, cenv):
     c_def = '''static datum
 %(name)s(datum rcv, datum args)
 {
+#line %(line)d "%(file)s"
 %(body)s
 }
 '''
-    body = meth.cadddr() % lexical_scanner(cenv)
-    c_def %= { 'name':str(entry), 'body':body }
+    lexeme = meth.cadddr()
+    body = lexeme % lexical_scanner(cenv)
+    c_def %= { 'name':str(entry), 'body':body, 'file':lexeme.pos[0],
+               'line':lexeme.pos[1] }
     seq = empty_instruction_seq()
     seq.add_c_defs(c_def)
     return seq

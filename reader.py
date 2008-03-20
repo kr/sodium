@@ -20,9 +20,9 @@ class Parser:
         self.peek, self.lexeme, self.p = self.tokens.pop(0)
 
     def xmatch(self, *types):
-        peek, lexeme = self.peek, self.lexeme
+        peek, lexeme, pos = self.peek, self.lexeme, self.p
         self.match(*types)
-        return peek, lexeme
+        return peek, lexeme, pos
 
     def match(self, *types):
         peek, lexeme = self.peek, self.lexeme
@@ -91,7 +91,7 @@ mole :
         #return cons(first, self.__tail(*follow))
 
     def __message(self):
-      stype, lexeme = self.xmatch(*MESSAGE_TOKENS)
+      stype, lexeme, pos = self.xmatch(*MESSAGE_TOKENS)
       return lx.S(lexeme)
 
     def gobble_messages_reverse(self, l):
@@ -171,7 +171,7 @@ atom : NAME
      | STR
      | FOREIGN
         '''
-        type, lexeme = self.xmatch(T.INT, T.DEC, T.NAME, T.STR, T.FOREIGN)
+        type, lexeme, pos = self.xmatch(T.INT, T.DEC, T.NAME, T.STR, T.FOREIGN)
         if type == T.INT:
             return lx.Integer(lexeme)
         if type == T.NAME:
@@ -181,7 +181,7 @@ atom : NAME
         if type == T.DEC:
             return lx.Decimal(lexeme)
         if type == T.FOREIGN:
-            return lexeme[4:-4]
+            return lx.ForeignString(lexeme[4:-4]).setpos(pos)
 
     def match_loop(self, parse, *sentinels):
         rl = nil
