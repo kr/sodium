@@ -1,5 +1,5 @@
 
-inline C <<<<
+inline C <<end
 
 #include <string.h>
 
@@ -7,10 +7,10 @@ inline C <<<<
 
 static datum percent_star_sym;
 
->>>>
+end
 
 def str ():
-  inline C / <<<<
+  inline C / <<end
     /* concatenate */
     datum new_str;
     int l1, l2;
@@ -32,9 +32,9 @@ def str ():
     free(s2);
 
     return new_str;
-  >>>>
+  end
 
-  inline C run <<<<
+  inline C run <<end
     /* index a single char */
     int i;
     char s[2];
@@ -45,14 +45,14 @@ def str ():
     s[0] = bytes_contents(rcv)[i];
     s[1] = '\0';
     return make_bytes_init(s);
-  >>>>
+  end
 
-  inline C length <<<<
+  inline C length <<end
     if (args != nil) die("str.length -- too many args");
     return int2datum(strlen(bytes_contents(rcv)));
-  >>>>
+  end
 
-  inline C = <<<<
+  inline C = <<end
     char *s1, *s2;
     int i, l1, l2;
 
@@ -71,9 +71,9 @@ def str ():
         if (s1[i] != s2[i]) return nil;
     }
     return int2datum(1);
-  >>>>
+  end
 
-  inline C substring <<<<
+  inline C substring <<end
     char *s;
     int start, end, len;
 
@@ -99,7 +99,7 @@ def str ():
         new[i] = '\0';
         return make_bytes_init(new);
     }
-  >>>>
+  end
 
   (tail n) (str.substring n (str.length))
   (head n):
@@ -140,24 +140,24 @@ def str ():
         (format (str 1) (a.car)) / ((str.tail 2).%* (a.cdr))
         (str.head i) / ((str.tail i).%* a)
 
-  inline C % <<<<
+  inline C % <<end
     regs[R_VM0] = rcv;
     args = cons(args, nil);
     return call(regs[R_VM0], percent_star_sym, args);
-  >>>>
+  end
 
 def intern-syms ():
-  inline C run <<<<
+  inline C run <<end
     percent_star_sym = intern("%%*");
     return ok_sym;
-  >>>>
+  end
 
 def install-str ():
-  inline C run <<<<
+  inline C run <<end
     if (args == nil) die("install-str -- not enough args");
     str_surrogate = car(args);
     return ok_sym;
-  >>>>
+  end
 
 def (to-str x):
   if (inspect.same-type? x str):

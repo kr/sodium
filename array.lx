@@ -1,6 +1,6 @@
 
 def array ():
-  inline C get <<<<
+  inline C get <<end
     int i;
 
     if (args == nil) die("array.get -- not enough args");
@@ -8,9 +8,9 @@ def array ():
 
     i = datum2int(car(args));
     return array_get(rcv, i);
-  >>>>
+  end
 
-  inline C put! <<<<
+  inline C put! <<end
     int i;
 
     if (args == nil) die("array.put! -- not enough args");
@@ -19,7 +19,7 @@ def array ():
     i = datum2int(car(args));
     array_put(rcv, i, car(args));
     return ok_sym;
-  >>>>
+  end
 
   (map f):
     cons (f (array.car)) ((array.cdr).map f)
@@ -44,11 +44,11 @@ def array ():
     if (is? (array.car.car) name) (array.car) (array.cdr.assq name)
 
 def install-array ():
-  inline C run <<<<
+  inline C run <<end
     if (args == nil) die("install-array -- not enough args");
     array_surrogate = car(args);
     return ok_sym;
-  >>>>
+  end
 
 install-array array
 

@@ -1,4 +1,4 @@
-inline C <<<<
+inline C <<end
 #include <stdio.h>
 
 static void
@@ -11,13 +11,13 @@ fin_test_fn(void *i)
     }
 }
 
->>>>
+end
 
 def (f):
   def x ():
-    inline C prepare <<<<
+    inline C prepare <<end
       return grow_closure(&rcv, 1, (na_fn_free) fin_test_fn, (void *) 3);
-    >>>>
+    end
 
   x.prepare
 

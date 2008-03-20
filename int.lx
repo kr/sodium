@@ -1,26 +1,26 @@
 
-inline C <<<<
+inline C <<end
 #define MAX_LX_INT (0x3fffffff)
 #define MIN_LX_INT (-0x40000000)
 
 #define bigint(x) (printf("%ld\n", (x)), die1("no bigints yet", nil))
->>>>
+end
 
 def int ():
-  inline C cmp <<END
+  inline C cmp <<end
     register long a, b;
 
     if (args == nil) die("int.cmp -- not enough args");
     a = datum2int(rcv);
     b = datum2int(car(args));
     return (a < b) ? int2datum(-1) : (a > b) ? int2datum(1) : int2datum(0);
-  END
+  end
 
   (= x) (is? (int.cmp x) 0)
   (> x) (is? (int.cmp x) 1)
   (< x) (is? (int.cmp x) -1)
 
-  inline C "+" <<<<
+  inline C "+" <<end
     register long a, b, r;
 
     if (args == nil) die("int.+ -- not enough args");
@@ -29,9 +29,9 @@ def int ():
     r = a + b;
     if (r >= MAX_LX_INT || r <= MIN_LX_INT) return bigint(r);
     return int2datum(r);
-  >>>>
+  end
 
-  inline C - <<<<
+  inline C - <<end
     register long a, b, r;
 
     if (args == nil) die("int.- -- not enough args");
@@ -40,9 +40,9 @@ def int ():
     r = a - b;
     if (r >= MAX_LX_INT || r <= MIN_LX_INT) return bigint(r);
     return int2datum(r);
-  >>>>
+  end
 
-  inline C "*" <<<<
+  inline C "*" <<end
     register long a, b, r;
 
     if (args == nil) die("int.* -- not enough args");
@@ -56,9 +56,9 @@ def int ():
     }
     die("should convert to bigints and try again");
     return nil;
-  >>>>
+  end
 
-  inline C / <<<<
+  inline C / <<end
     register long a, b, r;
 
     if (args == nil) die("int./ -- not enough args");
@@ -68,9 +68,9 @@ def int ():
     r = a / b;
     if (r == MAX_LX_INT + 1) return bigint(r);
     return int2datum(r);
-  >>>>
+  end
 
-  inline C % <<<<
+  inline C % <<end
     register long a, b, r;
 
     if (args == nil) die("int.%% -- not enough args");
@@ -79,7 +79,7 @@ def int ():
     if (b == 0) die("int.%% -- modulo by zero");
     r = a %% b;
     return int2datum(r);
-  >>>>
+  end
 
   (** x) (error "not implemented")
 
@@ -92,11 +92,11 @@ def int ():
       (upper.str) / (table lower)
 
 def install-int ():
-  inline C run <<<<
+  inline C run <<end
     if (args == nil) die("install-int -- not enough args");
     int_surrogate = car(args);
     return ok_sym;
-  >>>>
+  end
 
 install-int int
 

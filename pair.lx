@@ -1,22 +1,22 @@
 
 def pair ():
-  inline C set-cdr! <<<<
+  inline C set-cdr! <<end
     chunk p = rcv;
 
     if (args == nil) die("pair.set-cdr! -- not enough args");
     cdr(p) = car(args);
     return ok_sym;
-  >>>>
+  end
 
-  inline C car <<<<
+  inline C car <<end
     if (args != nil) die("pair.car -- too many args");
     return car(rcv);
-  >>>>
+  end
 
-  inline C cdr <<<<
+  inline C cdr <<end
     if (args != nil) die("pair.cdr -- too many args");
     return cdr(rcv);
-  >>>>
+  end
 
   (map f):
     cons (f (pair.car)) ((pair.cdr).map f)
@@ -41,11 +41,11 @@ def pair ():
     if (is? (pair.car.car) name) (pair.car) (pair.cdr.assq name)
 
 def init ():
-  inline C run <<<<
+  inline C run <<end
     if (args == nil) die("install-pair -- not enough args");
     pair_surrogate = car(args);
     return ok_sym;
-  >>>>
+  end
 
 init pair
 

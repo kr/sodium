@@ -1,4 +1,4 @@
-inline C <<<<
+inline C <<end
 #include <string.h>
 #include <stdio.h>
 #include <sys/stat.h>
@@ -16,19 +16,19 @@ fsize(FILE *f)
     return sbuf.st_size;
 }
 
->>>>
+end
 
 def intern-syms ():
-  inline C run <<<<
+  inline C run <<end
     read_sym = intern("read");
     write_sym = intern("write");
     return ok_sym;
-  >>>>
+  end
 
 def file ():
   (run name mode):
     def f ():
-      inline C read <<<<
+      inline C read <<end
         uint r, len;
         datum str;
         FILE *f = (FILE *) ((chunk) rcv)->datums[2];
@@ -44,9 +44,9 @@ def file ():
         }
         *s = '\0';
         return str;
-      >>>>
+      end
 
-      inline C write <<<<
+      inline C write <<end
         uint r, len;
         FILE *f = ((chunk) rcv)->datums[2];
         char *s;
@@ -60,9 +60,9 @@ def file ():
             s += r;
         }
         return ok_sym;
-      >>>>
+      end
 
-      inline C close <<<<
+      inline C close <<end
         FILE *f = ((chunk) rcv)->datums[2];
 
         if (f) {
@@ -70,9 +70,9 @@ def file ():
             ((chunk) rcv)->datums[2] = 0;
         }
         return ok_sym;
-      >>>>
+      end
 
-      inline C prepare <<<<
+      inline C prepare <<end
         FILE *f;
         char *mode = "rb";
 
@@ -88,7 +88,7 @@ def file ():
         f = fopen(bytes_contents(%(name)s), mode);
 
         return grow_closure(&rcv, 1, (na_fn_free) fclose, f);
-      >>>>
+      end
 
     f.prepare
 

@@ -1,19 +1,19 @@
-inline C <<<<
+inline C <<end
 #include "st.h"
->>>>
+end
 
 def symbol ():
-  inline C str <<<<
+  inline C str <<end
     return make_bytes_init(symbol2charstar(rcv));
-  >>>>
+  end
   (str) "this-is-a-symbol"
 
 def install-symbol ():
-  inline C run <<<<
+  inline C run <<end
     if (args == nil) die("install-symbol -- not enough args");
     symbol_surrogate = car(args);
     return ok_sym;
-  >>>>
+  end
 
 install-symbol symbol
 

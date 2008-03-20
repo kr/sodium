@@ -1,4 +1,4 @@
-inline C <<<<
+inline C <<end
 
 #include <string.h>
 #include <pcre.h>
@@ -7,12 +7,12 @@ inline C <<<<
 
 int ovector[OVECCOUNT];
 
->>>>
+end
 
 def re ():
-  inline C dotall <<<<
+  inline C dotall <<end
     return int2datum(PCRE_DOTALL);
-  >>>>
+  end
 
   (run pat) (re.make pat (re.dotall))
 
@@ -21,15 +21,15 @@ def re ():
       (run subj) (r.match subj (r.runopts))
       (find subj) (r.match subj (r.findopts))
 
-      inline C runopts <<<<
+      inline C runopts <<end
         return int2datum(PCRE_ANCHORED);
-      >>>>
+      end
 
-      inline C findopts <<<<
+      inline C findopts <<end
         return int2datum(0);
-      >>>>
+      end
 
-      inline C match <<<<
+      inline C match <<end
         char *subj, *res;
         int rc, subj_len, res_len, opts;
         pcre *re = (pcre *) ((chunk) rcv)->datums[2];
@@ -53,9 +53,9 @@ def re ():
         res = subj + ovector[0];
         res_len = ovector[1] - ovector[0];
         return make_bytes_init_len(res, res_len);
-      >>>>
+      end
 
-      inline C prepare <<<<
+      inline C prepare <<end
         pcre *re;
         const char *error;
         char *pattern;
@@ -69,7 +69,7 @@ def re ():
         if (re == NULL) return nil;
 
         return grow_closure(&rcv, 1, free, re);
-      >>>>
+      end
 
     r.prepare
 

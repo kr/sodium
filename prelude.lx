@@ -1,8 +1,8 @@
 # This is the standard prelude for LX.
 
-inline C <<<<
+inline C <<end
 #include "prim.h"
->>>>
+end
 
 def π 3.14159
 
@@ -14,21 +14,21 @@ def (not x) (if x false true)
 def (make-blank-module) (obj ())
 
 def compile-module ():
-  inline C run <<<<
+  inline C run <<end
     datum name;
     name = car(args);
     return compile_module(name);
-  >>>>
+  end
 
 def become ():
-  inline C run <<<<
+  inline C run <<end
     datum a, b, keep_b;
     a = car(args);
     b = cadr(args);
     keep_b = caddr(args);
     become(&a, &b, datum2int(keep_b));
     return nil;
-  >>>>
+  end
 
 def (insert-module name module):
   *modules* = (cons (cons name module) *modules*)
@@ -37,29 +37,29 @@ def (insert-module name module):
 def *modules* '()
 
 def call ():
-  inline C run <<<<
+  inline C run <<end
     datum d, msg, argl;
     d = car(args);
     msg = cadr(args);
     argl = caddr(args);
     return call(d, msg, argl);
-  >>>>
+  end
 
 def error ():
-  inline C run <<<<
+  inline C run <<end
     return report_error(args);
-  >>>>
+  end
 
 def inspect ():
-  inline C has-method? <<<<
+  inline C has-method? <<end
     return (datum) closure_has_method(car(args), cadr(args));
-  >>>>
-  inline C same-type? <<<<
+  end
+  inline C same-type? <<end
     return (datum) closures_same_type(car(args), cadr(args));
-  >>>>
-  inline C methods <<<<
+  end
+  inline C methods <<end
     return (datum) closure_methods(car(args));
-  >>>>
+  end
 
 # TODO replace this with 
 def (promise? x): inspect.has-method? x 'wait
@@ -70,18 +70,18 @@ def (ensure try finally):
   try:run.wait+ success failure
 
 def is? ():
-  inline C run <<<<
+  inline C run <<end
     if (args == nil) die("is? -- not enough args");
     if (cdr(args) == nil) die("is? -- not enough args");
     return (datum) (car(args) == cadr(args));
-  >>>>
+  end
 
 def cons ():
-  inline C run <<<<
+  inline C run <<end
     if (args == nil) die("cons -- not enough args");
     if (cdr(args) == nil) die("cons -- not enough args");
     return cons(car(args), cadr(args));
-  >>>>
+  end
 
 def (load-module name):
   def ent (*modules*.assq name)
@@ -94,33 +94,33 @@ def (load-module name):
       . new-module
 
 def list ():
-  inline C run <<<<
+  inline C run <<end
     return args;
-  >>>>
+  end
 
 def make-array ():
-  inline C run <<<<
+  inline C run <<end
     if (args == nil) die("make-array -- not enough args");
     if (!intp(car(args))) die1("make-array -- not an int", car(args));
     return make_array(datum2int(car(args)));
-  >>>>
+  end
 
 def pr ():
-  inline C run <<<<
+  inline C run <<end
     if (args == nil) die("pr -- not enough args");
     pr(car(args));
     return ok_sym;
-  >>>>
+  end
 
 def open (load-module (quote file))
 load-module (quote file)
 
 def prx ():
-  inline C run <<<<
+  inline C run <<end
     if (args == nil) die("prx -- not enough args");
     prx(car(args));
     return ok_sym;
-  >>>>
+  end
 
 def (make-queue):
   def front '()
