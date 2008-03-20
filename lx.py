@@ -1,4 +1,6 @@
 
+from string import maketrans
+
 from typ import *
 from pair import cons, nil, pairp
 from pair import list as plist
@@ -222,6 +224,34 @@ def compile_meth_body(meth, meth_entry, cenv):
             EXTEND_ENVIRONMENT(env_r, env_r, argl_r, tmp_r)),
         compile_sequence(body, val_r, return_s, cenv))
 
+def munge_sym_to_c(name):
+    return 'n_' + str(name).translate(maketrans('-', '_'))
+
+def make_c_defines(cenv):
+    def make_c_define(name, i, j):
+        p = munge_sym_to_c(name), i, j, name
+        return '#define %s (lexical_lookup(closure_env(rcv), %d, %d)) /* %s */\n' % p
+    def help(i, env):
+        def hhelp(j, names):
+            if names.nullp(): return ''
+            name = names.car()
+            return make_c_define(name, i, j) + hhelp(j + 1, names.cdr())
+        if env.nullp(): return ''
+        return hhelp(0, env.car()) + help(i + 1, env.cdr())
+    return help(0, cenv)
+
+def make_c_undefines(cenv):
+    def make_c_define(name):
+        return '#undef %s /* %s */\n' % (munge_sym_to_c(name), name)
+    def help(env):
+        def hhelp(names):
+            if names.nullp(): return ''
+            name = names.car()
+            return make_c_define(name) + hhelp(names.cdr())
+        if env.nullp(): return ''
+        return hhelp(env.car()) + help(env.cdr())
+    return help(cenv)
+
 def compile_inline_meth_body(meth, entry, cenv):
     class lexical_scanner(object):
         def __init__(self, cenv):
@@ -233,14 +263,18 @@ def compile_inline_meth_body(meth, entry, cenv):
     c_def = '''static datum
 %(name)s(datum rcv, datum args)
 {
+%(defines)s
 #line %(line)d "%(file)s"
 %(body)s
+%(undefines)s
 }
 '''
     lexeme = meth.cadddr()
     body = lexeme % lexical_scanner(cenv)
+    defines = make_c_defines(cenv)
+    undefines = make_c_undefines(cenv)
     c_def %= { 'name':str(entry), 'body':body, 'file':lexeme.pos[0],
-               'line':lexeme.pos[1] }
+               'line':lexeme.pos[1], 'defines':defines, 'undefines':undefines }
     seq = empty_instruction_seq()
     seq.add_c_defs(c_def)
     return seq
