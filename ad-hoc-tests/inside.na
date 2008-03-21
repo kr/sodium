@@ -1,0 +1,8 @@
+
+def (f x): x .- 3
+def (g x): x .- 4
+def (h x): x .- 5
+
+def n (f: g: h 17)
+
+pr n
