@@ -19,7 +19,7 @@ def int ():
   (> x) (is? (int.cmp x) 1)
   (< x) (is? (int.cmp x) -1)
 
-  inline C ("+" b) <<end
+  inline C (+ b) <<end
     register long a, b, r;
 
     a = datum2int(rcv);
@@ -39,7 +39,7 @@ def int ():
     return int2datum(r);
   end
 
-  inline C ("*" b) <<end
+  inline C (* b) <<end
     register long a, b, r;
 
     a = datum2int(rcv);
