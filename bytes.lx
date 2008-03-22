@@ -9,7 +9,7 @@ static datum percent_star_sym;
 
 end
 
-def str ():
+def bytes ():
   inline C (/ x) <<end
     /* concatenate */
     datum new_str;
@@ -36,7 +36,7 @@ def str ():
     int i;
     char s[2];
 
-    if (!intp(n_i)) die("str -- expected int");
+    if (!intp(n_i)) die("bytes -- expected int");
     i = datum2int(n_i);
     s[0] = bytes_contents(rcv)[i];
     s[1] = '\0';
@@ -89,12 +89,12 @@ def str ():
     }
   end
 
-  (tail n) (str.substring n (str.length))
+  (tail n) (bytes.substring n (bytes.length))
   (head n):
-    str.substring 0 n
+    bytes.substring 0 n
 
   (starts-with? sub):
-    (str.head (sub.length)) = sub
+    (bytes.head (sub.length)) = sub
 
   (find-from n sub):
     def (helper s i):
@@ -103,30 +103,30 @@ def str ():
         ? (s.starts-with? sub):
           . i
           helper (s.tail 1) (i + 1)
-    helper (str.tail n) n
+    helper (bytes.tail n) n
 
   (find sub):
-    str.find-from 0 sub
+    bytes.find-from 0 sub
 
   # (% . a):
   #   pr "in %"
-  #   def i (str.find "%")
+  #   def i (bytes.find "%")
   #   ? (not i):
-  #     . str
-  #     ? ((str 0) = "%"):
-  #       (format (str 1) (a.car)) / ((str.tail 2) % . (a.cdr))
-  #       (str.head i) / ((str.tail i) % . a)
+  #     . bytes
+  #     ? ((bytes 0) = "%"):
+  #       (format (bytes 1) (a.car)) / ((bytes.tail 2) % . (a.cdr))
+  #       (bytes.head i) / ((bytes.tail i) % . a)
 
   (%* a):
     def (format code val):
       to-str val
-    def l (str.length)
-    def i (str.find "%")
+    def l (bytes.length)
+    def i (bytes.find "%")
     ? (is? i l):
-      . str
-      ? ((str 0) = "%"):
-        (format (str 1) (a.car)) / ((str.tail 2).%* (a.cdr))
-        (str.head i) / ((str.tail i).%* a)
+      . bytes
+      ? ((bytes 0) = "%"):
+        (format (bytes 1) (a.car)) / ((bytes.tail 2).%* (a.cdr))
+        (bytes.head i) / ((bytes.tail i).%* a)
 
   inline C % <<end
     regs[R_VM0] = rcv;
@@ -140,9 +140,9 @@ def intern-syms ():
     return ok_sym;
   end
 
-def install-str ():
+def install-bytes ():
   inline C (run sur) <<end
-    str_surrogate = n_sur;
+    bytes_surrogate = n_sur;
     return ok_sym;
   end
 
@@ -152,6 +152,6 @@ def (to-str x):
     to-str (x.str)
 
 intern-syms
-install-str str
+install-bytes bytes
 
 . '()

@@ -135,7 +135,7 @@ gc(int c, ...)
     to_start = relocate(to_start);
     modules = relocate(modules);
     int_surrogate = relocate(int_surrogate);
-    str_surrogate = relocate(str_surrogate);
+    bytes_surrogate = relocate(bytes_surrogate);
     pair_surrogate = relocate(pair_surrogate);
     array_surrogate = relocate(array_surrogate);
     nil_surrogate = relocate(nil_surrogate);
@@ -319,20 +319,20 @@ make_bytes_init(const char *s)
 }
 
 char *
-bytes_contents(datum str)
+bytes_contents(datum bytes)
 {
     chunk p;
-    if (!bytesp(str)) die1("bytes_contents -- not an instance of bytes", str);
-    p = (chunk) str;
+    if (!bytesp(bytes)) die1("bytes_contents -- not an instance of bytes", bytes);
+    p = (chunk) bytes;
     return (char *) p->datums;
 }
 
 /* caller must free the bytes returned by this function */
 char *
-copy_bytes_contents(datum str)
+copy_bytes_contents(datum bytes)
 {
     uint n;
-    char *s, *x = bytes_contents(str);
+    char *s, *x = bytes_contents(bytes);
     n = strlen(x) + 1;
     s = malloc(sizeof(char) * n);
     memcpy(s, x, n);

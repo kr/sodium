@@ -863,7 +863,7 @@ main(int argc, char **argv)
 
     /* load the very basic builtin modules */
     start_body(load_module("int"));
-    start_body(load_module("str"));
+    start_body(load_module("bytes"));
     start_body(load_module("pair"));
     start_body(load_module("array"));
     start_body(load_module("nil"));

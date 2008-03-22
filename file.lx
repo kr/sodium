@@ -30,20 +30,20 @@ def file ():
     def f ():
       inline C (read) <<end
         uint r, len;
-        datum str;
+        datum bytes;
         FILE *f = (FILE *) ((chunk) rcv)->datums[2];
         char *s;
 
         if (!f) die("f:read -- this file is closed");
         len = fsize(f);
-        str = make_bytes(len + 1);
-        for (s = bytes_contents(str); len; len -= r) {
+        bytes = make_bytes(len + 1);
+        for (s = bytes_contents(bytes); len; len -= r) {
             r = fread(s, sizeof(char), len, f);
             // TODO error checking with feof() and ferror()
             s += r;
         }
         *s = '\0';
-        return str;
+        return bytes;
       end
 
       inline C (write s) <<end

@@ -46,10 +46,10 @@ datum array_get(datum arr, uint index);
 datum array_put(datum arr, uint index, datum val);
 uint array_len(datum arr);
 
-char *bytes_contents(datum str);
+char *bytes_contents(datum bytes);
 
 /* caller must free the bytes returned by this function */
-char *copy_bytes_contents(datum str);
+char *copy_bytes_contents(datum bytes);
 
 inline pair datum2pair(datum d);
 
@@ -98,7 +98,7 @@ void init_mem(void);
 int pair_tag_matches(datum o);
 int closure_tag_matches(datum o);
 int array_tag_matches(datum arr);
-int bytes_tag_matches(datum str);
+int bytes_tag_matches(datum bytes);
 int broken_heart_tag_matches(datum bh);
 
 /*bool*/
