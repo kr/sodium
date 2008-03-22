@@ -72,7 +72,10 @@ mole :
         if self.peek == T.DOT:
           self.match(T.DOT)
           return self.__expr()
-        first = self.__expr()
+        if self.peek in MESSAGE_TOKENS:
+          first = lx.S(self.match(*MESSAGE_TOKENS))
+        else:
+          first = self.__expr()
 
         strip = (self.peek in MESSAGE_TOKENS)
         res = self.__molex(first, *follow)
