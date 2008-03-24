@@ -67,13 +67,14 @@ def assign2setbang(exp):
 def compile_shfn(exp, target, linkage, cenv):
   return compile(shfn2fn(exp), target, linkage, cenv)
 
+def expand_sequence(seq, cenv):
+  seq = expand_imports(seq)
+  if cenv is not nil:
+    return scan_out_defines(seq)
+  return seq
+
 def compile_do(exp, target, linkage, cenv):
-    seq = exp.cdr()
-    if cenv is not nil:
-      seq = scan_out_defines(seq)
-    else:
-      seq = expand_imports(seq)
-    return compile_sequence(seq, target, linkage, cenv)
+  return compile_sequence(exp.cdr(), target, linkage, cenv)
 
 env_r = S('env')
 global_r = S('global')
@@ -151,6 +152,7 @@ def compile_if(exp, target, linkage, cenv):
 
 def compile_sequence(seq, target, linkage, cenv):
     if seq.nullp(): raise "value of null sequence is undefined"
+    seq = expand_sequence(seq, cenv)
     if seq.cdr().nullp(): return compile(seq.car(), target, linkage, cenv)
     return preserving((env_r, continue_r),
         compile(seq.car(), target, next_s, cenv),
@@ -224,7 +226,7 @@ def compile_meth_body(meth, meth_entry, cenv):
     if is_inline_meth(meth):
         return compile_inline_meth_body(meth, meth_entry, cenv)
     formals = meth_params(meth)
-    body = scan_out_defines(meth_body(meth))
+    body = meth_body(meth)
     cenv = cons(formals, cenv)
     return append_ir_seqs(
         make_ir_seq((env_r, proc_r, argl_r), (env_r, tmp_r),
@@ -761,7 +763,7 @@ def scan_out_defines(body):
             return cons(var, vars), cons(set, exps), cons(q_unassigned_s, voids)
         else:
             return vars, cons(exp, exps), voids
-    vars, exps, voids = scan(expand_imports(body))
+    vars, exps, voids = scan(body)
     if vars.nullp(): return exps
     binding = make_fn(vars, exps)
     return plist(cons(binding, voids)) # apply the fn to the void values
