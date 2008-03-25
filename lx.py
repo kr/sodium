@@ -67,8 +67,19 @@ def assign2setbang(exp):
 def compile_shfn(exp, target, linkage, cenv):
   return compile(shfn2fn(exp), target, linkage, cenv)
 
+def expand_macros(seq):
+  if seq.nullp(): return seq
+  if not pairp(seq.car()): return seq
+  if seq.car().nullp(): return seq
+  tag = str(seq.caar())
+  if tag not in macros: return seq
+  return macros[tag](seq)
+
 def expand_sequence(seq, cenv):
-  seq = expand_imports(seq)
+  while True:
+    nseq = expand_macros(seq)
+    if nseq == seq: break
+    seq = nseq
   if cenv is not nil:
     return scan_out_defines(seq)
   return seq
@@ -748,6 +759,10 @@ def expand_imports(seq):
 
   if seq.nullp(): return seq
   return expand_import(seq.car()).append(expand_imports(seq.cdr()))
+
+macros = {
+  'import': expand_imports,
+}
 
 unassigned_s = S(':unassigned:')
 q_unassigned_s = plist(quote_s, unassigned_s)
