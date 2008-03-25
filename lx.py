@@ -732,8 +732,6 @@ def make_if(test, consequent, alternative=None):
 def make_do(*stmts):
   return plist(do_s, *stmts)
 
-promise__s = S('promise?')
-wait_s = S('wait')
 def expand_imports(seq):
   def expand_import(stmt):
     def old_name(term):
@@ -747,12 +745,6 @@ def expand_imports(seq):
                       make_call(new_name(stmt.cadr()), old_name(term)))
     def module2def(name):
       return make_def(new_name(name), make_load_module(old_name(name)))
-    def replace(term):
-      name = new_name(term)
-      arg = x_s
-      if name is x_s: arg = y_s
-      return make_call(name, wait_s,
-                       make_fn(plist(arg), plist(plist(set__s, name, arg))))
     terms = stmt.cddr()
     return cons(module2def(stmt.cadr()), terms.map(import_term2def))
 
