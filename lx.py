@@ -758,7 +758,7 @@ def expand_imports(seq):
     return cons(module2def(stmt.cadr()), terms.map(import_term2def))
 
   if seq.nullp(): return seq
-  return expand_import(seq.car()).append(expand_imports(seq.cdr()))
+  return expand_import(seq.car()).append(seq.cdr())
 
 macros = {
   'import': expand_imports,
