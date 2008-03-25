@@ -1,7 +1,7 @@
 
 do (? 3 (pr "good"))
-#do (if 3 (pr "good") (pr "good"))
+do (if 3 (pr "good") (pr "good"))
 
 do (? '() (pr "fail") (pr "good"))
-#do (if '() (pr "fail") (pr "fail"))
+do (if '() (pr "fail") (pr "fail"))
 

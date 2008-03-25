@@ -752,8 +752,18 @@ def expand_imports(seq):
   if seq.nullp(): return seq
   return expand_import(seq.car()).append(seq.cdr())
 
+# TODO handle "else" clause
+def expand_if(seq):
+  def help(stmt):
+    test = stmt.cadr()
+    consequent = cons(do_s, stmt.cddr())
+    return plist(qmark_s, test, consequent)
+  if seq.nullp(): return seq
+  return cons(help(seq.car()), seq.cdr())
+
 macros = {
   'import': expand_imports,
+  'if': expand_if,
 }
 
 unassigned_s = S(':unassigned:')
