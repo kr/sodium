@@ -2,7 +2,7 @@
 
 # Test eventual sends
 
-def (f x) (if x (error "zippo") 7)
+def (f x) (? x (error "zippo") 7)
 
 def p (f :run 1) # doomed promise -- must be an error
 

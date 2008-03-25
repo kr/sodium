@@ -2,7 +2,7 @@ def n 0
 
 def (count):
   n :: (n + 1)
-  if ((n % 100000) = 0) (pr n)
-  if (n < 5000000) (count)
+  ? ((n % 100000) = 0) (pr n)
+  ? (n < 5000000) (count)
 
 count

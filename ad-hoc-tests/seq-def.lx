@@ -5,7 +5,7 @@ do :
 pr x
 
 def (f):
-  if 4 :
+  ? 4 :
     do :
       def q 'blah
       pr q

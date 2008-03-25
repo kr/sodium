@@ -24,7 +24,7 @@ def array ():
 
   (filter f):
     def rest ((array.cdr).filter f)
-    if (f (array.car)):
+    ? (f (array.car)):
       cons (array.car) rest
       . rest
 
@@ -34,12 +34,12 @@ def array ():
     . 'ok
 
   (= p):
-    if ((array.car) = (p.car)):
-      if ((array.cdr) = (p.cdr)) true false
+    ? ((array.car) = (p.car)):
+      ? ((array.cdr) = (p.cdr)) true false
       . false
 
   (assq name):
-    if (is? (array.car.car) name) (array.car) (array.cdr.assq name)
+    ? (is? (array.car.car) name) (array.car) (array.cdr.assq name)
 
 def install-array ():
   inline C (run sur) <<end

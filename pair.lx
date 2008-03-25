@@ -20,7 +20,7 @@ def pair ():
 
   (filter f):
     def rest ((pair.cdr).filter f)
-    if (f (pair.car)):
+    ? (f (pair.car)):
       cons (pair.car) rest
       . rest
 
@@ -30,12 +30,12 @@ def pair ():
     . 'ok
 
   (= p):
-    if ((pair.car) = (p.car)):
-      if ((pair.cdr) = (p.cdr)) true false
+    ? ((pair.car) = (p.car)):
+      ? ((pair.cdr) = (p.cdr)) true false
       . false
 
   (assq name):
-    if (is? (pair.car.car) name) (pair.car) (pair.cdr.assq name)
+    ? (is? (pair.car.car) name) (pair.car) (pair.cdr.assq name)
 
 def init ():
   inline C (run sur) <<end

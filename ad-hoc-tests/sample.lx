@@ -32,7 +32,7 @@ pr '(x
 x :: 3
 pr "about to print x, which should equal 3"
 pr x
-if x:
+? x:
     do:
         pr x
 

@@ -36,6 +36,7 @@ def_s = S('def')
 load_module_s = S('load-module')
 export_s = S('export')
 import_s = S('import')
+qmark_s = S('?')
 if_s = S('if')
 fn_s = S('fn')
 shfn_s = S(':shorthand-fn:')
@@ -50,7 +51,7 @@ def compile(exp, target, linkage, cenv):
     if variablep(exp): return compile_variable(exp, target, linkage, cenv)
     if tagged_list(exp, set__s): return compile_assignment(exp, target, linkage, cenv)
     if tagged_list(exp, def_s): return compile_definition(exp, target, linkage, cenv)
-    if tagged_list(exp, if_s): return compile_if(exp, target, linkage, cenv)
+    if tagged_list(exp, qmark_s): return compile_qmark(exp, target, linkage, cenv)
     if tagged_list(exp, fn_s): return compile_obj(fn2obj(exp), target, linkage, cenv)
     if tagged_list(exp, shfn_s): return compile_shfn(exp, target, linkage, cenv)
     if tagged_list(exp, obj_s): return compile_obj(exp, target, linkage, cenv)
@@ -142,7 +143,7 @@ def import_name(exp):
     return exp.cadr()
 
 continue_r = S('continue')
-def compile_if(exp, target, linkage, cenv):
+def compile_qmark(exp, target, linkage, cenv):
     t_branch = make_label('true-branch')
     f_branch = make_label('false-branch')
     after_if = make_label('after-if')
