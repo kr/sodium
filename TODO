@@ -19,7 +19,10 @@
 [ ] move bytecode loading into sodium code
 [ ] add debugging info to byte code files
 [ ] exceptions
-[ ] macros
+[+] macros
+[ ] macro: if/elif/else
+[ ] macro: for
+[ ] macro: try/catch/ensure
 [ ] unit testing
 [ ] change name to "sodium"
 [ ] flesh out str methods
