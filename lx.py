@@ -753,7 +753,6 @@ def expand_imports(seq):
       if name is x_s: arg = y_s
       return make_call(name, wait_s,
                        make_fn(plist(arg), plist(plist(set__s, name, arg))))
-    if not tagged_list(stmt, import_s): return plist(stmt)
     terms = stmt.cddr()
     return cons(module2def(stmt.cadr()), terms.map(import_term2def))
 
