@@ -48,9 +48,7 @@
 [ ] bootstrap
 [ ] embed the compiler to form one do-it-all binary
 [ ] repl
-[ ] private methods
 [ ] make the compiler also emit real C-code (not just packaged byte codes)
-[ ] generalized array notation input: '(a . b . c . d)
 [ ] inline bytecode notation
 [ ] reimplement CISCy operations (e.g. variable lookup, call) in bytecode
 [ ] PIC optimization
