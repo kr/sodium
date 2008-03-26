@@ -73,7 +73,9 @@ def cons ():
   end
 
 def (map f a):
-  ? (is? a '()) a (cons (f a.car) (map f a.cdr))
+  if (is? a '()): return a
+  def x (f a.car) # evaluate x before the rest
+  cons x (map f a.cdr)
 
 def (load-module name):
   def ent (*modules*.assq name)

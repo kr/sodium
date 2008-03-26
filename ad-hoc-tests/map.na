@@ -3,3 +3,5 @@
 def s '(a b c d)
 
 pr (map [list x] s)
+
+map [pr x] s
