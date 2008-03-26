@@ -23,6 +23,7 @@
 [+] macro: if/elif/else
 [ ] macro: for
 [ ] macro: try/catch/ensure
+[ ] return expr
 [ ] unit testing
 [ ] change name to "sodium"
 [ ] flesh out str methods
