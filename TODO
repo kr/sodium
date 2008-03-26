@@ -43,6 +43,7 @@
 [ ] overloading by number of args
 [ ] var args
 [ ] fix handling of unassigned variables
+[ ] global constants (names that can be assigned exactly once)
 
 [ ] bootstrap
 [ ] embed the compiler to form one do-it-all binary
