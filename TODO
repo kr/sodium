@@ -20,7 +20,7 @@
 [ ] add debugging info to byte code files
 [ ] exceptions
 [+] macros
-[ ] macro: if/elif/else
+[+] macro: if/elif/else
 [ ] macro: for
 [ ] macro: try/catch/ensure
 [ ] unit testing

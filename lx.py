@@ -77,10 +77,14 @@ def expand_macros(seq):
   return macros[tag](seq)
 
 def expand_sequence(seq, cenv):
+  oseq = seq
   while True:
     nseq = expand_macros(seq)
     if nseq == seq: break
     seq = nseq
+  #if oseq != seq:
+  #  print 'old:', oseq
+  #  print 'new:', seq
   if cenv is not nil:
     return scan_out_defines(seq)
   return seq
@@ -752,18 +756,50 @@ def expand_imports(seq):
   if seq.nullp(): return seq
   return expand_import(seq.car()).append(seq.cdr())
 
-# TODO handle "else" clause
+else_s = S('else')
+false_s = S('false')
+def if_macro_alternative(seq):
+  if seq.nullp(): return false_s
+  next = seq.car()
+  if tagged_list(next, else_s): return cons(do_s, next.cdr())
+  return false_s
+
+def if_macro_tail(seq):
+  if seq.nullp(): return seq
+  next = seq.car()
+  if tagged_list(next, else_s): return seq.cdr()
+  return seq
+
+elif_s = S('elif')
+def collect_elifs(seq):
+  if seq.nullp(): return false_s, seq
+  next = seq.car()
+  if tagged_list(next, else_s):
+    return cons(do_s, next.cdr()), seq.cdr()
+  if not tagged_list(next, elif_s): return false_s, seq
+  alt, tail = collect_elifs(seq.cdr())
+  return plist(do_s, cons(if_s, next.cdr()), plist(else_s, alt)), tail
+
 def expand_if(seq):
-  def help(stmt):
+  def help(stmt, alt):
     test = stmt.cadr()
     consequent = cons(do_s, stmt.cddr())
-    return plist(qmark_s, test, consequent)
+    return plist(qmark_s, test, consequent, alt)
   if seq.nullp(): return seq
-  return cons(help(seq.car()), seq.cdr())
+  alternative, tail = collect_elifs(seq.cdr())
+  return cons(help(seq.car(), alternative), tail)
+
+def report_else_error(seq):
+  raise 'else with no preceding if'
+
+def report_elif_error(seq):
+  raise 'elif with no preceding if'
 
 macros = {
   'import': expand_imports,
   'if': expand_if,
+  'else': report_else_error,
+  'elif': report_elif_error,
 }
 
 unassigned_s = S(':unassigned:')

@@ -5,3 +5,61 @@ do (if 3 (pr "good") (pr "good"))
 do (? '() (pr "fail") (pr "good"))
 do (if '() (pr "fail") (pr "fail"))
 
+do:
+  if 3:
+    pr "good"
+    pr "good"
+
+do:
+  if 3:
+    pr "good"
+    pr "good"
+  else:
+    pr "fail"
+    pr "fail"
+
+do:
+  if '():
+    pr "fail"
+    pr "fail"
+  else:
+    pr "good"
+    pr "good"
+
+do:
+  if '():
+    pr "fail"
+    pr "fail"
+  elif 3:
+    pr "good"
+    pr "good"
+  else:
+    pr "fail"
+    pr "fail"
+
+do:
+  if '():
+    pr "fail"
+    pr "fail"
+  elif '():
+    pr "fail"
+    pr "fail"
+  else:
+    pr "good"
+    pr "good"
+
+do:
+  if '():
+    pr "fail"
+    pr "fail"
+  elif 3:
+    pr "good"
+    pr "good"
+
+do:
+  if '():
+    pr "fail"
+    pr "fail"
+  elif '():
+    pr "fail"
+    pr "fail"
