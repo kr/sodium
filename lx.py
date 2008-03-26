@@ -36,6 +36,7 @@ def_s = S('def')
 load_module_s = S('load-module')
 export_s = S('export')
 import_s = S('import')
+return_s = S('return')
 qmark_s = S('?')
 if_s = S('if')
 fn_s = S('fn')
@@ -58,9 +59,14 @@ def compile(exp, target, linkage, cenv):
     if tagged_list(exp, do_s): return compile_do(exp, target, linkage, cenv)
     if tagged_list(exp, inline_s): return compile_inline(exp)
     if tagged_list(exp, export_s): return compile(export2obj(exp), target, linkage, cenv)
+    if tagged_list(exp, return_s): return compile_return(exp, target, linkage, cenv)
     if tagged_list2(exp, assign_s): return compile(assign2setbang(exp), target, linkage, cenv)
     if pairp(exp): return compile_application(exp, target, linkage, cenv)
     raise Exception, 'Unknown expression type %s' % exp
+
+val_r = S('val')
+def compile_return(exp, target, linkage, cenv):
+  return compile(exp.cadr(), val_r, return_s, cenv);
 
 def assign2setbang(exp):
   return plist(set__s, exp.car(), exp.caddr())
@@ -114,7 +120,6 @@ def compile_variable(exp, target, linkage, cenv):
             make_ir_seq((env_r,), (target,),
                 LEXICAL_LOOKUP(target, addr)))
 
-val_r = S('val')
 next_s = S('next')
 ok_s = S('ok')
 def compile_assignment(exp, target, linkage, cenv):
@@ -236,7 +241,6 @@ def meth_body(meth):
 
 proc_r = S('proc')
 argl_r = S('argl')
-return_s = S('return')
 tmp_r = S('tmp')
 def compile_meth_body(meth, meth_entry, cenv):
     if is_inline_meth(meth):
