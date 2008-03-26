@@ -61,6 +61,8 @@ def compile(exp, target, linkage, cenv):
     if tagged_list(exp, export_s): return compile(export2obj(exp), target, linkage, cenv)
     if tagged_list(exp, return_s): return compile_return(exp, target, linkage, cenv)
     if tagged_list2(exp, assign_s): return compile(assign2setbang(exp), target, linkage, cenv)
+    if simple_macrop(exp): return compile(expand_simple_macros(exp),
+            target, linkage, cenv)
     if pairp(exp): return compile_application(exp, target, linkage, cenv)
     raise Exception, 'Unknown expression type %s' % exp
 
@@ -74,18 +76,35 @@ def assign2setbang(exp):
 def compile_shfn(exp, target, linkage, cenv):
   return compile(shfn2fn(exp), target, linkage, cenv)
 
-def expand_macros(seq):
+def simple_macrop(exp):
+  tag = str(exp.car())
+  return tag in simple_macros
+
+def expand_simple_macro(exp):
+  if not pairp(exp): return exp
+  tag = str(exp.car())
+  if tag not in simple_macros: return exp
+  return simple_macros[tag](exp)
+
+def expand_simple_macros(exp):
+  while True:
+    nexp = expand_simple_macro(exp)
+    if nexp == exp: break
+    exp = nexp
+  return exp
+
+def expand_seq_macros(seq):
   if seq.nullp(): return seq
   if not pairp(seq.car()): return seq
   if seq.car().nullp(): return seq
   tag = str(seq.caar())
-  if tag not in macros: return seq
-  return macros[tag](seq)
+  if tag not in seq_macros: return seq
+  return seq_macros[tag](seq)
 
 def expand_sequence(seq, cenv):
   oseq = seq
   while True:
-    nseq = expand_macros(seq)
+    nseq = expand_seq_macros(seq)
     if nseq == seq: break
     seq = nseq
   #if oseq != seq:
@@ -799,11 +818,26 @@ def report_else_error(seq):
 def report_elif_error(seq):
   raise 'elif with no preceding if'
 
-macros = {
+in_s = S('in')
+map_s = S('map')
+def expand_for(exp):
+  param = exp.cadr()
+  in_word = exp.caddr()
+  seq_exp = exp.cadddr()
+  body_seq = exp.cddddr()
+  if in_word is not in_s: raise 'syntax error'
+  f = cons(fn_s, cons(plist(param), body_seq))
+  return plist(map_s, f, seq_exp)
+
+seq_macros = {
   'import': expand_imports,
   'if': expand_if,
   'else': report_else_error,
   'elif': report_elif_error,
+}
+
+simple_macros = {
+  'for': expand_for,
 }
 
 unassigned_s = S(':unassigned:')

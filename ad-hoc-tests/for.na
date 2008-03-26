@@ -1,0 +1,9 @@
+
+
+def s '(a b c d)
+
+pr: for v in s:
+  list v
+
+for v in s:
+  pr v
