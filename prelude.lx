@@ -74,13 +74,13 @@ def cons ():
 
 def (load-module name):
   def ent (*modules*.assq name)
-  ? ent:
+  if ent:
     ent.cdr
-    do:
-      def new-module (make-blank-module)
-      *modules* :: (cons (cons name new-module) *modules*)
-      become new-module (compile-module name) 1
-      . new-module
+  else:
+    def new-module (make-blank-module)
+    *modules* :: (cons (cons name new-module) *modules*)
+    become new-module (compile-module name) 1
+    . new-module
 
 def list ():
   inline C run <<end
@@ -114,32 +114,31 @@ def (make-queue):
   def queue ():
     (empty?): is? front '()
     (front):
-      ? (queue.empty?): error "front called on an empty queue"
+      if (queue.empty?): error "front called on an empty queue"
       front.car
     (run item):
       def new (cons item '())
-      ? (queue.empty?):
-        do:
-          front :: new
-          rear :: new
-        do:
-          rear.set-cdr! new
-          rear :: new
+      if (queue.empty?):
+        front :: new
+        rear :: new
+      else:
+        rear.set-cdr! new
+        rear :: new
       . queue
     (remove!):
       def item queue.front
       queue.delete!
       . item
     (delete!):
-      ? (queue.empty?): error "delete! called on an empty queue"
+      if (queue.empty?): error "delete! called on an empty queue"
       front :: front.cdr
       . queue
     (consume! f):
-      ? (queue.empty?):
+      if (queue.empty?):
         . 'ok
-        do:
-          f queue.remove!
-          queue.consume! f
+      else:
+        f queue.remove!
+        queue.consume! f
   . queue
 
 def (make-promise):
@@ -162,12 +161,12 @@ def (make-promise):
     def (broken?) (is? status 'broken)
 
     def (queue-for-success f):
-      ? (pending?) (success-queue f)
-      ? (resolved?) (f value)
+      if (pending?) (success-queue f)
+      if (resolved?) (f value)
 
     def (queue-for-err f):
-      ? (pending?) (err-queue f)
-      ? (broken?) (f err-name err-val)
+      if (pending?) (err-queue f)
+      if (broken?) (f err-name err-val)
 
     def (process state err):
       status :: state
@@ -213,13 +212,13 @@ def (make-promise):
 
     def sink ():
       (run val):
-        ? (resolved?): error "already resolved"
+        if (resolved?): error "already resolved"
         status :: 'resolved
         value :: val
         success-queue.consume! [x val]
         process 'resolved
       (break! name val):
-        ? (broken?): error "already broken"
+        if (broken?): error "already broken"
         status :: 'broken
         err-name :: name
         err-val :: val
@@ -265,7 +264,7 @@ def (send rcv msg args):
 def *tasks* (make-queue)
 
 def (process-tasks):
-  ? (not *tasks*.empty?): do:
+  if (not *tasks*.empty?):
       def task (*tasks*.remove!)
       task
       # if there was an error
