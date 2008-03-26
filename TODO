@@ -57,4 +57,4 @@
 [ ] use qhasm or similar to produce native binaries
 [ ] lexer macros
 
-[ ] redesign punctuation messages
+[+] redesign punctuation messages
