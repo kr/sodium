@@ -19,9 +19,6 @@ def array ():
     return ok_sym;
   end
 
-  (map f):
-    cons (f (array.car)) ((array.cdr).map f)
-
   (filter f):
     def rest ((array.cdr).filter f)
     ? (f (array.car)):

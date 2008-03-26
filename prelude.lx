@@ -72,6 +72,9 @@ def cons ():
     return cons(n_x, n_y);
   end
 
+def (map f a):
+  ? (is? a '()) a (cons (f a.car) (map f a.cdr))
+
 def (load-module name):
   def ent (*modules*.assq name)
   if ent:

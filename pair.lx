@@ -15,9 +15,6 @@ def pair ():
     return cdr(rcv);
   end
 
-  (map f):
-    cons (f (pair.car)) ((pair.cdr).map f)
-
   (filter f):
     def rest ((pair.cdr).filter f)
     ? (f (pair.car)):
