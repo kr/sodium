@@ -21,6 +21,16 @@ all_regs_dict = dict([(str(k),i) for i,k in enumerate(all_regs)])
 
 import_names = []
 
+def quote(s):
+    r = ''
+    for c in s:
+        if c in '\\"':
+            c = '\\' + c
+        if c == '\n':
+            c = '\\n'
+        r += c
+    return '"' + r + '"'
+
 def tr(s, old, new):
     for a,b in zip(old, new):
         s = s.replace(a, b)
@@ -150,7 +160,7 @@ extern struct lxc_module lxc_module_%(name)s;
                 print >>fd, '#define %s "%s"' % (c_name, str(d))
             elif isinstance(d, String):
                 sdts += '@'
-                print >>fd, '#define %s "%s"' % (c_name, str(d))
+                print >>fd, '#define %s %s' % (c_name, quote(str(d)))
             elif isinstance(d, InlineMethEntry):
                 sdts += '>'
                 print >>fd, '#define %s %s' % (c_name, str(d))
