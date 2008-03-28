@@ -1,0 +1,12 @@
+
+def x (make-dict)
+
+pr x
+
+x 'a 7
+
+pr "\n\n\n\n\n\n####################\n\n\n\n\n"
+
+def y (x.get 'a)
+
+pr y

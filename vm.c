@@ -452,8 +452,12 @@ lexical_setbang(datum env, uint level, uint index, datum val)
 {
     datum cell;
 
-    for (;level--;) env = cdr(env);
+    /*printf("\n\n\nlexical_setbang(%p, %d, %d, %p)\n", env, level, index, val);*/
+
+    for (;level--;) /*pr(env),*/ env = cdr(env);
+    /*pr(env);*/
     cell = car(env);
+    /*pr(cell);*/
     for (;index--;) cell = cdr(cell);
     car(cell) = val;
     return ok_sym;
