@@ -33,11 +33,20 @@ typedef struct closure {
     method_table table;
 } *closure;
 
+typedef struct str {
+    uint info;
+    size_t size;
+    size_t len;
+    char data[];
+} *str;
+
 datum cons(datum x, datum y);
 datum make_array(uint len);
 datum make_bytes(uint len);
 datum make_bytes_init(const char *s);
 datum make_bytes_init_len(const char *s, int len);
+datum make_str(size_t size, size_t len);
+datum make_str_init(size_t size, size_t len, const char *bytes);
 datum make_closure(datum env, uint *table);
 datum grow_closure(datum *o, uint len, na_fn_free fn, void *data);
 
@@ -51,7 +60,11 @@ char *bytes_contents(datum bytes);
 /* caller must free the bytes returned by this function */
 char *copy_bytes_contents(datum bytes);
 
+/* caller must free the str returned by this function */
+char *copy_str_contents(datum str);
+
 inline pair datum2pair(datum d);
+inline str datum2str(datum d);
 
 inline closure datum2closure(datum d);
 
@@ -99,6 +112,7 @@ int pair_tag_matches(datum o);
 int closure_tag_matches(datum o);
 int array_tag_matches(datum arr);
 int bytes_tag_matches(datum bytes);
+int str_tag_matches(datum bytes);
 int broken_heart_tag_matches(datum bh);
 
 /*bool*/
@@ -107,6 +121,8 @@ int broken_heart_tag_matches(datum bh);
 #define arrayp(x) (in_chunk_range(x) && array_tag_matches(x))
 
 #define bytesp(x) (in_chunk_range(x) && bytes_tag_matches(x))
+
+#define strp(x) (in_chunk_range(x) && str_tag_matches(x))
 
 #define closurep(x) (in_chunk_range(x) && closure_tag_matches(x))
 

@@ -242,6 +242,7 @@ extern struct lxc_module lxc_module_%(name)s;
             elif isinstance(d, String):
                 fd.write('@')
                 fd.write(encode_int(len(d)))
+                fd.write(encode_int(len(d)))
                 fd.write(d)
             elif self_evaluatingp(d):
                 fd.write('#')

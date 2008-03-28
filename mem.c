@@ -39,7 +39,8 @@ init_mem(void)
 #define DATUM_TYPE_CLOSURE 0x02
 #define DATUM_TYPE_ARRAY 0x03
 #define DATUM_TYPE_BYTES 0x04
-#define DATUM_TYPE_FZ 0x05
+#define DATUM_TYPE_STR 0x05
+#define DATUM_TYPE_FZ 0xf0
 #define DATUM_TYPE_BROKEN_HEART 0xff
 #define DATUM_LEN(i) ((i) & 0x00ffffff)
 #define SET_DATUM_TYPE(o,t) {(o)->info = DATUM_INFO(t, DATUM_LEN((o)->info));}
@@ -261,15 +262,6 @@ become(datum *a, datum *b, int keep_b)
 }
 
 datum
-make_bytes(uint bytes_len)
-{
-    uint words_len;
-
-    words_len = max((bytes_len + 3) / 4, 1);
-    return internal_cons(DATUM_TYPE_BYTES, words_len, nil, nil);
-}
-
-datum
 grow_closure(datum *op, uint len, na_fn_free fn, void *data)
 {
     chunk fz;
@@ -304,6 +296,15 @@ make_closure(datum env, uint *table)
 }
 
 datum
+make_bytes(uint bytes_len)
+{
+    uint words_len;
+
+    words_len = max((bytes_len + 3) / 4, 1);
+    return internal_cons(DATUM_TYPE_BYTES, words_len, nil, nil);
+}
+
+datum
 make_bytes_init_len(const char *s, int len)
 {
     datum d = make_bytes(len + 1);
@@ -316,6 +317,25 @@ datum
 make_bytes_init(const char *s)
 {
     return make_bytes_init_len(s, strlen(s));
+}
+
+datum
+make_str(size_t size, size_t len)
+{
+    uint words_size;
+
+    words_size = 2 + (size + 3) / 4;
+    return internal_cons(DATUM_TYPE_STR, words_size, (datum) size,
+                         (datum) len);
+}
+
+datum
+make_str_init(size_t size, size_t len, const char *bytes)
+{
+    str s = (str) make_str(size + 1, len);
+    memcpy(s->data, bytes, size);
+    s->data[size] = '\0';
+    return (datum) s;
 }
 
 char *
@@ -337,6 +357,28 @@ copy_bytes_contents(datum bytes)
     s = malloc(sizeof(char) * n);
     memcpy(s, x, n);
     return s;
+}
+
+inline str
+datum2str(datum d)
+{
+    if (!in_chunk_range(d)) die1("not a str", d);
+    if (!str_tag_matches(d)) die1("not a str", d);
+    return (str) d;
+}
+
+
+/* caller must free the str returned by this function */
+char *
+copy_str_contents(datum d)
+{
+    char *r;
+    str s = datum2str(d);
+
+    r = malloc(sizeof(char) * (s->size + 1));
+    memcpy(r, s->data, s->size);
+    r[s->size] = 0;
+    return r;
 }
 
 static chunk
@@ -398,6 +440,14 @@ bytes_tag_matches(datum arr)
     chunk p = (chunk) arr;
     return DATUM_TYPE(p->info) == DATUM_TYPE_BYTES;
 }
+
+int
+str_tag_matches(datum str)
+{
+    chunk p = (chunk) str;
+    return DATUM_TYPE(p->info) == DATUM_TYPE_STR;
+}
+
 
 int
 broken_heart_tag_matches(datum bh)

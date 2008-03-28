@@ -47,6 +47,9 @@ prx(datum d)
         printf("<addr %p>", d);
     } else if (symbolp(d)) {
         pr_symbol(d);
+    } else if (strp(d)) {
+        str s = datum2str(d);
+        printf("%*s", s->size, s->data);
     } else if (bytesp(d)) {
         printf("%s", bytes_contents(d));
     } else if (pairp(d)) {

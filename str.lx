@@ -1,0 +1,162 @@
+# All str objects use UTF-8 for the internal representation.
+# For now, all str objects are restricted to the set of 7-bit ASCII chars.
+
+inline C <<end
+
+#include <string.h>
+
+#include "prim.h"
+
+static datum percent_star_sym;
+
+end
+
+def str ():
+  inline C (/ x) <<end
+    /* concatenate */
+    str a, b, s;
+    size_t az, bz;
+    char *s1, *s2;
+
+    a = datum2str(rcv);
+    b = datum2str(n_x);
+
+    s1 = copy_str_contents(rcv);
+    s2 = copy_str_contents(n_x);
+
+    az = a->size;
+    bz = b->size;
+
+    s = (str) make_str(az + bz + 1, a->len + b->len);
+    strcpy(s->data, s1);
+    strcpy(s->data + az, s2);
+    s->data[az + bz] = '\0';
+    free(s1);
+    free(s2);
+
+    return (datum) s;
+  end
+
+  inline C (run i) <<end
+    /* index a single char */
+    int i;
+    str a;
+    char s[2];
+
+    a = datum2str(rcv);
+
+    if (!intp(n_i)) die("str -- expected int");
+    i = datum2int(n_i);
+    s[0] = a->data[i];
+    s[1] = '\0';
+    return make_str_init(1, 1, s);
+  end
+
+  inline C (length) <<end
+    return int2datum(datum2str(rcv)->len);
+  end
+
+  inline C (= x) <<end
+    str a, b;
+    int i;
+
+    a = datum2str(rcv);
+    b = datum2str(n_x);
+
+    if (a->len != b->len) return nil;
+
+    for (i = 0; i < a->len; i++) {
+        if (a->data[i] != b->data[i]) return nil;
+    }
+    return int2datum(1);
+  end
+
+  inline C (substring start end) <<end
+    str s;
+    int start, end;
+
+    s = datum2str(rcv);
+
+    start = datum2int(n_start);
+    if (start < 0) start = 0;
+
+    end = datum2int(n_end);
+    if (end > s->len) end = s->len;
+
+    {
+        int i, j;
+        char new[end - start + 1];
+        for (i = 0, j = start; j < end; i++, j++) {
+            new[i] = s->data[j];
+        }
+        new[i] = '\0';
+        return make_str_init(end - start, end - start, new);
+    }
+  end
+
+  (tail n) (str.substring n (str.length))
+  (head n):
+    str.substring 0 n
+
+  (starts-with? sub):
+    (str.head (sub.length)) = sub
+
+  (find-from n sub):
+    def (helper s i):
+      if ((s.length) < (sub.length)):
+        i + (s.length)
+        if (s.starts-with? sub):
+          . i
+          helper (s.tail 1) (i + 1)
+    helper (str.tail n) n
+
+  (find sub):
+    str.find-from 0 sub
+
+  # (% . a):
+  #   pr "in %"
+  #   def i (str.find "%")
+  #   if (not i):
+  #     . str
+  #     if ((str 0) = "%"):
+  #       (format (str 1) (a.car)) / ((str.tail 2) % . (a.cdr))
+  #       (str.head i) / ((str.tail i) % . a)
+
+  (%* a):
+    def (format code val):
+      to-str val
+    def l (str.length)
+    def i (str.find "%")
+    if (is? i l):
+      . str
+      if ((str 0) = "%"):
+        (format (str 1) (a.car)) / ((str.tail 2).%* (a.cdr))
+        (str.head i) / ((str.tail i).%* a)
+
+  inline C % <<end
+    regs[R_VM0] = rcv;
+    args = cons(args, nil);
+    return call(regs[R_VM0], percent_star_sym, args);
+  end
+
+def intern-syms ():
+  inline C run <<end
+    percent_star_sym = intern("%%*");
+    return ok_sym;
+  end
+
+def install-str ():
+  inline C (run sur) <<end
+    str_surrogate = n_sur;
+    return ok_sym;
+  end
+
+def (to-str x):
+  if (inspect.same-type? x str):
+    . x
+    to-str (x.str)
+
+intern-syms
+install-str str
+
+. '()
