@@ -7,6 +7,19 @@ inline C <<end
 
 static datum percent_star_sym;
 
+typedef struct bytes {
+    uint info;
+    size_t size;
+    char data[];
+} *bytes;
+
+static inline bytes
+datum2bytes(datum d)
+{
+    if (!bytesp(d)) die1("not a bytes", d);
+    return (bytes) d;
+}
+
 end
 
 def bytes ():
@@ -29,6 +42,14 @@ def bytes ():
     free(s2);
 
     return new_str;
+  end
+
+  inline C (decode) <<end
+    bytes b = datum2bytes(rcv);
+
+    /* TODO check for valid UTF-8 and count runes */
+    /* assume only ASCII for now */
+    return make_str_init(b->size, b->size, b->data);
   end
 
   inline C (run i) <<end

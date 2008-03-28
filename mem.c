@@ -300,8 +300,8 @@ make_bytes(uint bytes_len)
 {
     uint words_len;
 
-    words_len = max((bytes_len + 3) / 4, 1);
-    return internal_cons(DATUM_TYPE_BYTES, words_len, nil, nil);
+    words_len = 1 + (bytes_len + 3) / 4;
+    return internal_cons(DATUM_TYPE_BYTES, words_len, (datum) words_len, nil);
 }
 
 datum
@@ -344,7 +344,7 @@ bytes_contents(datum bytes)
     chunk p;
     if (!bytesp(bytes)) die1("bytes_contents -- not an instance of bytes", bytes);
     p = (chunk) bytes;
-    return (char *) p->datums;
+    return (char *) &p->datums[1];
 }
 
 /* caller must free the bytes returned by this function */
