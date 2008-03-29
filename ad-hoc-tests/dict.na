@@ -3,8 +3,8 @@ def x (make-dict)
 
 pr x
 
-x 'a 7
+x.set 'a 7
 
-def y (x.get 'a)
+def y (x 'a)
 
 pr y

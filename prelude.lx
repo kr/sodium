@@ -100,13 +100,13 @@ def (assq x a):
 def (make-dict):
   def items '()
   def dict: obj ():
-    (run key value):
+    (set key value):
       def pair (assq key items)
       if pair:
         pair.set-cdr! value
       else:
         items :: (cons (cons key value) items)
-    (get key):
+    (run key):
       def pair (assq key items)
       if pair: return pair.cdr
       . '()
