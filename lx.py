@@ -436,10 +436,12 @@ def compile_procedure_call(target, linkage, cenv, message):
                                APPLY_PRIM_METH(target, addr_r, proc_r, argl_r))))),
                  after_call)
 
+pop_all_s = S('pop-all')
 def compile_meth_invoc(target, linkage, cenv, message):
     if target is val_r:
         if linkage is return_s:
             return make_ir_seq((addr_r, continue_r), all_writable_regs,
+                    pop_all_s,
                     GOTO_REG(addr_r))
         else:
             return make_ir_seq((addr_r,), all_writable_regs,
@@ -459,7 +461,7 @@ def compile_meth_invoc(target, linkage, cenv, message):
 
 def compile_linkage(linkage):
     if linkage is S('return'):
-        return make_ir_seq((S('continue'),), (), GOTO_REG(S('continue')))
+        return make_ir_seq((S('continue'),), (), pop_all_s, GOTO_REG(S('continue')))
     if linkage is next_s:
         return empty_instruction_seq()
     return make_ir_seq((), (), GOTO_LABEL(linkage))

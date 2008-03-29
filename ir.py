@@ -14,6 +14,7 @@ all_writable_regs = (
     S('addr'),
     S('env'),
     S('tmp'),
+    S('void'),
 )
 
 all_regs = all_readonly_regs + all_writable_regs
@@ -345,13 +346,22 @@ def append_ir_seqs(*seqs):
                                   append_seq_list(cdr(seqs)))
     return append_seq_list(seqs)
 
+pop_all_s = S('pop-all')
+void_s = S('void')
 def preserving(regs, s1, s2):
+    def add_pops(ss):
+        nss = []
+        for stmt in ss:
+            nss.append(stmt)
+            if stmt is pop_all_s:
+                nss.append(POP(void_s))
+        return tuple(nss)
     for reg in regs:
         if needs_registerp(s2, reg) and modifies_registerp(s1, reg):
             s1 = make_ir_seq_with_c_defs(
                     frozenset([reg]) | registers_needed(s1),
                     registers_modified(s1) - frozenset([reg]),
-                    (PUSH(reg),) + statements(s1) + (POP(reg),),
+                    (PUSH(reg),) + add_pops(statements(s1)) + (POP(reg),),
                     c_defs(s1))
     return append_ir_seqs(s1, s2)
 

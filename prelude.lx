@@ -105,17 +105,10 @@ def (make-dict):
       if pair:
         pair.set-cdr! value
       else:
-        def x (cons (cons key value) items)
-        items :: x
-        . 5
+        items :: (cons (cons key value) items)
     (get key):
       def pair (assq key items)
-      pr "\n\n\n$$$$$$$$$$$\n\n\n\n"
-      if pair:
-        def x pair.cdr
-        pr "\n\n\n***********\n\n\n\n"
-        pr x
-        return x
+      if pair: return pair.cdr
       . '()
   . dict
 
