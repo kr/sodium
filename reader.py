@@ -81,17 +81,6 @@ mole :
         res = self.__molex(first, *follow)
         if strip: return res.car()
         return res
-        #rtail = list(first)
-        #stype, lexeme = self.peek, None
-        #if stype in (T.SMESS, T.IMESS, T.ASSIGN):
-        #    stype, lexeme = self.xmatch(T.SMESS, T.IMESS, T.ASSIGN)
-        #    if stype == T.ASSIGN:
-        #        # TODO check that first is a NAME
-        #        return list(lx.S('set!'), first, self.__expr())
-        #    return cons(first, cons(lx.S(lexeme), self.__tail(*follow)))
-        #    rtail = cons(lx.S(lexeme), rtail)
-
-        #return cons(first, self.__tail(*follow))
 
     def __message(self):
       stype, lexeme, pos = self.xmatch(*MESSAGE_TOKENS)
@@ -116,10 +105,6 @@ mole :
       x = list(cons(head, tail))
       return x
 
-      #head = messages.cdr()
-      #if head.nullp(): return tail
-      #return cons(x, tail)
-
     def __tail(self, *follow):
         '''
 tail :
@@ -138,7 +123,6 @@ tail :
             self.match(T.DEDENT)
             return exprs
         return self.__molex(self.__expr(), *follow)
-        #return cons(self.__expr(), self.__tail(*follow))
 
     def __expr(self):
         '''
