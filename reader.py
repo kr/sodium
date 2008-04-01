@@ -62,6 +62,9 @@ stmt : mole
         '''
 mole : 
      | '.' expr
+     | IMESS stuff
+     | expr stuff
+
      | expr tail
      | expr SMESS tail
      | expr IMESS tail
@@ -79,7 +82,12 @@ mole :
 
         strip = (self.peek in MESSAGE_TOKENS)
         res = self.__molex(first, *follow)
-        if strip: return res.car()
+        if strip: res = res.car()
+
+        if self.peek == T.DOTS:
+            x = res.append(self.__tail(*follow))
+            return x
+
         return res
 
     def __message(self):
@@ -97,32 +105,43 @@ mole :
       return list(self.make_head(d), a)
 
     def __molex(self, first, *follow):
+      '''
+molex : MESS* tail
+      '''
+
       rhead = self.gobble_messages_reverse(list(first))
-      tail = cons(rhead.car(), self.__tail(*follow))
+      tail = cons(rhead.car(), self.__inner_tail(*follow + (T.DOTS,)))
       if rhead.cdr().nullp():
         return tail
       head = self.make_head(rhead.cdr())
       x = list(cons(head, tail))
       return x
 
+    def __inner_tail(self, *follow):
+        '''
+inner_tail :
+           | expr inner_tail
+        '''
+        if self.peek in follow: return nil
+        return self.__molex(self.__expr(), *follow)
+
+
     def __tail(self, *follow):
         '''
 tail :
      | ':' mole
      | ':' EOL INDENT stmt+ DEDENT
-     | expr tail
         '''
 
-        if self.peek in follow: return nil
-        if self.peek == T.DOTS:
-            self.match(T.DOTS)
-            if self.peek != T.EOL: return list(self.__mole(*follow))
-            self.match(T.EOL)
-            self.match(T.INDENT)
-            exprs = self.match_loop(self.__stmt, T.DEDENT)
-            self.match(T.DEDENT)
-            return exprs
-        return self.__molex(self.__expr(), *follow)
+        if self.peek != T.DOTS: return nil
+
+        self.match(T.DOTS)
+        if self.peek != T.EOL: return list(self.__mole(*follow))
+        self.match(T.EOL)
+        self.match(T.INDENT)
+        exprs = self.match_loop(self.__stmt, T.DEDENT)
+        self.match(T.DEDENT)
+        return exprs
 
     def __expr(self):
         '''

@@ -19,5 +19,10 @@ def y (3 + 4)
   pr "yay"
   pr "boo"
 
+if (3 + 4) = 7:
+  pr "yay"
+else:
+  pr "boo"
+
 #pr 1073741824
 #pr (-1073741824 / -1)
