@@ -41,7 +41,7 @@ else:
     # (do ...)
     exp = cons(lx.do_s, exps)
 
-code = lx.compile(exp, lx.S('val'), lx.S('next'), nil)
+code = lx.compile(exp, lx.S('val'), lx.S('next'), nil, lx.S('pop-all-top'))
 outfd = open(outfile, 'w')
 if gen_c:
     if not outfile.endswith('.c'): raise 'bad output file name', outfile

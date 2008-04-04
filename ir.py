@@ -346,14 +346,13 @@ def append_ir_seqs(*seqs):
                                   append_seq_list(cdr(seqs)))
     return append_seq_list(seqs)
 
-pop_all_s = S('pop-all')
 void_s = S('void')
-def preserving(regs, s1, s2):
+def preserving(regs, s1, s2, pop_all_symbol):
     def add_pops(ss):
         nss = []
         for stmt in ss:
             nss.append(stmt)
-            if stmt is pop_all_s:
+            if stmt is pop_all_symbol:
                 nss.append(POP(void_s))
         return tuple(nss)
     for reg in regs:
