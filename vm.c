@@ -21,7 +21,7 @@ size_t static_datums_cap = 0, static_datums_fill = 0, static_datums_base;
 
 uint quit_inst[1] = {0x30000000};
 
-datum genv, task_processor, regs[REG_COUNT];
+datum genv, regs[REG_COUNT];
 chunk stack = nil;
 
 #define MAX_INSTR_SETS 50
@@ -31,6 +31,7 @@ int instr_sets = 0;
 datum modules = nil;
 
 datum run_sym, ok_sym;
+static datum process_tasks_sym;
 
 #if VM_DEBUG > 0
 static char *instr_names[32] = {
@@ -743,7 +744,7 @@ report_error(datum args)
 static void
 process_tasks()
 {
-    call(task_processor, run_sym, nil);
+    call(lookup(genv, process_tasks_sym), run_sym, nil);
 }
 
 static datum
@@ -791,6 +792,7 @@ main(int argc, char **argv)
 
     run_sym = intern("run");
     ok_sym = intern("ok");
+    process_tasks_sym = intern("process-tasks");
 
     /* load the very basic builtin modules */
     start_body(load_module("int"));
@@ -805,10 +807,6 @@ main(int argc, char **argv)
 
     /* load and execute the standard prelude */
     start_body(load_module("prelude"));
-
-    /* must do this lookup before loading any other modules, because they might
-     * use it */
-    task_processor = lookup(genv, intern("process-tasks"));
 
     /* load the main file */
     main_addr = load_module_file(argv[1]);

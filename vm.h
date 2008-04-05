@@ -79,7 +79,7 @@ datum report_error(datum args);
 
 extern datum regs[REG_COUNT];
 extern chunk stack;
-extern datum genv, task_processor;
+extern datum genv;
 extern datum modules;
 
 extern datum run_sym, ok_sym;

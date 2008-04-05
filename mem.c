@@ -130,7 +130,6 @@ gc(int c, ...)
     }
 
     stack = relocate(stack);
-    task_processor = relocate(task_processor);
     genv = relocate(genv);
     modules = relocate(modules);
     int_surrogate = relocate(int_surrogate);
