@@ -28,10 +28,9 @@ chunk stack = nil;
 uint *instr_bases[MAX_INSTR_SETS], *instr_ends[MAX_INSTR_SETS];
 int instr_sets = 0;
 
-datum to_import = nil, to_start = nil, modules = nil;
-int modules_available = 0;
+datum modules = nil;
 
-datum run_sym, ok_sym, emptyp_sym, remove_sym;
+datum run_sym, ok_sym;
 
 #if VM_DEBUG > 0
 static char *instr_names[32] = {
@@ -235,31 +234,6 @@ init_list(uint value)
         p = (spair) p->cdr;
     }
     return l;
-}
-
-static void
-load_import_names(FILE *f, uint n)
-{
-    datum s;
-    for (; n; n--) {
-        s = load_symbol(f);
-        if (assq(s, modules)) continue;
-        if (memq(s, to_import)) continue;
-        to_import = cons(s, to_import);
-    }
-}
-
-static void
-init_import_names(const char **import_names, uint n)
-{
-    datum s;
-    for (;n;) {
-        n--;
-        s = intern(import_names[n]);
-        if (assq(s, modules)) continue;
-        if (memq(s, to_import)) continue;
-        to_import = cons(s, to_import);
-    }
 }
 
 static void
@@ -640,7 +614,6 @@ static uint *
 load_module_file(const char *name)
 {
     uint *insts, *label_offsets;
-    uint import_names_count;
     uint label_count = 0;
     size_t instr_count = 0;
     FILE *f;
@@ -663,9 +636,6 @@ load_module_file(const char *name)
     }
 
     check_magic(f);
-
-    import_names_count = read_int(f);
-    load_import_names(f, import_names_count);
 
     static_datums_cap += read_int(f);
     static_datums_base = static_datums_fill;
@@ -700,8 +670,6 @@ load_module_file(const char *name)
 static uint *
 load_lxc_module(lxc_module mod)
 {
-    init_import_names(mod->import_names, mod->import_names_count);
-
     static_datums_cap += mod->static_datums_count;
     static_datums_base = static_datums_fill;
 
@@ -779,41 +747,6 @@ process_tasks()
 }
 
 static datum
-make_promise()
-{
-    return call(lookup(genv, intern("make-promise")), run_sym, nil);
-}
-
-/* writes to regs[R_VAL] */
-static void
-resolve_promise(datum sink, datum val)
-{
-    datum argl;
-    regs[R_VAL] = sink;
-    argl = cons(val, nil);
-    call(regs[R_VAL], run_sym, argl);
-}
-
-static void
-make_modules_available()
-{
-    modules_available = 1;
-}
-
-/* a module entry: (name datum (promise . sink)) */
-static datum
-make_module_entry(datum name)
-{
-    datum x;
-
-    x = make_promise();
-    x = cons(x, nil);
-    x = cons(nil, x);
-    x = cons(name, x);
-    return x;
-}
-
-static datum
 make_resolved_module_entry(datum name, datum d)
 {
     datum x;
@@ -822,13 +755,6 @@ make_resolved_module_entry(datum name, datum d)
     x = cons(d, x);
     x = cons(name, x);
     return x;
-}
-
-static void
-resolve_module(datum entry, datum val)
-{
-    car(cdr(entry)) = val;
-    resolve_promise(cdaddr(entry), val);
 }
 
 static datum
@@ -856,8 +782,7 @@ compile_module(datum name)
 int
 main(int argc, char **argv)
 {
-    uint *lib_addr, *insts, *main_addr;
-    datum x, import_name;
+    uint *main_addr;
 
     if (argc != 2) usage();
 
@@ -866,8 +791,6 @@ main(int argc, char **argv)
 
     run_sym = intern("run");
     ok_sym = intern("ok");
-    emptyp_sym = intern("empty?");
-    remove_sym = intern("remove!");
 
     /* load the very basic builtin modules */
     start_body(load_module("int"));
@@ -890,32 +813,6 @@ main(int argc, char **argv)
     /* load the main file */
     main_addr = load_module_file(argv[1]);
 
-    /* load all the library files */
-    while (to_import) {
-        import_name = car(to_import);
-        x = make_module_entry(import_name);
-
-        modules = cons(x, modules);
-        to_import = cdr(to_import);
-
-        insts = load_module(symbol2charstar(import_name));
-        x = cons(import_name, insts);
-        to_start = cons(x, to_start);
-    }
-
-    /* execute the library bodies */
-    while (to_start) {
-        import_name = caar(to_start);
-        lib_addr = cdar(to_start);
-        to_start = cdr(to_start);
-        start_body(lib_addr);
-        x = assq(import_name, modules);
-        printf("resolving module as ");
-        pr(regs[R_VAL]);
-        resolve_module(x, regs[R_VAL]);
-    }
-
-    make_modules_available();
     process_tasks();
 
     /* execute the main body */

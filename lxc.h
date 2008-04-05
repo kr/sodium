@@ -20,9 +20,6 @@ typedef struct static_datums_info {
 typedef struct lxc_module {
     const char *name;
 
-    const char **import_names;
-    uint import_names_count;
-
     struct static_datums_info static_datums;
     uint static_datums_count;
 

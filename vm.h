@@ -80,9 +80,9 @@ datum report_error(datum args);
 extern datum regs[REG_COUNT];
 extern chunk stack;
 extern datum genv, task_processor;
-extern datum to_import, to_start, modules;
+extern datum modules;
 
-extern datum run_sym, ok_sym, emptyp_sym, remove_sym;
+extern datum run_sym, ok_sym;
 
 extern datum *static_datums;
 extern size_t static_datums_fill;

@@ -20,8 +20,6 @@ all_writable_regs = (
 all_regs = all_readonly_regs + all_writable_regs
 all_regs_dict = dict([(str(k),i) for i,k in enumerate(all_regs)])
 
-import_names = []
-
 def quote(s):
     r = ''
     for c in s:
@@ -138,16 +136,6 @@ extern struct lxc_module lxc_module_%(name)s;
         for c_def in self.c_defs:
             print >>fd, c_def
 
-        # import names
-        import_names_id = '((const char **) 0)'
-        if import_names:
-            import_names_id = 'import_names'
-            print >>fd
-            print >>fd, 'static const char *import_names[] = {'
-            for import_name in import_names:
-                print >>fd, '    "%s",' % (import_name,)
-            print >>fd, '};'
-
         # datums
         print >>fd
         sdts = ''
@@ -198,8 +186,6 @@ extern struct lxc_module lxc_module_%(name)s;
         print >>fd
         print >>fd, 'struct lxc_module lxc_module_%s = {' % (cname,)
         print >>fd, '    "%s",' % (name,)
-        print >>fd, '    %s,' % (import_names_id,)
-        print >>fd, '    %d,' % (len(import_names),)
         print >>fd, '    {'
         print >>fd, '        "%s",' % (sdts,)
         print >>fd, '        static_datum_entries,'
@@ -214,7 +200,6 @@ extern struct lxc_module lxc_module_%(name)s;
         datums, labels = self.extract()
 
         self.emit_magic(fd)
-        self.emit_import_names(fd)
         self.emit_datums(fd, datums)
         self.emit_labels(fd, labels)
         self.emit_instructions(fd, labels, datums)
@@ -223,13 +208,6 @@ extern struct lxc_module lxc_module_%(name)s;
     @staticmethod
     def emit_magic(fd):
         fd.write("\x89LX1\x0d\n\x1a\n")
-
-    @staticmethod
-    def emit_import_names(fd):
-        fd.write(encode_int(len(import_names)))
-        for d in import_names:
-            fd.write(str(d))
-            fd.write('\0')
 
     def emit_c_pair(self, fd, p, c_name):
         if len(p):
