@@ -783,8 +783,6 @@ compile_module(datum name)
 int
 main(int argc, char **argv)
 {
-    uint *main_addr;
-
     if (argc != 2) usage();
 
     init_mem();
@@ -808,11 +806,9 @@ main(int argc, char **argv)
     /* load and execute the standard prelude */
     start_body(load_module("prelude"));
 
-    /* load the main file */
-    main_addr = load_module_file(argv[1]);
+    /* load and execute the main program */
+    start_body(load_module_file(argv[1]));
 
-    /* execute the main body */
-    start_body(main_addr);
     process_tasks();
 
     return 0;
