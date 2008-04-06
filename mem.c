@@ -351,16 +351,21 @@ bytes_contents(datum bytes)
     return (char *) &p->datums[1];
 }
 
-/* caller must free the bytes returned by this function */
-char *
-copy_bytes_contents(datum bytes)
+size_t
+copy_bytes_contents(char *dest, datum bytes, size_t n)
 {
-    uint n;
-    char *s, *x = bytes_contents(bytes);
-    n = strlen(x) + 1;
-    s = malloc(sizeof(char) * n);
-    memcpy(s, x, n);
-    return s;
+    char *x = bytes_contents(bytes);
+    if (bytes_len(bytes) < n) n = bytes_len(bytes);
+    memcpy(dest, x, n);
+    return n;
+}
+
+size_t
+copy_bytes_contents0(char *dest, datum bytes, size_t n)
+{
+    n = copy_bytes_contents(dest, bytes, n - 1);
+    dest[n] = 0;
+    return n + 1;
 }
 
 inline str

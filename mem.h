@@ -57,9 +57,8 @@ uint array_len(datum arr);
 
 size_t bytes_len(datum bytes);
 char *bytes_contents(datum bytes);
-
-/* caller must free the bytes returned by this function */
-char *copy_bytes_contents(datum bytes);
+size_t copy_bytes_contents(char *dest, datum bytes, size_t n);
+size_t copy_bytes_contents0(char *dest, datum bytes, size_t n);
 
 /* caller must free the str returned by this function */
 char *copy_str_contents(datum str);

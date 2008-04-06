@@ -27,10 +27,10 @@ def bytes ():
     /* concatenate */
     datum new_str;
     int l1, l2;
-    char *s1, *s2, *s;
+    char s1[bytes_len(rcv)], s2[bytes_len(n_x)], *s;
 
-    s1 = copy_bytes_contents(rcv);
-    s2 = copy_bytes_contents(n_x);
+    copy_bytes_contents(s1, rcv, bytes_len(rcv));
+    copy_bytes_contents(s2, n_x, bytes_len(n_x));
     l1 = strlen(s1);
     l2 = strlen(s2);
     new_str = make_bytes(l1 + l2 + 1);
@@ -38,8 +38,6 @@ def bytes ():
     strcpy(s, s1);
     strcpy(s + l1, s2);
     s[l1 + l2] = '\0';
-    free(s1);
-    free(s2);
 
     return new_str;
   end
