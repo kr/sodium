@@ -712,6 +712,12 @@ start_body(uint *start_addr)
     start(start_addr);
 }
 
+void
+execute_file(const char *file)
+{
+    start_body(load_module_file(file));
+}
+
 datum
 call(datum o, datum m, chunk a)
 {
@@ -755,6 +761,8 @@ compile_module(datum name)
 int
 main(int argc, char **argv)
 {
+    datum args;
+
     if (argc != 2) usage();
 
     init_mem();
@@ -764,11 +772,12 @@ main(int argc, char **argv)
     ok_sym = intern("ok");
     process_tasks_sym = intern("process-tasks");
 
+    /* must evaluate this before the call to define */
+    args = cons(make_bytes_init(argv[1]), nil);
+    define(genv, args, intern("*args*"));
+
     /* load and execute the standard prelude */
     start_body(load_module("prelude"));
-
-    /* load and execute the main program */
-    start_body(load_module_file(argv[1]));
 
     process_tasks();
 

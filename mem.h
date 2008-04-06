@@ -55,6 +55,7 @@ datum array_get(datum arr, uint index);
 datum array_put(datum arr, uint index, datum val);
 uint array_len(datum arr);
 
+size_t bytes_len(datum bytes);
 char *bytes_contents(datum bytes);
 
 /* caller must free the bytes returned by this function */

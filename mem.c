@@ -297,7 +297,7 @@ make_bytes(uint bytes_len)
     uint words_len;
 
     words_len = 1 + (bytes_len + 3) / 4;
-    return internal_cons(DATUM_TYPE_BYTES, words_len, (datum) words_len, nil);
+    return internal_cons(DATUM_TYPE_BYTES, words_len, (datum) bytes_len, nil);
 }
 
 datum
@@ -332,6 +332,15 @@ make_str_init(size_t size, size_t len, const char *bytes)
     memcpy(s->data, bytes, size);
     s->data[size] = '\0';
     return (datum) s;
+}
+
+size_t
+bytes_len(datum bytes)
+{
+    chunk p;
+    if (!bytesp(bytes)) die1("bytes_contents -- not an instance of bytes", bytes);
+    p = (chunk) bytes;
+    return (size_t) p->datums[0];
 }
 
 char *
