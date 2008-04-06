@@ -811,8 +811,6 @@ main(int argc, char **argv)
     /* load the main file */
     main_addr = load_module_file(argv[1]);
 
-    process_tasks();
-
     /* execute the main body */
     start_body(main_addr);
     process_tasks();
