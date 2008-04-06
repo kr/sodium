@@ -14,25 +14,16 @@ end
 def str ():
   inline C (/ x) <<end
     /* concatenate */
-    str a, b, s;
-    size_t az, bz;
-    char *s1, *s2;
+    str s, a = datum2str(rcv), b = datum2str(n_x);
+    size_t az = a->size, bz = b->size;
+    char s1[az], s2[bz];
 
-    a = datum2str(rcv);
-    b = datum2str(n_x);
-
-    s1 = copy_str_contents(rcv);
-    s2 = copy_str_contents(n_x);
-
-    az = a->size;
-    bz = b->size;
+    copy_str_contents(s1, rcv, az);
+    copy_str_contents(s2, n_x, bz);
 
     s = (str) make_str(az + bz + 1, a->len + b->len);
-    strcpy(s->data, s1);
-    strcpy(s->data + az, s2);
-    s->data[az + bz] = '\0';
-    free(s1);
-    free(s2);
+    memcpy(s->data, s1, az);
+    memcpy(s->data + az, s2, bz);
 
     return (datum) s;
   end

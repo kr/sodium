@@ -375,18 +375,22 @@ datum2str(datum d)
     return (str) d;
 }
 
-
-/* caller must free the str returned by this function */
-char *
-copy_str_contents(datum d)
+size_t
+copy_str_contents(char *dest, datum x, size_t n)
 {
-    char *r;
-    str s = datum2str(d);
+    str s = datum2str(x);
 
-    r = malloc(sizeof(char) * (s->size + 1));
-    memcpy(r, s->data, s->size);
-    r[s->size] = 0;
-    return r;
+    if (s->size < n) n = s->size;
+    memcpy(dest, s->data, n);
+    return n;
+}
+
+size_t
+copy_str_contents0(char *dest, datum str, size_t n)
+{
+    n = copy_str_contents0(dest, str, n - 1);
+    dest[n] = 0;
+    return n + 1;
 }
 
 static chunk

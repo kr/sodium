@@ -60,8 +60,8 @@ char *bytes_contents(datum bytes);
 size_t copy_bytes_contents(char *dest, datum bytes, size_t n);
 size_t copy_bytes_contents0(char *dest, datum bytes, size_t n);
 
-/* caller must free the str returned by this function */
-char *copy_str_contents(datum str);
+size_t copy_str_contents(char *dest, datum str, size_t n);
+size_t copy_str_contents0(char *dest, datum str, size_t n);
 
 inline pair datum2pair(datum d);
 inline str datum2str(datum d);
