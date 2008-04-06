@@ -303,9 +303,8 @@ make_bytes(uint bytes_len)
 datum
 make_bytes_init_len(const char *s, int len)
 {
-    datum d = make_bytes(len + 1);
-    strcpy(bytes_contents(d), s);
-    bytes_contents(d)[len] = '\0';
+    datum d = make_bytes(len);
+    memcpy(bytes_contents(d), s, len);
     return d;
 }
 

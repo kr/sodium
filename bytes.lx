@@ -25,21 +25,17 @@ end
 def bytes ():
   inline C (/ x) <<end
     /* concatenate */
-    datum new_str;
-    int l1, l2;
-    char s1[bytes_len(rcv)], s2[bytes_len(n_x)], *s;
+    bytes new_str;
+    size_t l1 = bytes_len(rcv), l2 = bytes_len(n_x);
+    char s1[l1], s2[l2];
 
-    copy_bytes_contents(s1, rcv, bytes_len(rcv));
-    copy_bytes_contents(s2, n_x, bytes_len(n_x));
-    l1 = strlen(s1);
-    l2 = strlen(s2);
-    new_str = make_bytes(l1 + l2 + 1);
-    s = bytes_contents(new_str);
-    strcpy(s, s1);
-    strcpy(s + l1, s2);
-    s[l1 + l2] = '\0';
+    copy_bytes_contents(s1, rcv, l1);
+    copy_bytes_contents(s2, n_x, l2);
+    new_str = (bytes) make_bytes(l1 + l2);
+    memcpy(new_str->data, s1, l1);
+    memcpy(new_str->data + l1, s2, l2);
 
-    return new_str;
+    return (datum) new_str;
   end
 
   inline C (decode) <<end
@@ -51,61 +47,55 @@ def bytes ():
   end
 
   inline C (run i) <<end
-    /* index a single char */
+    /* index a single byte */
     int i;
-    char s[2];
 
     if (!intp(n_i)) die("bytes -- expected int");
     i = datum2int(n_i);
-    s[0] = bytes_contents(rcv)[i];
-    s[1] = '\0';
-    return make_bytes_init(s);
+
+    if (i > bytes_len(rcv)) return nil;
+    return int2datum(bytes_contents(rcv)[i]);
   end
 
   inline C (length) <<end
-    return int2datum(strlen(bytes_contents(rcv)));
+    return int2datum(bytes_len(rcv));
   end
 
   inline C (= x) <<end
-    char *s1, *s2;
-    int i, l1, l2;
+    size_t i;
+    bytes a = datum2bytes(rcv), b = datum2bytes(n_x);
 
-    if (!bytesp(n_x)) return nil;
-    s1 = bytes_contents(rcv);
-    s2 = bytes_contents(n_x);
-
-    l1 = strlen(s1);
-    l2 = strlen(s2);
-    if (l1 != l2) return nil;
-
-    for (i = 0; i < l1; i++) {
-        if (s1[i] != s2[i]) return nil;
+    if (a->size != b->size) return nil;
+    for (i = 0; i < a->size; i++) {
+        if (a->data[i] != b->data[i]) return nil;
     }
     return int2datum(1);
   end
 
   inline C (substring start end) <<end
-    char *s;
-    int start, end, len;
+    int start, end;
+    size_t len = bytes_len(rcv);
+    char s[len];
+    bytes new;
 
-    s = bytes_contents(rcv);
-    len = strlen(s);
+    copy_bytes_contents(s, rcv, len);
 
     start = datum2int(n_start);
-    if (start < 0) start = 0;
-
     end = datum2int(n_end);
+
+    /* allow negative indices to count from the end */
+    if (start < 0) start = len - start;
+    if (end < 0) end = len - end;
+
+    /* out-of-bounds indices refer to the beginning or end of the string */
+    if (start < 0) start = 0;
+    if (end < 0) end = 0;
+    if (start > len) start = len;
     if (end > len) end = len;
 
-    {
-        int i, j;
-        char new[end - start + 1];
-        for (i = 0, j = start; j < end; i++, j++) {
-            new[i] = s[j];
-        }
-        new[i] = '\0';
-        return make_bytes_init(new);
-    }
+    new = (bytes) make_bytes(end - start);
+    memcpy(new->data, s + start, end - start);
+    return (datum) new;
   end
 
   (tail n) (bytes.substring n (bytes.length))
