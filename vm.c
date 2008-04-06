@@ -28,8 +28,6 @@ chunk stack = nil;
 uint *instr_bases[MAX_INSTR_SETS], *instr_ends[MAX_INSTR_SETS];
 int instr_sets = 0;
 
-datum modules = nil;
-
 datum run_sym, ok_sym;
 static datum process_tasks_sym;
 
@@ -747,35 +745,9 @@ process_tasks()
     call(lookup(genv, process_tasks_sym), run_sym, nil);
 }
 
-static datum
-make_resolved_module_entry(datum name, datum d)
-{
-    datum x;
-
-    x = cons(nil, nil);
-    x = cons(d, x);
-    x = cons(name, x);
-    return x;
-}
-
-static datum
-load_builtin(char *name, datum modules)
-{
-    datum x;
-
-    start_body(load_module(name));
-    x = make_resolved_module_entry(intern(name), regs[R_VAL]);
-    return cons(x, modules);
-}
-
 datum
 compile_module(datum name)
 {
-    datum p;
-
-    p = assq(name, modules);
-    if (p) return cadr(p);
-
     start_body(load_module(symbol2charstar(name)));
     return regs[R_VAL]; /* return value from module */
 }
@@ -800,8 +772,6 @@ main(int argc, char **argv)
     start_body(load_module("array"));
     start_body(load_module("nil"));
     start_body(load_module("symbol"));
-
-    modules = load_builtin("file", modules);
 
     /* load and execute the standard prelude */
     start_body(load_module("prelude"));

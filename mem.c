@@ -131,7 +131,6 @@ gc(int c, ...)
 
     stack = relocate(stack);
     genv = relocate(genv);
-    modules = relocate(modules);
     int_surrogate = relocate(int_surrogate);
     bytes_surrogate = relocate(bytes_surrogate);
     pair_surrogate = relocate(pair_surrogate);
