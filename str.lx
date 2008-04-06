@@ -132,7 +132,7 @@ def str ():
 
 def intern-syms ():
   inline C run <<end
-    percent_star_sym = intern("%%*");
+    percent_star_sym = intern("%*");
     return ok_sym;
   end
 
