@@ -4,6 +4,20 @@ inline C <<end
 #include "prim.h"
 end
 
+def compile-module ():
+  inline C (run name) <<end
+    return compile_module(n_name);
+  end
+
+# This must be done before using any methods on these types of objects.
+compile-module 'int
+compile-module 'bytes
+compile-module 'str
+compile-module 'pair
+compile-module 'array
+compile-module 'nil
+compile-module 'symbol
+
 def π 3.14159
 
 def false '()
@@ -12,11 +26,6 @@ def true 1
 def (not x) (? x false true)
 
 def (make-blank-module) (obj ())
-
-def compile-module ():
-  inline C (run name) <<end
-    return compile_module(n_name);
-  end
 
 def become ():
   inline C (run x y keep_y) <<end

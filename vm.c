@@ -764,15 +764,6 @@ main(int argc, char **argv)
     ok_sym = intern("ok");
     process_tasks_sym = intern("process-tasks");
 
-    /* load the very basic builtin modules */
-    start_body(load_module("int"));
-    start_body(load_module("bytes"));
-    start_body(load_module("str"));
-    start_body(load_module("pair"));
-    start_body(load_module("array"));
-    start_body(load_module("nil"));
-    start_body(load_module("symbol"));
-
     /* load and execute the standard prelude */
     start_body(load_module("prelude"));
 
