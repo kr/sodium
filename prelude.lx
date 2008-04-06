@@ -317,3 +317,6 @@ def execute-file ():
 
 # Load and execute the main program.
 execute-file *args*.car
+
+# Process the work queue.
+process-tasks

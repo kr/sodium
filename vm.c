@@ -29,7 +29,6 @@ uint *instr_bases[MAX_INSTR_SETS], *instr_ends[MAX_INSTR_SETS];
 int instr_sets = 0;
 
 datum run_sym, ok_sym;
-static datum process_tasks_sym;
 
 #if VM_DEBUG > 0
 static char *instr_names[32] = {
@@ -745,12 +744,6 @@ report_error(datum args)
     return nil;
 }
 
-static void
-process_tasks()
-{
-    call(lookup(genv, process_tasks_sym), run_sym, nil);
-}
-
 datum
 compile_module(datum name)
 {
@@ -770,7 +763,6 @@ main(int argc, char **argv)
 
     run_sym = intern("run");
     ok_sym = intern("ok");
-    process_tasks_sym = intern("process-tasks");
 
     /* must evaluate this before the call to define */
     args = cons(make_bytes_init(argv[1]), nil);
@@ -778,8 +770,6 @@ main(int argc, char **argv)
 
     /* load and execute the standard prelude */
     start_body(load_module("prelude"));
-
-    process_tasks();
 
     return 0;
 }
