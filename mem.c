@@ -132,6 +132,7 @@ gc(int c, ...)
     stack = relocate(stack);
     genv = relocate(genv);
     int_surrogate = relocate(int_surrogate);
+    str_surrogate = relocate(str_surrogate);
     bytes_surrogate = relocate(bytes_surrogate);
     pair_surrogate = relocate(pair_surrogate);
     array_surrogate = relocate(array_surrogate);
