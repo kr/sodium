@@ -8,28 +8,6 @@ from env import *
 from ir import *
 from util import traced
 
-class Object(object):
-    count = 0
-    def __init__(self, tos, env):
-        self.oid = Object.count
-        Object.count += 1
-        self.name = ':::'
-        self.env = env
-        self.methods = {}
-        for name, params, bproc in tos:
-            self.methods[name] = make_method(params, bproc)
-    def __repr__(self): return '<%s object %d>' % (self.name, self.oid)
-    def __str__(self): return repr(self)
-    def __getattr__(self, name):
-        try:
-            return super(Object, self).__getattr__(name)
-        except AttributeError, e:
-            return lambda *args: call(self, S(name), args)
-
-method_s = S('method')
-def make_method(parameters, body):
-    return plist(method_s, parameters, body)
-
 quote_s = S('quote')
 set__s = S('set!')
 def_s = S('def')
@@ -472,59 +450,6 @@ def end_with_linkage(linkage, ir_seq, pop_all_symbol):
             compile_linkage(linkage, pop_all_symbol),
             pop_all_symbol)
 
-def eval(exp, env):
-    return analyze(exp)(env)
-
-def analyze(exp):
-    if self_evaluatingp(exp): return analyze_self_evaluating(exp)
-    if tagged_list(exp, quote_s): return analyze_quoted(exp)
-    if variablep(exp): return analyze_variable(exp)
-    if tagged_list(exp, set__s): return analyze_assignment(exp)
-    if tagged_list(exp, def_s): return analyze_definition(exp)
-    if tagged_list(exp, if_s): return analyze_if(exp)
-    if tagged_list(exp, fn_s): return analyze(fn2obj(exp))
-    if tagged_list(exp, obj_s): return analyze_obj(exp)
-    if tagged_list(exp, do_s): return analyze_sequence(exp.cdr())
-    if pairp(exp): return analyze_application(exp)
-    raise Exception, 'Unknown expression type %s' % exp
-
-def analyze_self_evaluating(exp):
-    return lambda env: exp
-
-def analyze_quoted(exp):
-    qval = exp.cadr()
-    return lambda env: qval
-
-def analyze_variable(exp):
-    return lambda env: env[exp]
-
-def analyze_assignment(exp):
-    var = exp.cadr()
-    vproc = analyze(exp.caddr())
-    def execute(env):
-        env[var] = vproc(env)
-        return 'ok'
-    return execute
-
-def analyze_definition(exp):
-    var = definition_variable(exp)
-    vproc = analyze(definition_value(exp))
-    def execute(env):
-        env.define(var, vproc(env))
-        return 'ok'
-    return execute
-
-def analyze_if(exp):
-    pproc = analyze(exp.cadr())
-    cproc = analyze(exp.caddr())
-    aproc = analyze(if_alternative(exp))
-    def execute(env):
-        if truep(pproc(env)):
-            return cproc(env)
-        else:
-            return aproc(env)
-    return execute
-
 def if_alternative(exp):
     if exp.cdddr().nullp(): return Integer(0)
     return exp.cadddr()
@@ -553,88 +478,6 @@ def shfn2fn(exp):
     seq = exp.cdr()
     return make_fn(scan_out_xyz_sequence(seq), seq)
 
-def analyze_obj(exp):
-    def f(to):
-        name = to.caar()
-        vars = to.cdar()
-        bproc = analyze_sequence(scan_out_defines(to.cdr()))
-        return plist(name, vars, bproc)
-    return lambda env: make_object(exp.cddr().map(f), env)
-
-def analyze_sequence(exps):
-    def sequentially(proc1, proc2):
-        def execute(env):
-            proc1(env)
-            return proc2(env)
-        return execute
-    def loop(first, rest):
-        if rest.nullp():
-            return first
-        else:
-            return loop(sequentially(first, rest.car()), rest.cdr())
-    procs = exps.map(analyze)
-    if procs.nullp(): raise Exception, 'Empty sequence -- ANALYZE'
-    return loop(procs.car(), procs.cdr())
-
-def analyze_application(exp):
-    fproc = analyze(exp.car())
-    if (not exp.cdr().nullp()) and symbolp(exp.cadr()):
-        f, msg = None, exp.cadr()
-        if msg[0] == '.': f, msg = call, S(msg[1:])
-        if msg[0] == ':': f, msg = send, S(msg[1:])
-        if len(msg) == 1 and msg in PUNC: f, msg = call, msg
-        if f:
-            aprocs = exp.cddr().map(analyze)
-            def execute(env):
-                return f(fproc(env), msg, map(lambda ap: ap(env), aprocs))
-            return execute
-    aprocs = exp.cdr().map(analyze)
-    def execute(env):
-        return execute_application(fproc(env),
-                                   map(lambda aproc: aproc(env), aprocs))
-    return execute
-
-def execute_application(proc, args):
-    if callable(proc):
-        return proc(*args)
-    if isinstance(proc, Object):
-        return proc.run(*args)
-    raise Exception, 'Unknown procedure type ' + proc + type(proc)
-
-def truep(v):
-    #if v is None: return False
-    if isinstance(v, Integer): return not not v
-    #if isinstance(v, String): return not not v
-    #if isinstance(v, S): return not not v
-    if v is False: return False
-    return True
-
-method_s = S('method')
-def call(rcv, msg, args):
-    if isinstance(rcv, Object):
-        if msg not in rcv.methods:
-            raise RuntimeError, 'object does not understand %s' % msg
-        meth = rcv.methods[msg]
-        if callable(meth): return meth(*((rcv,) + tuple(args)))
-        if tagged_list(meth, method_s):
-            params, bproc = meth.cdr()
-            return bproc(rcv.env.extend(params, args))
-        raise Exception, 'Unknown method type %r' % (meth,)
-    else:
-        return getattr(rcv, msg)(*args)
-
-def send(rcv, msg, args):
-    if isinstance(rcv, Object):
-        if send_s in rcv.methods:
-            return rcv.send(msg, args)
-        promise, resolver = make_promise()
-        tasks.append((rcv, msg, args, resolver))
-        return promise
-    raise Exception, 'Unknown receiver type %r' % (rcv,)
-
-def eval_sequence(exps, env):
-    return eval(cons(do_s, exps), env)
-
 def variablep(exp):
     return symbolp(exp)
 
@@ -654,12 +497,6 @@ def make_obj(tos):
 def make_fn(parameters, body):
     return cons(fn_s, cons(parameters, body))
 
-def make_procedure(parameters, bproc, env):
-    return make_object(((run_s, parameters, bproc),), env)
-
-def make_object(tos, env):
-    return Object(tos, env)
-
 def self_evaluatingp(exp):
     return isinstance(exp, Integer) or isinstance(exp, String) or isinstance(exp, Decimal)
 
@@ -668,61 +505,6 @@ def tagged_list(exp, tag):
 
 def tagged_list2(exp, tag):
     return pairp(exp) and (not exp.nullp()) and tagged_list(exp.cdr(), tag)
-
-class EmptyEnvironment(dict):
-    def __setitem__(self, var, val):
-        self[var]
-
-    def __str__(self):
-        return '{}'
-
-class Environment(object):
-    def __init__(self, parent, frame, order):
-        self.parent = parent
-        self.frame = frame
-        self.order = order
-
-    @classmethod
-    def make(clas, **frame):
-        return clas(EmptyEnvironment(), frame, ())
-
-    def extend(self, vars, vals):
-        frame = {}
-        frame.update(zip(vars, vals))
-        return Environment(self, frame, vars)
-
-    @staticmethod
-    def check(var, val):
-        if val is unassigned_s:
-            raise RuntimeError, ('Access unassigned variable %r' % (var,))
-        return val
-
-    def __getitem__(self, var):
-        if var in self.frame: return self.check(var, self.frame[var])
-        return self.check(var, self.parent[var])
-
-    def __setitem__(self, var, val):
-        if var in self.frame:
-            self.frame[var] = val
-        else:
-            self.parent[var] = val
-
-    def define(self, var, val):
-        if isinstance(val, Object):
-            val.name = var
-        self.frame[var] = val
-
-    def lexical_lookup(self, frame, displacement):
-        if frame > 0: return self.parent.lexical_lookup(frame - 1, displacement)
-        return self.frame[order[displacement]]
-
-    def lexical_set(self, frame, displacement, val):
-        if frame > 0: return self.parent.lexical_set(frame - 1, displacement, val)
-        self.frame[order[displacement]] = val
-
-    def __repr__(self):
-        names = ' '.join(self.frame.keys())
-        return '{%s} -> %r' % (names, self.parent)
 
 def lexical_address_lookup(addr, env):
     return env.lexical_lookup(*addr)
@@ -953,30 +735,6 @@ def scan_out_xyz_sequence(seq):
     exp = seq.car()
     return set_merge(scan_out_xyz(exp), scan_out_xyz_sequence(seq.cdr()))
 
-def make_promise():
-    return pair2tuple(global_env['make-promise'].run())
-
-def work_left():
-    return len(tasks)
-
-def get_task():
-    return tasks.pop(0)
-
 
 PUNC = '+-*/%=<>'
-
-global_env = Environment.make(**{
-    'true':True,
-    'false':False,
-    'is?':isp,
-    'cons':cons,
-    'make-dict':make_dict,
-    'rep':rep,
-    'pr':pr,
-    'error':error,
-    'send':send,
-    'call':call,
-})
-
-tasks = []
 
