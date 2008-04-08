@@ -7,6 +7,9 @@ from pair import cons, nil
 import reader
 import lx
 
+def basename(name):
+  return name[:name.find('.')]
+
 def read_file(n):
     return reader.read(open(n).read(), n)
 
@@ -47,6 +50,6 @@ if gen_c:
     if not outfile.endswith('.c'): raise 'bad output file name', outfile
     outhfile = outfile[:-2] + '.h'
     outhfd = open(outhfile, 'w')
-    code.gen_c(infile.replace('.lx', ''), outfd, outhfd, outhfile)
+    code.gen_c(basename(infile), outfd, outhfd, outhfile)
 else:
     code.assemble(outfd)
