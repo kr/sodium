@@ -48,8 +48,6 @@ code = lx.compile(exp, lx.S('val'), lx.S('next'), nil, lx.S('pop-all-top'))
 outfd = open(outfile, 'w')
 if gen_c:
     if not outfile.endswith('.c'): raise 'bad output file name', outfile
-    outhfile = outfile[:-2] + '.h'
-    outhfd = open(outhfile, 'w')
-    code.gen_c(basename(infile), outfd, outhfd, outhfile)
+    code.gen_c(basename(infile), outfd)
 else:
     code.assemble(outfd)

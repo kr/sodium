@@ -23,10 +23,10 @@ vm: $(sources:.c=.o)
 module-index.c: $(lxmodules)
 	./gen-mod-index --output=$@ $(lxmodules:.lx=)
 
-prelude.c prelude.h: prelude.lx
+prelude.c: prelude.lx
 	./lx1c --generate-c --output=$@ $<
 
-%.lxc.c %.lxc.h: %.lx
+%.lxc.c: %.lx
 	./lx1c --module --generate-c --output=$@ $<
 
 clean:
@@ -36,7 +36,7 @@ distclean: clean
 	rm -f *.d *.pyc *.lxc ad-hoc-tests/*.lxc lib/*.lxc tests/*.lxc
 
 reallyclean: distclean
-	rm -f prelude.c prelude.h *.lxc.c *.lxc.h module-index.c
+	rm -f prelude.c *.lxc.c module-index.c
 
 # .DELETE_ON_ERROR:
 .PHONY: all clean distclean reallyclean
