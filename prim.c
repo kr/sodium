@@ -49,9 +49,9 @@ prx(datum d)
         pr_symbol(d);
     } else if (strp(d)) {
         str s = datum2str(d);
-        printf("%*s", s->size, s->data);
+        printf("%*.*s", s->size, s->size, s->data);
     } else if (bytesp(d)) {
-        printf("%s", bytes_contents(d));
+        printf("%*s", bytes_len(d), bytes_contents(d));
     } else if (pairp(d)) {
         printf("(");
         pr_pair(d, "");

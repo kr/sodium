@@ -328,9 +328,8 @@ make_str(size_t size, size_t len)
 datum
 make_str_init(size_t size, size_t len, const char *bytes)
 {
-    str s = (str) make_str(size + 1, len);
+    str s = (str) make_str(size, len);
     memcpy(s->data, bytes, size);
-    s->data[size] = '\0';
     return (datum) s;
 }
 
