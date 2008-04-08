@@ -1,7 +1,7 @@
 lxmodules := int.lx bytes.lx str.lx pair.lx array.lx nil.lx symbol.lx re.lx \
-			 file.lx fin.lx
+			 file.lx fin.lx prelude.lx
 cmodules := vm.c mem.c obj.c gen.c prim.c st.c
-sources := $(cmodules) module-index.c prelude.lxc.c $(lxmodules:.lx=.lxc.c)
+sources := $(cmodules) module-index.c $(lxmodules:.lx=.lxc.c)
 
 export CFLAGS := -g -pg -Wall -Werror
 #export CFLAGS := -O2 -Wall -Werror
@@ -23,6 +23,7 @@ vm: $(sources:.c=.o)
 module-index.c: $(lxmodules)
 	./gen-mod-index --output=$@ $(lxmodules:.lx=)
 
+# This one is special.
 prelude.lxc.c: prelude.lx
 	./lx1c --generate-c --output=$@ $<
 
@@ -36,7 +37,7 @@ distclean: clean
 	rm -f *.d *.pyc *.lxc ad-hoc-tests/*.lxc lib/*.lxc tests/*.lxc
 
 reallyclean: distclean
-	rm -f prelude.lxc.c *.lxc.c module-index.c
+	rm -f *.lxc.c module-index.c
 
 # .DELETE_ON_ERROR:
 .PHONY: all clean distclean reallyclean
