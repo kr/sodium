@@ -30,23 +30,25 @@ def re ():
       end
 
       inline C (match subj opts) <<end
-        char *subj, *res;
-        int rc, subj_len, res_len, opts;
+        str subj;
+        char *res;
+        int rc, res_size, opts;
         pcre *re = (pcre *) ((chunk) rcv)->datums[2];
 
-        subj = bytes_contents(n_subj);
-        subj_len = strlen(subj);
+        subj = datum2str(n_subj);
 
         opts = datum2int(n_opts);
 
-        rc = pcre_exec(re, NULL, subj, subj_len, 0, opts, ovector, OVECCOUNT);
+        rc = pcre_exec(re, NULL, subj->data, subj->size, 0, opts, ovector,
+                       OVECCOUNT);
 
         if (rc < 0) return nil;
         if (rc == 0) return nil;
 
-        res = subj + ovector[0];
-        res_len = ovector[1] - ovector[0];
-        return make_bytes_init_len(res, res_len);
+        res = subj->data + ovector[0];
+        res_size = ovector[1] - ovector[0];
+        /* for now, assume UTF-8 len == res_size */
+        return make_str_init(res_size, res_size, res);
       end
 
       inline C (prepare) <<end
@@ -55,9 +57,9 @@ def re ():
         char *pattern;
         int erroffset, opts;
 
-        pattern = bytes_contents(n_pat);
+        pattern = datum2str(n_pat)->data;
         opts = datum2int(n_opts);
-        re = pcre_compile(pattern, opts, &error, &erroffset, NULL);
+        re = pcre_compile(pattern, opts | PCRE_UTF8, &error, &erroffset, NULL);
         if (re == NULL) return nil;
 
         return grow_closure(&rcv, 1, free, re);
