@@ -5,6 +5,7 @@
 
 #include "gen.h"
 #include "str.h"
+#include "bytes.h"
 
 typedef void(*na_fn_free)(void *);
 
@@ -37,8 +38,6 @@ typedef struct closure {
 datum cons(datum x, datum y);
 datum make_array(uint len);
 datum make_bytes(uint len);
-datum make_bytes_init(const char *s);
-datum make_bytes_init_len(const char *s, int len);
 datum make_str(size_t size, size_t len);
 datum make_closure(datum env, uint *table);
 datum grow_closure(datum *o, uint len, na_fn_free fn, void *data);
@@ -50,8 +49,6 @@ uint array_len(datum arr);
 
 size_t bytes_len(datum bytes);
 char *bytes_contents(datum bytes);
-size_t copy_bytes_contents(char *dest, datum bytes, size_t n);
-size_t copy_bytes_contents0(char *dest, datum bytes, size_t n);
 
 inline pair datum2pair(datum d);
 

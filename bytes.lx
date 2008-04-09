@@ -7,17 +7,42 @@ inline C <<end
 
 static datum percent_star_sym;
 
-typedef struct bytes {
-    uint info;
-    size_t size;
-    char data[];
-} *bytes;
+datum
+make_bytes_init_len(const char *s, int len)
+{
+    datum d = make_bytes(len);
+    memcpy(bytes_contents(d), s, len);
+    return d;
+}
 
-static inline bytes
+datum
+make_bytes_init(const char *s)
+{
+    return make_bytes_init_len(s, strlen(s));
+}
+
+inline bytes
 datum2bytes(datum d)
 {
     if (!bytesp(d)) die1("not a bytes", d);
     return (bytes) d;
+}
+
+size_t
+copy_bytes_contents(char *dest, datum bytes, size_t n)
+{
+    char *x = bytes_contents(bytes);
+    if (bytes_len(bytes) < n) n = bytes_len(bytes);
+    memcpy(dest, x, n);
+    return n;
+}
+
+size_t
+copy_bytes_contents0(char *dest, datum bytes, size_t n)
+{
+    n = copy_bytes_contents(dest, bytes, n - 1);
+    dest[n] = 0;
+    return n + 1;
 }
 
 end

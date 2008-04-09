@@ -302,20 +302,6 @@ make_bytes(uint bytes_len)
 }
 
 datum
-make_bytes_init_len(const char *s, int len)
-{
-    datum d = make_bytes(len);
-    memcpy(bytes_contents(d), s, len);
-    return d;
-}
-
-datum
-make_bytes_init(const char *s)
-{
-    return make_bytes_init_len(s, strlen(s));
-}
-
-datum
 make_str(size_t size, size_t len)
 {
     uint words_size;
@@ -341,23 +327,6 @@ bytes_contents(datum bytes)
     if (!bytesp(bytes)) die1("bytes_contents -- not an instance of bytes", bytes);
     p = (chunk) bytes;
     return (char *) &p->datums[1];
-}
-
-size_t
-copy_bytes_contents(char *dest, datum bytes, size_t n)
-{
-    char *x = bytes_contents(bytes);
-    if (bytes_len(bytes) < n) n = bytes_len(bytes);
-    memcpy(dest, x, n);
-    return n;
-}
-
-size_t
-copy_bytes_contents0(char *dest, datum bytes, size_t n)
-{
-    n = copy_bytes_contents(dest, bytes, n - 1);
-    dest[n] = 0;
-    return n + 1;
 }
 
 static chunk
