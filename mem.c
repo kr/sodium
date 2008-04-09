@@ -325,14 +325,6 @@ make_str(size_t size, size_t len)
                          (datum) len);
 }
 
-datum
-make_str_init(size_t size, size_t len, const char *bytes)
-{
-    str s = (str) make_str(size, len);
-    memcpy(s->data, bytes, size);
-    return (datum) s;
-}
-
 size_t
 bytes_len(datum bytes)
 {
@@ -364,32 +356,6 @@ size_t
 copy_bytes_contents0(char *dest, datum bytes, size_t n)
 {
     n = copy_bytes_contents(dest, bytes, n - 1);
-    dest[n] = 0;
-    return n + 1;
-}
-
-inline str
-datum2str(datum d)
-{
-    if (!in_chunk_range(d)) die1("not a str", d);
-    if (!str_tag_matches(d)) die1("not a str", d);
-    return (str) d;
-}
-
-size_t
-copy_str_contents(char *dest, datum x, size_t n)
-{
-    str s = datum2str(x);
-
-    if (s->size < n) n = s->size;
-    memcpy(dest, s->data, n);
-    return n;
-}
-
-size_t
-copy_str_contents0(char *dest, datum str, size_t n)
-{
-    n = copy_str_contents0(dest, str, n - 1);
     dest[n] = 0;
     return n + 1;
 }

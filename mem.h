@@ -4,6 +4,7 @@
 #define mem_h
 
 #include "gen.h"
+#include "str.h"
 
 typedef void(*na_fn_free)(void *);
 
@@ -33,20 +34,12 @@ typedef struct closure {
     method_table table;
 } *closure;
 
-typedef struct str {
-    uint info;
-    size_t size;
-    size_t len;
-    char data[];
-} *str;
-
 datum cons(datum x, datum y);
 datum make_array(uint len);
 datum make_bytes(uint len);
 datum make_bytes_init(const char *s);
 datum make_bytes_init_len(const char *s, int len);
 datum make_str(size_t size, size_t len);
-datum make_str_init(size_t size, size_t len, const char *bytes);
 datum make_closure(datum env, uint *table);
 datum grow_closure(datum *o, uint len, na_fn_free fn, void *data);
 
@@ -60,11 +53,7 @@ char *bytes_contents(datum bytes);
 size_t copy_bytes_contents(char *dest, datum bytes, size_t n);
 size_t copy_bytes_contents0(char *dest, datum bytes, size_t n);
 
-size_t copy_str_contents(char *dest, datum str, size_t n);
-size_t copy_str_contents0(char *dest, datum str, size_t n);
-
 inline pair datum2pair(datum d);
-inline str datum2str(datum d);
 
 inline closure datum2closure(datum d);
 
