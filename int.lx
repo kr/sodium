@@ -1,11 +1,12 @@
 
 inline C <<end
 #include <string.h>
+#include "prim.h"
 
 #define MAX_LX_INT (0x3fffffff)
 #define MIN_LX_INT (-0x40000000)
 
-#define bigint(x) (printf("%ld\n", (x)), die1("no bigints yet", nil))
+#define bigint(x) (prfmt(1, "%u\n", (x)), die1("no bigints yet", nil))
 
 inline str
 datum2str(datum d)

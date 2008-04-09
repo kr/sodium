@@ -1,4 +1,3 @@
-#include <stdio.h>
 #include "gen.h"
 #include "obj.h"
 #include "mem.h"

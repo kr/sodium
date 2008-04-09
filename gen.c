@@ -1,4 +1,5 @@
-#include <stdio.h>
+#include <unistd.h>
+#include <string.h>
 #include <stdlib.h>
 #include "gen.h"
 #include "mem.h"
@@ -18,14 +19,20 @@ truep(datum d)
 void
 die(const char *m)
 {
-    fprintf(stderr, "\n%s\n", m);
+    size_t n = strlen(m);
+    write(2, "\n", 1);
+    write(2, m, n);
+    write(2, "\n", 1);
     DUMP_CORE;
 }
 
 datum
 die1(const char *m, datum d)
 {
-    fprintf(stderr, "\n%s: ", m);
+    size_t n = strlen(m);
+    write(2, "\n", 1);
+    write(2, m, n);
+    write(2, ": ", 1);
     pr(d);
     DUMP_CORE;
     return nil;

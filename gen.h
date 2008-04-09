@@ -1,8 +1,6 @@
 #ifndef GEN_H
 #define GEN_H
 
-#include <stdio.h>
-
 typedef void * datum;
 
 #define INT_TAG 0x1

@@ -1,4 +1,4 @@
-#include <stdio.h>
+#include <unistd.h>
 #include <string.h>
 #include <sys/stat.h>
 #include "gen.h"
@@ -6,6 +6,8 @@
 #include "obj.h"
 #include "st.h"
 #include "vm.h"
+
+#define VOID ((void) 0)
 
 /* global functions */
 
@@ -17,56 +19,119 @@ pr_array(datum d)
     prx(item0(d));
     len = array_len(d);
     for (i = 1; i < len; i++) {
-        fputs(" ", stdout);
+        write(1, " ", 1);
         prx(array_get(d, i));
     }
 }
 
 static void
-pr_pair(datum d, char *sp)
+pr_pair(datum d, int sp)
 {
     if (d == nil) return;
-    fputs(sp, stdout);
+    if (sp) write(1, " ", 1);
     prx(car(d));
     if (pairp(cdr(d)) || cdr(d) == nil) {
-        pr_pair(cdr(d), " ");
+        pr_pair(cdr(d), 1);
     } else {
-        fputs(" . ", stdout);
+        write(1, " . ", 3);
         prx(cdr(d));
     }
+}
+
+/* r must be <= 36 */
+static void
+pradix(int fd, unsigned int i, int r, int print_zero)
+{
+    char c = "0123456789abcdefghijklmnopqrstuvwxyz"[i % r];
+    if (!i) return (print_zero? write(fd, "0", 1) : 0), VOID;
+    pradix(fd, i / r, r, 0);
+    write(fd, &c, 1);
+}
+
+void
+prfmt(int fd, char *fmt, ...)
+{
+    va_list ap;
+    char *p, *sval;
+    int ival;
+    unsigned int uval;
+
+    va_start(ap, fmt);
+    for (p = fmt; *p; p++) {
+        if (*p != '%') {
+            write(fd, p, 1);
+            continue;
+        }
+        switch (*++p) {
+            case 'u':
+                uval = va_arg(ap, unsigned int);
+                pradix(fd, uval, 10, 1);
+                break;
+            case 'x':
+                uval = va_arg(ap, unsigned int);
+                write(fd, "0x", 2);
+                pradix(fd, uval, 16, 1);
+                break;
+            case 'd':
+                ival = va_arg(ap, int);
+                if (ival < 0) write(1, "-", 1);
+                pradix(fd, ival > 0? ival: -ival, 10, 1);
+                break;
+            case 'p':
+                uval = va_arg(ap, unsigned int);
+                if (uval) {
+                    write(fd, "0x", 2);
+                    pradix(fd, uval, 16, 1);
+                } else {
+                    write(fd, "(nil)", 5);
+                }
+                break;
+            case 's':
+                sval = va_arg(ap, char *);
+                write(fd, sval, strlen(sval));
+                break;
+            default:
+                write(fd, p, 1);
+                break;
+        }
+    }
+    va_end(ap);
 }
 
 void
 prx(datum d)
 {
     if (!d) {
-        printf("()");
+        write(1, "()", 2);
     } else if (intp(d)) {
-        printf("%d", datum2int(d));
+        int i = datum2int(d);
+        prfmt(1, "%d", i);
     } else if (addrp(d)) {
-        printf("<addr %p>", d);
+        prfmt(1, "<addr %p>", d);
     } else if (symbolp(d)) {
         pr_symbol(d);
     } else if (strp(d)) {
         str s = datum2str(d);
-        printf("%*.*s", s->size, s->size, s->data);
+        write(1, s->data, s->size);
     } else if (bytesp(d)) {
-        printf("%*s", bytes_len(d), bytes_contents(d));
+        bytes b = datum2bytes(d);
+        write(1, b->data, b->size);
     } else if (pairp(d)) {
-        printf("(");
-        pr_pair(d, "");
-        printf(")");
+        write(1, "(", 1);
+        pr_pair(d, 0);
+        write(1, ")", 1);
     } else if (arrayp(d)) {
-        printf("(array ");
+        write(1, "(array ", 7);
         pr_array(d);
-        printf(")");
+        write(1, ")", 1);
     } else if (closurep(d)) {
-        printf("<closure %p>", d);
+        prfmt(1, "<closure %p>", d);
     } else if (broken_heartp(d)) {
-        printf("<broken heart %p>:\n", ((chunk) d)->datums[0]);
-        prx(((chunk) d)->datums[0]);
+        d = ((chunk) d)->datums[0];
+        prfmt(1, "<broken-heart %p>", d);
+        prx(d);
     } else {
-        printf("<unknown-object %p>", d);
+        prfmt(1, "<unknown-object %p>", d);
     }
 }
 
@@ -74,5 +139,5 @@ void
 pr(datum d)
 {
     prx(d);
-    printf("\n");
+    write(1, "\n", 1);
 }

@@ -5,6 +5,7 @@
 #include "st.h"
 #include "gen.h"
 #include "obj.h"
+#include "prim.h"
 
 #define CHAR_STAR_TAG 0x2
 #define symbol2datum(x) ((datum) (((unsigned int)(x)) | CHAR_STAR_TAG))
@@ -103,11 +104,11 @@ dump_symbol(void *s)
 {
     symbol sym;
     if (!symbolp(s)) {
-        printf("<bad-symbol>");
+        prfmt(1, "<bad-symbol>");
         return;
     }
     sym = datum2symbol(s);
-    printf("symbol\n  %s", sym->ent->chars);
+    prfmt(1, "symbol\n  %s", sym->ent->chars);
 }
 
 void
@@ -115,11 +116,11 @@ pr_symbol(void *s)
 {
     symbol sym;
     if (!symbolp(s)) {
-        printf("<bad-symbol>");
+        prfmt(1, "<bad-symbol>");
         return;
     }
     sym = datum2symbol(s);
-    printf("%s", sym->ent->chars);
+    prfmt(1, "%s", sym->ent->chars);
 }
 
 int

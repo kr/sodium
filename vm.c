@@ -1,5 +1,7 @@
-#include <stdlib.h>
+#include <unistd.h>
 #include <stdio.h>
+#include <errno.h>
+#include <stdlib.h>
 #include <ctype.h>
 #include <netinet/in.h>
 #include <string.h>
@@ -61,17 +63,18 @@ static char *instr_names[32] = {
 };
 #endif
 
+#define USAGE "Usage: vm <file.lxc>\n"
 void
 usage(void)
 {
-    fprintf(stderr, "Usage: vm <file.lxc>\n");
+    write(2, USAGE, sizeof(USAGE));
     exit(1);
 }
 
 void
 bail(const char *m)
 {
-    perror(m);
+    prfmt(2, "%s: %s\n", m, strerror(errno));
     exit(1);
 }
 
@@ -88,7 +91,7 @@ read_int(FILE *f)
     uint n, r;
     r = fread(&n, 4, 1, f);
     if (r != 1) {
-        printf("could not read int. r = %d\n", r);
+        prfmt(1, "could not read int. r = %u\n", r);
         die("could not read int");
     }
     return ntohl(n);
@@ -106,7 +109,7 @@ static datum
 init_int(uint value)
 {
     if ((value & 1) != 1) {
-        printf("bad static int value 0x%x\n", value);
+        prfmt(1, "bad static int value 0x%x\n", value);
         die("bad static int value\n");
     }
     return (datum) value;
@@ -248,7 +251,9 @@ load_datums(FILE *f, uint n)
             case '$': d = load_symbol(f); break;
             case '(': d = load_list(f); break;
             default:
-                fprintf(stderr, "unknown datum signifier '%c'\n", type);
+                write(2, "unknown datum signifier '", 25);
+                write(2, &type, 1);
+                write(2, "'\n", 2);
                 die("unknown datum signifier");
         }
         insert_datum(d);
@@ -270,8 +275,9 @@ init_datums(static_datums_info static_datums, uint n)
             case '$': d = init_symbol(static_datums->entries[i]); break;
             case '(': d = init_list(static_datums->entries[i]); break;
             default:
-                fprintf(stderr, "unknown datum signifier '%c'\n",
-                        static_datums->types[i]);
+                write(2, "unknown datum signifier '", 25);
+                write(2, &static_datums->types[i], 1);
+                write(2, "'\n", 2);
                 die("unknown datum signifier");
         }
         insert_datum(d);
@@ -307,7 +313,7 @@ check_magic(FILE *f)
 }
 
 void
-link(uint *insts, uint inst_count, uint *lab_offsets)
+nalink(uint *insts, uint inst_count, uint *lab_offsets)
 {
     register uint *pc;
     uint di, li;
@@ -424,7 +430,7 @@ lexical_setbang(datum env, uint level, uint index, datum val)
 {
     datum cell;
 
-    /*printf("\n\n\nlexical_setbang(%p, %d, %d, %p)\n", env, level, index, val);*/
+    /*prfmt(1, "\n\n\nlexical_setbang(%p, %d, %d, %p)\n", env, level, index, val);*/
 
     for (;level--;) /*pr(env),*/ env = cdr(env);
     /*pr(env);*/
@@ -453,7 +459,7 @@ start(uint *start_addr)
     for (pc = start_addr;; ++pc) {
         register uint inst = *pc;
 #if VM_DEBUG > 0
-        printf("executing %s (0x%x at %p)\n",
+        prfmt(1, "executing %s (0x%x at %p)\n",
                 instr_names[I_OP(inst)], I_OP(inst), pc);
 #endif
         switch (I_OP(inst)) {
@@ -588,7 +594,7 @@ start(uint *start_addr)
                 regs[ra] = extend_environment(regs[rb], regs[rc], regs[rd]);
                 break;
             default:
-                printf("unknown op 0x%x at %p\n", I_OP(inst), pc);
+                prfmt(1, "unknown op 0x%x at %p\n", I_OP(inst), pc);
                 die("unknown op");
         }
     }
@@ -597,14 +603,19 @@ start(uint *start_addr)
 static char *
 find_module_file(const char *mname)
 {
-    char *name, *fmt = "lib/%s.lxc";
+    char *name;
     uint len = strlen(mname);
 
     name = malloc(sizeof(char) * (len + 9));
     if (!name) die("out of memory allocating file name");
 
-    if (strcmp(mname + len - 4, ".lxc") == 0) fmt = "lib/%s";
-    sprintf(name, fmt, mname);
+    memcpy(name, "lib/", 4);
+    memcpy(name + 4, mname, len);
+    if (strcmp(mname + len - 4, ".lxc") == 0) {
+        name[4 + len] = 0;
+    } else {
+        memcpy(name + 4 + len, ".lxc", 5);
+    }
     return name;
 }
 
@@ -623,13 +634,14 @@ load_module_file(const char *name)
         int namelen = strlen(name);
         char cmd[namelen + 7];
 
-        snprintf(cmd, namelen + 7, "./lx1c %*s", namelen - 1, name);
+        memcpy(cmd, "./lx1c ", 7);
+        memcpy(cmd + 7, name, namelen);
         system(cmd);
         f = fopen(name, "rb");
     }
 
     if (!f) {
-        fprintf(stderr, "cannot open file %s\n", name);
+        prfmt(2, "cannot open file %s\n", name);
         bail("cannot open file");
     }
 
@@ -659,7 +671,7 @@ load_module_file(const char *name)
 
     load_instrs(f, instr_count, insts);
 
-    link(insts, instr_count, label_offsets);
+    nalink(insts, instr_count, label_offsets);
     free(label_offsets);
 
     return insts;
@@ -680,7 +692,7 @@ load_lxc_module(lxc_module mod)
     instr_ends[instr_sets] = mod->instrs + mod->instrs_count;
     instr_sets++;
 
-    link(mod->instrs, mod->instrs_count, mod->label_offsets);
+    nalink(mod->instrs, mod->instrs_count, mod->label_offsets);
 
     return mod->instrs;
 }
@@ -738,10 +750,9 @@ call(datum o, datum m, chunk a)
 datum
 report_error(datum args)
 {
-    printf("error ");
+    write(1, "error ", 6);
     pr(args);
-    die("error");
-    return nil;
+    return die1("error", args);
 }
 
 datum
