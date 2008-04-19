@@ -1,8 +1,10 @@
 #include <unistd.h>
-#include <stdio.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <ctype.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 #include <netinet/in.h>
 #include <string.h>
 #include <setjmp.h>
@@ -75,7 +77,14 @@ void
 bail(const char *m)
 {
     prfmt(2, "%s: %s\n", m, strerror(errno));
-    exit(1);
+    exit(2);
+}
+
+void
+bailx(const char *m)
+{
+    prfmt(2, "%s\n", m);
+    exit(3);
 }
 
 static void
@@ -86,11 +95,11 @@ insert_datum(datum d)
 }
 
 static uint
-read_int(FILE *f)
+read_int(int f)
 {
     uint n, r;
-    r = fread(&n, 4, 1, f);
-    if (r != 1) {
+    r = read(f, &n, 4);
+    if (r != 4) {
         prfmt(1, "could not read int. r = %u\n", r);
         die("could not read int");
     }
@@ -98,7 +107,7 @@ read_int(FILE *f)
 }
 
 static datum
-load_int(FILE *f)
+load_int(int f)
 {
     uint n;
     n = read_int(f);
@@ -122,7 +131,7 @@ init_pointer(uint value)
 }
 
 static datum
-load_bigint(FILE *f)
+load_bigint(int f)
 {
     die("this is a long integer... teach me how to handle those");
     return nil;
@@ -136,21 +145,23 @@ init_bigint(uint value)
 }
 
 static char *
-read_bytes(FILE *f, size_t n)
+read_bytes(int f, size_t n)
 {
-    size_t r, i;
+    ssize_t r;
+    size_t i;
     char *s;
     s = (char *)malloc((n + 1) * sizeof(char));
     s[n] = '\0';
     for (i = 0; i < n; i += r) {
-        r = fread(s + i, 1, n - i, f);
+        r = read(f, s + i, n - i);
+        if (-1 == r) bail("read() failed");
         if (!r) die("could not read");
     }
     return s;
 }
 
 static datum
-load_str(FILE *f)
+load_str(int f)
 {
     size_t size, len;
     char *s;
@@ -172,16 +183,18 @@ init_str(uint value)
 }
 
 char
-readc(FILE *f)
+readc(int f)
 {
-    int c;
-    c = getc(f);
-    if (c == EOF) bail("cannot read");
-    return (char)c;
+    int r;
+    char c;
+    r = read(f, &c, 1);
+    if (r < 0) bail("read() failed");
+    if (r < 1) bailx("unexpected end of file");
+    return c;
 }
 
 static datum
-load_symbol(FILE *f)
+load_symbol(int f)
 {
     int l = 1;
     char c, *s = NULL;
@@ -207,7 +220,7 @@ init_symbol(uint value)
 }
 
 static datum
-load_list(FILE *f)
+load_list(int f)
 {
     int i = 0;
     chunk l = nil;
@@ -238,7 +251,7 @@ init_list(uint value)
 }
 
 static void
-load_datums(FILE *f, uint n)
+load_datums(int f, uint n)
 {
     datum d = nil;
     char type;
@@ -285,7 +298,7 @@ init_datums(static_datums_info static_datums, uint n)
 }
 
 static void
-load_labels(FILE *f, uint n, uint *lab_offsets)
+load_labels(int f, uint n, uint *lab_offsets)
 {
     uint i;
     for (i = 0; i < n; i++) {
@@ -294,7 +307,7 @@ load_labels(FILE *f, uint n, uint *lab_offsets)
 }
 
 static void
-load_instrs(FILE *f, uint n, uint *insts)
+load_instrs(int f, uint n, uint *insts)
 {
     uint i;
     for (i = 0; i < n; i++) {
@@ -303,11 +316,11 @@ load_instrs(FILE *f, uint n, uint *insts)
 }
 
 void
-check_magic(FILE *f)
+check_magic(int f)
 {
     size_t r;
     char magic[MAGIC_LEN];
-    r = fread(magic, 1, MAGIC_LEN, f);
+    r = read(f, magic, MAGIC_LEN);
     if (r != MAGIC_LEN) bail("can't read magic");
     if (strncmp(magic, "\x89LX1\x0d\n\x1a\n", MAGIC_LEN) != 0) die("bad magic");
 }
@@ -625,22 +638,22 @@ load_module_file(const char *name)
     uint *insts, *label_offsets;
     uint label_count = 0;
     size_t instr_count = 0;
-    FILE *f;
+    int f;
 
-    f = fopen(name, "rb");
+    f = open(name, O_RDONLY);
 
     /* compile the library file if necessary */
-    if (!f) {
+    if (-1 == f) {
         int namelen = strlen(name);
         char cmd[namelen + 7];
 
         memcpy(cmd, "./lx1c ", 7);
         memcpy(cmd + 7, name, namelen);
         system(cmd);
-        f = fopen(name, "rb");
+        f = open(name, O_RDONLY);
     }
 
-    if (!f) {
+    if (-1 == f) {
         prfmt(2, "cannot open file %s\n", name);
         bail("cannot open file");
     }
