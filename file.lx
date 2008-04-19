@@ -1,17 +1,19 @@
 inline C <<end
+#include <unistd.h>
+#include <sys/types.h>
+#include <fcntl.h>
 #include <string.h>
-#include <stdio.h>
 #include <sys/stat.h>
 
 static datum read_sym, write_sym;
 
 static size_t
-fsize(FILE *f)
+fsize(int f)
 {
     int r;
     struct stat sbuf;
 
-    r = fstat(fileno(f), &sbuf);
+    r = fstat(f, &sbuf);
     if (r) die("fsize -- cannot stat");
     return sbuf.st_size;
 }
@@ -26,20 +28,22 @@ def intern-syms ():
   end
 
 def file ():
-  (run name mode):
+  (run name flags):
     def f ():
       inline C (read) <<end
-        uint r, len;
+        int r;
+        uint len;
         datum bytes;
-        FILE *f = (FILE *) ((chunk) rcv)->datums[2];
+        int f = (int) ((chunk) rcv)->datums[2];
         char *s;
 
         if (!f) die("f:read -- this file is closed");
         len = fsize(f);
         bytes = make_bytes(len + 1);
         for (s = bytes_contents(bytes); len; len -= r) {
-            r = fread(s, sizeof(char), len, f);
-            // TODO error checking with feof() and ferror()
+            r = read(f, s, len);
+            if (r < 1) die("read() error");
+            /* TODO better error checking */
             s += r;
         }
         *s = '\0';
@@ -47,44 +51,48 @@ def file ():
       end
 
       inline C (write s) <<end
-        uint r, len;
-        FILE *f = ((chunk) rcv)->datums[2];
+        int r;
+        uint len;
+        int f = (int) ((chunk) rcv)->datums[2];
         char *s;
 
         if (!f) die("f:write -- this file is closed");
         s = bytes_contents(n_s);
         for (len = strlen(s); len; len -= r) {
-            r = fwrite(s, sizeof(char), len, f);
-            // TODO error checking with feof() and ferror()
+            r = write(f, s, len);
+            if (r < 1) die("write() error");
+            /* TODO better error checking */
             s += r;
         }
         return ok_sym;
       end
 
       inline C (close) <<end
-        FILE *f = ((chunk) rcv)->datums[2];
+        int r;
+        int f = (int) ((chunk) rcv)->datums[2];
 
         if (f) {
-            fclose(f);
+            r = close(f);
+            if (-1 == r) die("close() error");
             ((chunk) rcv)->datums[2] = 0;
         }
         return ok_sym;
       end
 
       inline C (prepare) <<end
-        FILE *f;
-        char *mode = "rb";
+        int f;
+        int flags = O_RDONLY;
 
-        // Get mode
-        if (n_mode == write_sym) {
-            mode = "wb";
-        } else if (n_mode != read_sym) {
-            return die1("f:prepare -- unknown mode", n_mode);
+        // Get flags
+        if (n_flags == write_sym) {
+            flags = O_WRONLY;
+        } else if (n_flags != read_sym) {
+            return die1("f:prepare -- unknown flags", n_flags);
         }
 
-        f = fopen(bytes_contents(n_name), mode);
+        f = open(bytes_contents(n_name), flags);
 
-        return grow_closure(&rcv, 1, (na_fn_free) fclose, f);
+        return grow_closure(&rcv, 1, (na_fn_free) close, (void *) f);
       end
 
     f.prepare
