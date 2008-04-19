@@ -138,12 +138,12 @@ init_bigint(uint value)
 static char *
 read_bytes(FILE *f, size_t n)
 {
-    size_t r;
+    size_t r, i;
     char *s;
     s = (char *)malloc((n + 1) * sizeof(char));
     s[n] = '\0';
-    for (; n; n -= r) {
-        r = fread(s, 1, n, f);
+    for (i = 0; i < n; i += r) {
+        r = fread(s + i, 1, n - i, f);
         if (!r) die("could not read");
     }
     return s;
