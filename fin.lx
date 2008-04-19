@@ -1,13 +1,13 @@
 inline C <<end
-#include <stdio.h>
+#include "prim.h"
 
 static void
 fin_test_fn(void *i)
 {
     if (i == (void *) 3) {
-        printf("success\n");
+        prfmt(1, "success\n");
     } else {
-        printf("FAIL %p\n", i);
+        prfmt(1, "FAIL %p\n", i);
     }
 }
 
