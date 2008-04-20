@@ -5,6 +5,9 @@ inline C <<end
 #include <string.h>
 #include <sys/stat.h>
 
+#include "vm.h"
+#include "prim.h"
+
 static datum read_sym, write_sym;
 
 static size_t
@@ -85,12 +88,24 @@ def file ():
 
         // Get flags
         if (n_flags == write_sym) {
-            flags = O_WRONLY;
+            flags = O_WRONLY | O_CREAT;
         } else if (n_flags != read_sym) {
             return die1("f:prepare -- unknown flags", n_flags);
         }
 
-        f = open(bytes_contents(n_name), flags);
+        if (bytesp(n_name)) {
+            f = open(bytes_contents(n_name), flags);
+        } else if (strp(n_name)) {
+            str name = datum2str(n_name);
+            char name0[name->size + 1];
+
+            copy_str_contents0(name0, n_name, name->size + 1);
+            prfmt(1, "opening ``%s''\n", name0);
+            f = open(name0, flags);
+        } else {
+            die1("f:prepare -- not bytes or str", n_name);
+        }
+        if (-1 == f) bail("open() failed");
 
         return grow_closure(&rcv, 1, (na_fn_free) close, (void *) f);
       end
