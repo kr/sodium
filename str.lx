@@ -77,6 +77,11 @@ def str ():
     return make_str_init(1, 1, s);
   end
 
+  inline C (encode) <<end
+    str s = datum2str(rcv);
+    return make_bytes_init_len(s->data, s->size);
+  end
+
   inline C (length) <<end
     return int2datum(datum2str(rcv)->len);
   end
