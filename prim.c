@@ -16,7 +16,7 @@ pr_array(datum d)
 {
     uint i, len;
     if (d == nil) return;
-    prx(item0(d));
+    prx(array_get(d, 0));
     len = array_len(d);
     for (i = 1; i < len; i++) {
         write(1, " ", 1);

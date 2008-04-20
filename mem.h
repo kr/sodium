@@ -66,20 +66,6 @@ inline closure datum2closure(datum d);
 
 #define cdaddr(x) (cdr(caddr(x)))
 
-#define item0(x) (array_get((x),0))
-#define item1(x) (array_get((x),1))
-#define item2(x) (array_get((x),2))
-#define item00(x) (item0(item0(x)))
-#define item01(x) (item0(item1(x)))
-#define item10(x) (item1(item0(x)))
-#define item11(x) (item1(item1(x)))
-#define item011(x) (item0(item11(x)))
-#define item0011(x) (item0(item011(x)))
-#define item1011(x) (item1(item011(x)))
-
-#define setitem0(x,y) (array_put((x),0,(y)))
-#define setitem1(x,y) (array_put((x),1,(y)))
-
 #define HEAP_SIZE (2 * 1024 * 1024)
 
 extern struct chunk *busy_chunks, *old_chunks;
