@@ -1,0 +1,19 @@
+def module ():
+  (load-file name):
+    def x ():
+      inline C (run) <<end
+        uint *addr = (uint *) ((chunk) rcv)->datums[2];
+        start_body(addr);
+        return ok_sym;
+      end
+
+      inline C (prepare) <<end
+        uint *addr;
+        char name[bytes_len(n_name) + 1];
+        copy_bytes_contents0(name, n_name, bytes_len(n_name) + 1);
+        addr = load_module_file(name);
+        return grow_closure(&rcv, 1, 0, addr);
+      end
+    x.prepare
+
+. module
