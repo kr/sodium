@@ -9,6 +9,23 @@ def compile-module ():
     return compile_module(n_name);
   end
 
+def (module-file name):
+  def x ():
+    inline C (run) <<end
+      uint *addr = (uint *) ((chunk) rcv)->datums[2];
+      start_body(addr);
+      return ok_sym;
+    end
+
+    inline C (prepare) <<end
+      uint *addr;
+      char name[bytes_len(n_name) + 1];
+      copy_bytes_contents0(name, n_name, bytes_len(n_name) + 1);
+      addr = load_module_file(name);
+      return grow_closure(&rcv, 1, 0, addr);
+    end
+  x.prepare
+
 # This must be done before using any methods on these types of objects.
 compile-module 'int
 compile-module 'bytes
@@ -305,16 +322,8 @@ def (process-tasks):
       # task.break!
       process-tasks
 
-def execute-file ():
-  inline C (run name) <<end
-    char name[bytes_len(n_name) + 1];
-    copy_bytes_contents0(name, n_name, bytes_len(n_name) + 1);
-    execute_file(name);
-    return ok_sym;
-  end
-
 # Load and execute the main program.
-execute-file *args*.car
+(module-file *args*.car)
 
 # Process the work queue.
 process-tasks

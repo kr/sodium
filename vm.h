@@ -71,7 +71,8 @@ void define(datum env, datum val, datum name);
 
 datum lookup(datum env, datum name);
 datum compile_module(datum name);
-void execute_file(const char *name);
+void start_body(uint *start_addr);
+uint *load_module_file(const char *name);
 datum lexical_lookup(datum env, uint level, uint index);
 datum lexical_setbang(datum env, uint level, uint index, datum val);
 datum extend_environment(datum env, datum argl, datum formals);

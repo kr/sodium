@@ -460,12 +460,16 @@ extend_environment(datum env, datum argl, datum formals)
     return cons(argl, env);
 }
 
-void
+static void
 start(uint *start_addr)
 {
     register uint *pc, *tmp;
     uint ra, rb, rc, rd, di, level, index;
     datum d;
+
+    /* save continue register */
+    stack = cons(regs[R_CONTINUE], stack);
+    regs[R_CONTINUE] = quit_inst;
 
     regs[R_NIL] = nil;
     regs[R_GLOBAL] = genv;
@@ -477,7 +481,7 @@ start(uint *start_addr)
 #endif
         switch (I_OP(inst)) {
             case OP_NOP: break;
-            case OP_QUIT: return;
+            case OP_QUIT: goto halt;
             case OP_GOTO_REG:
                 ra = I_R(inst);
                 pc = ((uint *) regs[ra]) - 1;
@@ -611,6 +615,10 @@ start(uint *start_addr)
                 die("unknown op");
         }
     }
+halt:
+    /* restore continue register */
+    regs[R_CONTINUE] = car(stack);
+    stack = cdr(stack);
 }
 
 static char *
@@ -632,7 +640,7 @@ find_module_file(const char *mname)
     return name;
 }
 
-static uint *
+uint *
 load_module_file(const char *name)
 {
     uint *insts, *label_offsets;
@@ -729,17 +737,11 @@ load_module(const char *mname)
     return insts;
 }
 
-static void
+void
 start_body(uint *start_addr)
 {
     regs[R_ENV] = genv;
     start(start_addr);
-}
-
-void
-execute_file(const char *file)
-{
-    start_body(load_module_file(file));
 }
 
 datum
@@ -750,10 +752,7 @@ call(datum o, datum m, chunk a)
     regs[R_ARGL] = a;
     regs[R_VM0] = closure_method(regs[R_PROC], m);
     if (addrp(regs[R_VM0])) {
-        stack = cons(regs[R_CONTINUE], stack); // save
-        regs[R_CONTINUE] = quit_inst;
         start(regs[R_VM0]);
-        regs[R_CONTINUE] = car(stack); stack = cdr(stack); // restore
         return regs[R_VAL];
     } else {
         return ((prim_meth) regs[R_VM0])(regs[R_PROC], regs[R_ARGL]);
