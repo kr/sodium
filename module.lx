@@ -1,4 +1,21 @@
+def compile-module ():
+  inline C (run name) <<end
+    return load_builtin_module(n_name);
+  end
+
+def (load-module name):
+  def ent (*modules*.assq name)
+  if ent:
+    ent.cdr
+  else:
+    def new-module (make-blank-module)
+    *modules* :: (cons (cons name new-module) *modules*)
+    become new-module (compile-module name) 1
+    . new-module
+
 def module ():
+  (run name): load-module name
+
   (load-file name):
     def x ():
       inline C (run) <<end

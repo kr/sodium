@@ -768,7 +768,7 @@ report_error(datum args)
 }
 
 datum
-compile_module(datum name)
+load_builtin_module(datum name)
 {
     start_body(load_module(symbol2charstar(name)));
     return regs[R_VAL]; /* return value from module */

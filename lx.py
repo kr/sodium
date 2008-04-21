@@ -11,7 +11,7 @@ from util import traced
 quote_s = S('quote')
 set__s = S('set!')
 def_s = S('def')
-load_module_s = S('load-module')
+load_module_s = S('module')
 export_s = S('export')
 import_s = S('import')
 return_s = S('return')

@@ -4,21 +4,20 @@ inline C <<end
 #include "prim.h"
 end
 
-def load-builtin-module ():
-  inline C (run name) <<end
-    return compile_module(n_name);
-  end
+# First let us load just builtin modules.
+def module (): inline C (run name) "return load_builtin_module(n_name);"
 
 # This must be done before using any methods on these types of objects.
-load-builtin-module 'int
-load-builtin-module 'bytes
-load-builtin-module 'str
-load-builtin-module 'pair
-load-builtin-module 'array
-load-builtin-module 'nil
-load-builtin-module 'symbol
+module 'int
+module 'bytes
+module 'str
+module 'pair
+module 'array
+module 'nil
+module 'symbol
 
-def module (load-builtin-module 'module)
+# Now load the real module module so we can load any module.
+module :: (module 'module)
 
 def π 3.14159
 
@@ -88,21 +87,6 @@ def (map f a):
   def x (f a.car) # evaluate x before the rest
   cons x (map f a.cdr)
 
-def compile-module ():
-  inline C (run name) <<end
-    return compile_module(n_name);
-  end
-
-def (load-module name):
-  def ent (*modules*.assq name)
-  if ent:
-    ent.cdr
-  else:
-    def new-module (make-blank-module)
-    *modules* :: (cons (cons name new-module) *modules*)
-    become new-module (compile-module name) 1
-    . new-module
-
 def list ():
   inline C run <<end
     return args;
@@ -140,8 +124,7 @@ def pr ():
     return ok_sym;
   end
 
-def open (load-module (quote file))
-load-module (quote file)
+import (file -> open)
 
 def prx ():
   inline C (run x) <<end
