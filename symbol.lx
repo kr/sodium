@@ -1,10 +1,16 @@
 inline C <<end
+#include <string.h>
 #include "st.h"
 end
 
 def symbol ():
   inline C str <<end
-    return make_bytes_init(symbol2charstar(rcv));
+    const char *cont;
+    size_t len;
+
+    cont = symbol2charstar(rcv);
+    len = strlen(cont);
+    return make_str_init(len, len, cont);
   end
 
 def install-symbol ():
