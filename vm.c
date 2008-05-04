@@ -652,11 +652,12 @@ load_module_file(const char *name)
 
     /* compile the library file if necessary */
     if (-1 == f) {
-        int namelen = strlen(name);
-        char cmd[namelen + 7];
+        int namelen = strlen(name) - 1;
+        char cmd[namelen + 8];
 
         memcpy(cmd, "./lx1c ", 7);
         memcpy(cmd + 7, name, namelen);
+        cmd[namelen + 7] = 0;
         system(cmd);
         f = open(name, O_RDONLY);
     }
