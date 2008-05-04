@@ -621,25 +621,6 @@ halt:
     stack = cdr(stack);
 }
 
-static char *
-find_module_file(const char *mname)
-{
-    char *name;
-    uint len = strlen(mname);
-
-    name = malloc(sizeof(char) * (len + 9));
-    if (!name) die("out of memory allocating file name");
-
-    memcpy(name, "lib/", 4);
-    memcpy(name + 4, mname, len);
-    if (strcmp(mname + len - 4, ".lxc") == 0) {
-        name[4 + len] = 0;
-    } else {
-        memcpy(name + 4 + len, ".lxc", 5);
-    }
-    return name;
-}
-
 uint *
 load_module_file(const char *name)
 {
@@ -720,11 +701,9 @@ load_lxc_module(lxc_module mod)
 }
 
 static uint *
-load_module(const char *mname)
+find_builtin_module(const char *mname)
 {
     int i;
-    uint *insts;
-    char *name;
 
     for (i = 0; i < lxc_modules_count; i++) {
         if (strcmp(lxc_modules[i]->name, mname) == 0) {
@@ -732,10 +711,7 @@ load_module(const char *mname)
         }
     }
 
-    name = find_module_file(mname);
-    insts = load_module_file(name);
-    free(name);
-    return insts;
+    return 0;
 }
 
 void
@@ -771,7 +747,11 @@ report_error(datum args)
 datum
 load_builtin_module(datum name)
 {
-    start_body(load_module(symbol2charstar(name)));
+    uint *insts;
+
+    insts = find_builtin_module(symbol2charstar(name));
+    if (!insts) return nil;
+    start_body(insts);
     return regs[R_VAL]; /* return value from module */
 }
 
@@ -793,7 +773,7 @@ main(int argc, char **argv)
     define(genv, args, intern("*args*"));
 
     /* load and execute the standard prelude */
-    start_body(load_module("prelude"));
+    start_body(find_builtin_module("prelude"));
 
     return 0;
 }

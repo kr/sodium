@@ -16,6 +16,18 @@ module 'array
 module 'nil
 module 'symbol
 
+def pr ():
+  inline C (run x) <<end
+    pr(n_x);
+    return ok_sym;
+  end
+
+def prx ():
+  inline C (run x) <<end
+    prx(n_x);
+    return ok_sym;
+  end
+
 # Now load the real module module so we can load any module.
 module :: (module 'module)
 
@@ -36,12 +48,6 @@ def become ():
     become(&x, &y, datum2int(n_keep_y));
     return nil;
   end
-
-def (insert-module name module):
-  *modules* = (cons (cons name module) *modules*)
-  . module
-
-def *modules* '()
 
 def call ():
   inline C (run d msg argl) <<end
@@ -118,19 +124,7 @@ def make-array ():
     return make_array(datum2int(n_size));
   end
 
-def pr ():
-  inline C (run x) <<end
-    pr(n_x);
-    return ok_sym;
-  end
-
 import (file -> open)
-
-def prx ():
-  inline C (run x) <<end
-    prx(n_x);
-    return ok_sym;
-  end
 
 def (make-queue):
   def front '()

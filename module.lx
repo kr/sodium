@@ -1,27 +1,37 @@
-def compile-module ():
+def *modules* '()
+
+def (find-module-file name):
+  name :: ("lib/"./ name.str./ ".lxc")
+  name.encode
+
+def (compile-module name):
+  (module.load-file (find-module-file name))
+
+def load-builtin-module ():
   inline C (run name) <<end
     return load_builtin_module(n_name);
   end
 
 def (load-module name):
-  def ent (*modules*.assq name)
-  if ent:
-    ent.cdr
-  else:
-    def new-module (make-blank-module)
-    *modules* :: (cons (cons name new-module) *modules*)
-    become new-module (compile-module name) 1
-    . new-module
+  def x (load-builtin-module name)
+  if x: return x
+  compile-module name
 
 def module ():
-  (run name): load-module name
+  (run name):
+    def ent (*modules*.assq name)
+    if ent: return ent.cdr
+    def new-module (make-blank-module)
+    *modules* :: (cons (cons name new-module) *modules*)
+    become new-module (load-module name) 1
+    . new-module
 
   (load-file name):
     def x ():
       inline C (run) <<end
         uint *addr = (uint *) ((chunk) rcv)->datums[2];
         start_body(addr);
-        return ok_sym;
+        return regs[R_VAL]; /* return value from module */
       end
 
       inline C (prepare) <<end
