@@ -6,7 +6,6 @@ def symbol ():
   inline C str <<end
     return make_bytes_init(symbol2charstar(rcv));
   end
-  (str) "this-is-a-symbol"
 
 def install-symbol ():
   inline C (run sur) <<end
