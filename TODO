@@ -20,6 +20,7 @@
 [ ] move bytecode loading into sodium code
 [ ] add debugging info to byte code files
 [ ] exceptions
+[ ] direct threading
 [+] macros
 [+] macro: if/elif/else
 [+] macro: for
