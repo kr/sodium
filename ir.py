@@ -218,7 +218,6 @@ class make_ir_seq:
             elif isinstance(d, String):
                 fd.write('@')
                 fd.write(encode_int(len(d)))
-                fd.write(encode_int(len(d)))
                 fd.write(d)
             elif self_evaluatingp(d):
                 fd.write('#')

@@ -66,9 +66,8 @@ def bytes ():
   inline C (decode) <<end
     bytes b = datum2bytes(rcv);
 
-    /* TODO check for valid UTF-8 and count runes */
-    /* assume only ASCII for now */
-    return make_str_init(b->size, b->size, b->data);
+    /* TODO check for valid UTF-8 */
+    return make_str_init(b->size, b->data);
   end
 
   inline C (run i) <<end

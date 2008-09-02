@@ -6,11 +6,10 @@
 typedef struct str {
     uint info;
     size_t size;
-    size_t len;
     char data[];
 } *str;
 
-datum make_str_init(size_t size, size_t len, const char *bytes);
+datum make_str_init(size_t size, const char *bytes);
 
 inline str datum2str(datum d);
 

@@ -18,9 +18,9 @@ datum2str(datum d)
 }
 
 datum
-make_str_init(size_t size, size_t len, const char *bytes)
+make_str_init(size_t size, const char *bytes)
 {
-    str s = (str) make_str(size, len);
+    str s = (str) make_str(size);
     memcpy(s->data, bytes, size);
     return (datum) s;
 }
@@ -55,7 +55,7 @@ def str ():
     copy_str_contents(s1, rcv, az);
     copy_str_contents(s2, n_x, bz);
 
-    s = (str) make_str(az + bz + 1, a->len + b->len);
+    s = (str) make_str(az + bz + 1);
     memcpy(s->data, s1, az);
     memcpy(s->data + az, s2, bz);
 
@@ -74,7 +74,7 @@ def str ():
     i = datum2int(n_i);
     s[0] = a->data[i];
     s[1] = '\0';
-    return make_str_init(1, 1, s);
+    return make_str_init(1, s);
   end
 
   inline C (encode) <<end
@@ -83,7 +83,7 @@ def str ():
   end
 
   inline C (length) <<end
-    return int2datum(datum2str(rcv)->len);
+    return int2datum(datum2str(rcv)->size);
   end
 
   inline C (= x) <<end
@@ -93,9 +93,9 @@ def str ():
     a = datum2str(rcv);
     b = datum2str(n_x);
 
-    if (a->len != b->len) return nil;
+    if (a->size != b->size) return nil;
 
-    for (i = 0; i < a->len; i++) {
+    for (i = 0; i < a->size; i++) {
         if (a->data[i] != b->data[i]) return nil;
     }
     return int2datum(1);
@@ -111,7 +111,7 @@ def str ():
     if (start < 0) start = 0;
 
     end = datum2int(n_end);
-    if (end > s->len) end = s->len;
+    if (end > s->size) end = s->size;
 
     {
         int i, j;
@@ -120,7 +120,7 @@ def str ():
             new[i] = s->data[j];
         }
         new[i] = '\0';
-        return make_str_init(end - start, end - start, new);
+        return make_str_init(end - start, new);
     }
   end
 

@@ -38,7 +38,7 @@ typedef struct closure {
 datum cons(datum x, datum y);
 datum make_array(uint len);
 datum make_bytes(uint len);
-datum make_str(size_t size, size_t len);
+datum make_str(size_t size);
 datum make_closure(datum env, uint *table);
 datum grow_closure(datum *o, uint len, na_fn_free fn, void *data);
 

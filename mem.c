@@ -302,13 +302,12 @@ make_bytes(uint bytes_len)
 }
 
 datum
-make_str(size_t size, size_t len)
+make_str(size_t size)
 {
     uint words_size;
 
-    words_size = 2 + (size + 3) / 4;
-    return internal_cons(DATUM_TYPE_STR, words_size, (datum) size,
-                         (datum) len);
+    words_size = 1 + (size + 3) / 4;
+    return internal_cons(DATUM_TYPE_STR, words_size, (datum) size, nil);
 }
 
 size_t

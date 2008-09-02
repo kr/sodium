@@ -163,23 +163,22 @@ read_bytes(int f, size_t n)
 static datum
 load_str(int f)
 {
-    size_t size, len;
+    size_t size;
     char *s;
     size = read_int(f);
-    len = read_int(f);
     s = read_bytes(f, size);
-    return make_str_init(size, len, s);
+    return make_str_init(size, s);
 }
 
 static datum
 init_str(uint value)
 {
-    size_t size, len;
+    size_t size;
     char *s = (char *) value;
 
-    size = len = strlen(s);
+    size = strlen(s);
 
-    return make_str_init(size, len, s);
+    return make_str_init(size, s);
 }
 
 char

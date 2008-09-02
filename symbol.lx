@@ -10,7 +10,7 @@ def symbol ():
 
     cont = symbol2charstar(rcv);
     len = strlen(cont);
-    return make_str_init(len, len, cont);
+    return make_str_init(len, cont);
   end
 
 def install-symbol ():
