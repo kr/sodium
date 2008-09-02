@@ -135,8 +135,10 @@ def str ():
     def (helper s i):
       if ((s.length) < (sub.length)):
         i + (s.length)
+      else:
         if (s.starts-with? sub):
           . i
+        else:
           helper (s.tail 1) (i + 1)
     helper (str.tail n) n
 
