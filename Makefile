@@ -30,6 +30,9 @@ prelude.lxc.c: prelude.lx
 %.lxc.c: %.lx
 	./lx1c --module --generate-c --output=$@ $<
 
+check:
+	./check.sh sh-tests/*.na
+
 clean:
 	rm -f vm *.o core core.* gmon.out
 
@@ -40,7 +43,7 @@ reallyclean: distclean
 	rm -f *.lxc.c module-index.c
 
 # .DELETE_ON_ERROR:
-.PHONY: all clean distclean reallyclean
+.PHONY: all clean distclean reallyclean check
 
 # This tells make how to generate dependency files
 %.d: %.c
