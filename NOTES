@@ -434,3 +434,9 @@ New notes, added on 2007-04-25 around 3:35 p.m.
   allows you to omit far more parens than my original plan.
 
   I haven't yet changed the lexer to turn punctuation into messages.
+
+
+New notes, added on 2008-09-19 around 10:52 a.m.
+
+  Use the exclamation mark "!" as shorthand for logical negation as in Arc.
+  This means "!x" gets rewritten to "(not x)".
