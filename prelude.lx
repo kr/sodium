@@ -124,7 +124,7 @@ def make-array ():
     return make_array(datum2int(n_size));
   end
 
-import (file -> open)
+import (file-io -> open)
 
 def (make-queue):
   def front '()
