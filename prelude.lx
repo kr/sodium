@@ -98,6 +98,23 @@ def list ():
     return args;
   end
 
+def bytes ():
+  inline C run <<end
+    datum x;
+    uint n = 0;
+
+    for (x = args; x; x = cdr(x)) n++;
+
+    {
+        uint i = 0;
+        char buf[n];
+        for (x = args; x; x = cdr(x)) {
+            buf[i++] = datum2int(car(x));
+        }
+        return make_bytes_init_len(buf, n);
+    }
+  end
+
 def (assq x a):
   if (is? a '()): return a
   if (is? x a.car.car): return a.car
