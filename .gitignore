@@ -10,3 +10,4 @@ core.*
 module-index.c
 prelude.[ch]
 vm
+sh-tests/*.out
