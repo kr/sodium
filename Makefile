@@ -34,7 +34,7 @@ check:
 	./check.sh sh-tests/*.na
 
 clean:
-	rm -f vm *.o core core.* gmon.out
+	rm -f vm *.o core core.* gmon.out sh-tests/*.out
 
 distclean: clean
 	rm -f *.d *.pyc *.lxc ad-hoc-tests/*.lxc lib/*.lxc tests/*.lxc
