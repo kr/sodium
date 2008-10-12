@@ -5,7 +5,7 @@ def (find-module-file name):
   name.encode
 
 def (compile-module name):
-  (module.load-file (find-module-file name))
+  module.load-file (find-module-file name)
 
 def load-builtin-module ():
   inline C (run name) <<end
@@ -26,21 +26,14 @@ def module ():
     become new-module (load-module name) 1
     . new-module
 
-  (load-file name):
-    def x ():
-      inline C (run) <<end
-        uint *addr = (uint *) ((chunk) rcv)->datums[2];
-        start_body(addr);
-        return regs[R_VAL]; /* return value from module */
-      end
+  inline C (load-file name) <<end
+    uint *addr;
+    char name[bytes_len(n_name) + 1];
+    copy_bytes_contents0(name, n_name, bytes_len(n_name) + 1);
+    addr = load_module_file(name);
 
-      inline C (prepare) <<end
-        uint *addr;
-        char name[bytes_len(n_name) + 1];
-        copy_bytes_contents0(name, n_name, bytes_len(n_name) + 1);
-        addr = load_module_file(name);
-        return grow_closure(&rcv, 1, 0, addr);
-      end
-    x.prepare
+    start_body(addr);
+    return regs[R_VAL]; /* return value from module */
+  end
 
 . module

@@ -307,7 +307,7 @@ def (process-tasks):
       process-tasks
 
 # Load and execute the main program.
-(module.load-file *args*.car)
+module.load-file *args*.car
 
 # Process the work queue.
 process-tasks
