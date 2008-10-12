@@ -47,7 +47,7 @@ copy_bytes_contents0(char *dest, datum bytes, size_t n)
 
 end
 
-def bytes ():
+def surrogate ():
   inline C (/ x) <<end
     /* concatenate */
     bytes new_str;
@@ -122,12 +122,12 @@ def bytes ():
     return (datum) new;
   end
 
-  (tail n) (bytes.substring n (bytes.length))
+  (tail n) (surrogate.substring n (surrogate.length))
   (head n):
-    bytes.substring 0 n
+    surrogate.substring 0 n
 
   (starts-with? sub):
-    (bytes.head (sub.length)) = sub
+    (surrogate.head (sub.length)) = sub
 
   (find-from n sub):
     def (helper s i):
@@ -136,30 +136,30 @@ def bytes ():
         ? (s.starts-with? sub):
           . i
           helper (s.tail 1) (i + 1)
-    helper (bytes.tail n) n
+    helper (surrogate.tail n) n
 
   (find sub):
-    bytes.find-from 0 sub
+    surrogate.find-from 0 sub
 
   # (% . a):
   #   pr "in %"
-  #   def i (bytes.find "%")
+  #   def i (surrogate.find "%")
   #   ? (not i):
-  #     . bytes
-  #     ? ((bytes 0) = "%"):
-  #       (format (bytes 1) (a.car)) / ((bytes.tail 2) % . (a.cdr))
-  #       (bytes.head i) / ((bytes.tail i) % . a)
+  #     . surrogate
+  #     ? ((surrogate 0) = "%"):
+  #       (format (surrogate 1) (a.car)) / ((surrogate.tail 2) % . (a.cdr))
+  #       (surrogate.head i) / ((surrogate.tail i) % . a)
 
   (%* a):
     def (format code val):
       to-str val
-    def l (bytes.length)
-    def i (bytes.find "%")
+    def l (surrogate.length)
+    def i (surrogate.find "%")
     ? (is? i l):
-      . bytes
-      ? ((bytes 0) = "%"):
-        (format (bytes 1) (a.car)) / ((bytes.tail 2).%* (a.cdr))
-        (bytes.head i) / ((bytes.tail i).%* a)
+      . surrogate
+      ? ((surrogate 0) = "%"):
+        (format (surrogate 1) (a.car)) / ((surrogate.tail 2).%* (a.cdr))
+        (surrogate.head i) / ((surrogate.tail i).%* a)
 
   inline C % <<end
     regs[R_VM0] = rcv;
@@ -173,7 +173,7 @@ def intern-syms ():
     return ok_sym;
   end
 
-def install-bytes ():
+def install-surrogate ():
   inline C (run sur) <<end
     bytes_surrogate = n_sur;
     return ok_sym;
@@ -185,6 +185,6 @@ def (to-str x):
     to-str (x.str)
 
 intern-syms
-install-bytes bytes
+install-surrogate surrogate
 
 . '()
