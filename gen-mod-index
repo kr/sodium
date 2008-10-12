@@ -36,6 +36,8 @@ print >>outfd, '#include "lxc.h"'
 print >>outfd, '#include "module-index.h"'
 #print >>outfd, 'extern struct lxc_module lxc_module_prelude;'
 for module in lxmodules:
+  module = tr(module, '/-.', '___')
+  if match('.*[^-_/A-Za-z0-9]', module): raise 'bad module name', module
   print >>outfd, 'extern struct lxc_module lxc_module_%s;' % (module,)
 
 print >>outfd
