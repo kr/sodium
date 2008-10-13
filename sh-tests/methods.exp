@@ -1,0 +1,9 @@
+(% %* find find-from starts-with? head tail substring = length encode run /)
+(assq = schedule run filter str)
+(assq = run filter cdr car set-cdr!)
+(str)
+(str ** % / * - + < > = cmp)
+(there hi)
+(a b c)
+ok
+ok
