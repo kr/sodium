@@ -197,6 +197,7 @@ gc(int c, ...)
                 np->datums[0] = relocate(np->datums[0]);
                 np->datums[1] = relocate(np->datums[1]);
                 /* fall through */
+            case DATUM_TYPE_STR:
             case DATUM_TYPE_BYTES:
                 scan_index += DATUM_LEN(np->info);
                 break;
