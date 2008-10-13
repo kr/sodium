@@ -7,12 +7,19 @@
 #include "obj.h"
 #include "prim.h"
 #include "config.h"
+#if GC_DEBUG
+#include <stdio.h>
+#endif
 
 int gc_in_progress = 0, become_keep_b = 0;
 struct chunk *busy_chunks, *old_chunks, *fz_list = nil;
 static struct chunk *free_chunks;
 size_t free_index = 0, scan_index = 0;
 static datum become_a = nil, become_b = nil;
+
+#if GC_DEBUG
+size_t reloc_ct;
+#endif
 
 // int /*bool*/
 // arrayp(datum x) {
@@ -54,6 +61,10 @@ relocate(chunk p)
     chunk np;
     int len;
 
+#if GC_DEBUG
+    if (!in_chunk_range(p)) printf("ignoring %p\n", p);
+#endif
+
     if (!in_chunk_range(p)) return p;
 
 #if GC_DEBUG_BH
@@ -65,7 +76,11 @@ relocate(chunk p)
     if (IS_BROKEN_HEART(p)) return p->datums[0];
 
 #if GC_DEBUG
-    printf("relocating chunk (type %d) at %p\n", DATUM_TYPE(p->info), p);
+    reloc_ct++;
+    printf("relocating chunk type %d (size %d) at %p\n",
+            DATUM_TYPE(p->info),
+            DATUM_LEN(p->info),
+            p);
 #endif
 
 #if GC_DEBUG_STR
@@ -118,6 +133,11 @@ gc(int c, ...)
     free_chunks = malloc(sizeof(struct chunk) * HEAP_SIZE);
     if (!free_chunks) die("gc -- out of memory");
 
+#if GC_DEBUG
+    printf("relocating roots\n");
+    reloc_ct = 0;
+#endif
+
     if (become_a && become_b) {
         new_become_a = relocate(become_a);
         new_become_b = relocate(become_b);
@@ -152,6 +172,10 @@ gc(int c, ...)
         static_datums[i] = relocate(static_datums[i]);
     }
 
+#if GC_DEBUG
+    printf("relocated %d roots\n", reloc_ct);
+#endif
+
     scan_index = 0;
 
 #if GC_DEBUG
@@ -176,6 +200,11 @@ gc(int c, ...)
             case DATUM_TYPE_BYTES:
                 scan_index += DATUM_LEN(np->info);
                 break;
+            default:
+#if GC_DEBUG
+                printf("woah! got type %d\n", DATUM_TYPE(np->info));
+#endif
+                assert(0);
         }
     }
 
