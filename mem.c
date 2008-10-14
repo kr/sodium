@@ -62,6 +62,9 @@ relocate(chunk p)
     chunk np;
     int len;
 
+    /* don't try to relocate an unboxed int */
+    if (((uint)p) & 1) return p;
+
 #if GC_DEBUG
     if (!in_chunk_range(p)) printf("ignoring %p\n", p);
 #endif
