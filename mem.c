@@ -40,8 +40,8 @@ init_mem(void)
 }
 
 #define CLIP_LEN(l) ((l) & 0x00ffffff)
-#define DATUM_INFO(t,l) (((t)<<24)|CLIP_LEN(l))
-#define DATUM_TYPE(i) ((i) >> 24)
+#define DATUM_INFO(t,l) (((l) << 8) | ((t) & 0xff))
+#define DATUM_TYPE(i) ((i) & 0xff)
 #define DATUM_TYPE_PAIR 0x01
 #define DATUM_TYPE_CLOSURE 0x02
 #define DATUM_TYPE_ARRAY 0x03
@@ -49,7 +49,7 @@ init_mem(void)
 #define DATUM_TYPE_STR 0x05
 #define DATUM_TYPE_FZ 0xf0
 #define DATUM_TYPE_BROKEN_HEART 0xff
-#define DATUM_LEN(i) ((i) & 0x00ffffff)
+#define DATUM_LEN(i) ((i) >> 8)
 #define SET_DATUM_TYPE(o,t) {(o)->info = DATUM_INFO(t, DATUM_LEN((o)->info));}
 #define IS_BROKEN_HEART(o) (DATUM_TYPE((o)->info) == DATUM_TYPE_BROKEN_HEART)
 
