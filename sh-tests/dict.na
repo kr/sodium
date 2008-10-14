@@ -1,7 +1,7 @@
 
 def x (make-dict)
 
-pr x
+#pr x
 
 x.set 'a 7
 
