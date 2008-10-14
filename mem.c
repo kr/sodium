@@ -39,10 +39,10 @@ init_mem(void)
     free_index = 0;
 }
 
-#define CLIP_LEN(l) ((l) & 0x00ffffff)
-#define DATUM_INFO(t,l) (((l) << 8) | ((t) & 0xff))
-#define DATUM_TYPE(i) ((i) & 0xff)
-#define DATUM_LEN(i) ((i) >> 8)
+#define CLIP_LEN(l) ((l) & 0x0fffffff)
+#define DATUM_INFO(t,l) (((l) << 4) | ((t) & 0xf))
+#define DATUM_TYPE(i) ((i) & 0xf)
+#define DATUM_LEN(i) ((i) >> 4)
 
 #define DATUM_TYPE_PAIR 3
 #define DATUM_TYPE_CLOSURE 5
