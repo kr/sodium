@@ -56,7 +56,7 @@ init_mem(void)
 
 #define FZ_LEN 3
 
-inline chunk
+static inline chunk
 relocate(chunk p)
 {
     chunk np;
