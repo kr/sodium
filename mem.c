@@ -100,9 +100,6 @@ relocate(datum *d)
 
     np = &free_chunks[free_index++];
     np->info = p->info;
-    if (DATUM_TYPE(p->info) == DATUM_TYPE_BYTES) {
-        np->info = DATUM_INFO(DATUM_TYPE_BYTES, DATUM_LEN(p->info));
-    }
     for (len = DATUM_LEN(p->info); len--;) {
         np->datums[len] = p->datums[len];
         ++free_index;
