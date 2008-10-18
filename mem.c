@@ -56,20 +56,22 @@ init_mem(void)
 
 #define FZ_LEN 3
 
-static inline chunk
-relocate(chunk p)
+static inline void
+relocate(datum *d)
 {
-    chunk np;
+    chunk p, np;
     int len;
 
+    p = *d;
+
     /* don't try to relocate an unboxed int */
-    if (((uint)p) & 1) return p;
+    if (((uint)p) & 1) return;
 
 #if GC_DEBUG
     if (!in_chunk_range(p)) printf("ignoring %p\n", p);
 #endif
 
-    if (!in_chunk_range(p)) return p;
+    if (!in_chunk_range(p)) return;
 
 #if GC_DEBUG_BH
     if (IS_BROKEN_HEART(p)) {
@@ -77,7 +79,10 @@ relocate(chunk p)
     }
 #endif
 
-    if (IS_BROKEN_HEART(p)) return p->datums[0];
+    if (IS_BROKEN_HEART(p)) {
+        *d = p->datums[0];
+        return;
+    }
 
 #if GC_DEBUG
     reloc_ct++;
@@ -115,7 +120,7 @@ relocate(chunk p)
 #endif
 
     p->info = DATUM_INFO(DATUM_TYPE_BROKEN_HEART, DATUM_LEN(p->info));
-    return p->datums[0] = np;
+    *d = p->datums[0] = np;
 }
 
 static void
@@ -124,7 +129,7 @@ gc(int c, ...)
     int i, live = 0;
     chunk np, fzp, *fz_prev;
     free_index = 0;
-    datum new_become_a, new_become_b, *dp;
+    datum old_become_a, old_become_b, *dp;
     va_list ap;
 
     if (gc_in_progress) die("ran out of memory during GC");
@@ -143,37 +148,39 @@ gc(int c, ...)
 #endif
 
     if (become_a && become_b) {
-        new_become_a = relocate(become_a);
-        new_become_b = relocate(become_b);
-        if (become_a != new_become_a) {
-            ((chunk) become_a)->datums[0] = new_become_b;
+        old_become_a = become_a;
+        old_become_b = become_b;
+        relocate(&become_a);
+        relocate(&become_b);
+        if (old_become_a != become_a) {
+            ((chunk) old_become_a)->datums[0] = become_b;
         }
-        if (become_b != new_become_b && !become_keep_b) {
-            ((chunk) become_b)->datums[0] = new_become_a;
+        if (old_become_b != become_b && !become_keep_b) {
+            ((chunk) old_become_b)->datums[0] = become_a;
         }
     }
 
-    stack = relocate(stack);
-    genv = relocate(genv);
-    int_surrogate = relocate(int_surrogate);
-    str_surrogate = relocate(str_surrogate);
-    bytes_surrogate = relocate(bytes_surrogate);
-    pair_surrogate = relocate(pair_surrogate);
-    array_surrogate = relocate(array_surrogate);
-    nil_surrogate = relocate(nil_surrogate);
-    symbol_surrogate = relocate(symbol_surrogate);
-    fz_list = relocate(fz_list);
+    relocate((datum *) &stack);
+    relocate(&genv);
+    relocate(&int_surrogate);
+    relocate(&str_surrogate);
+    relocate(&bytes_surrogate);
+    relocate(&pair_surrogate);
+    relocate(&array_surrogate);
+    relocate(&nil_surrogate);
+    relocate(&symbol_surrogate);
+    relocate((datum *) &fz_list);
     va_start(ap, c);
     for (; c; --c) {
         dp = va_arg(ap, datum *);
-        *dp = relocate(*dp);
+        relocate(dp);
     }
     va_end(ap);
     for (i = 0; i < REG_COUNT; ++i) {
-        regs[i] = relocate(regs[i]);
+        relocate(&regs[i]);
     }
     for (i = 0; i < static_datums_fill; ++i) {
-        static_datums[i] = relocate(static_datums[i]);
+        relocate(&static_datums[i]);
     }
 
 #if GC_DEBUG
@@ -191,15 +198,15 @@ gc(int c, ...)
         switch (DATUM_TYPE(np->info)) {
             case DATUM_TYPE_ARRAY:
                 for (i = DATUM_LEN(np->info); i--;) {
-                    np->datums[i] = relocate(np->datums[i]);
+                    relocate(&np->datums[i]);
                     ++scan_index;
                 }
                 break;
             case DATUM_TYPE_PAIR:
             case DATUM_TYPE_CLOSURE:
             case DATUM_TYPE_FZ:
-                np->datums[0] = relocate(np->datums[0]);
-                np->datums[1] = relocate(np->datums[1]);
+                relocate(&np->datums[0]);
+                relocate(&np->datums[1]);
                 /* fall through */
             case DATUM_TYPE_STR:
             case DATUM_TYPE_BYTES:
