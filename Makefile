@@ -30,7 +30,7 @@ prelude.lxc.c: prelude.lx
 %.lxc.c: %.lx
 	./lx1c --module --generate-c --output=$@ $<
 
-check:
+check: vm
 	./check.sh sh-tests/*.na
 
 clean:
