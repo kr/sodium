@@ -268,14 +268,19 @@ static datum
 internal_cons(unsigned char type, uint len, datum x, datum y)
 {
     datum p;
+    size_t wlen = len;
 
-    if ((free_index + (len + 1)) >= HEAP_SIZE) gc(2, &x, &y);
-    if ((free_index + (len + 1)) >= HEAP_SIZE) die("cons -- OOM after gc");
+    if (type == DATUM_TYPE_STR || type == DATUM_TYPE_BYTES) {
+        wlen = len + 3 / 4;
+    }
+
+    if ((free_index + (wlen + 1)) >= HEAP_SIZE) gc(2, &x, &y);
+    if ((free_index + (wlen + 1)) >= HEAP_SIZE) die("cons -- OOM after gc");
     p = busy_chunks + free_index++;
-    *p = DATUM_INFO(type, len);
-    if (len > 0) p[1] = (size_t) x;
-    if (len > 1) p[2] = (size_t) y;
-    free_index += len;
+    *p = DATUM_INFO(type, wlen);
+    if (wlen > 0) p[1] = (size_t) x;
+    if (wlen > 1) p[2] = (size_t) y;
+    free_index += wlen;
 #if GC_DEBUG
     prdesc("Allocated", *p);
 #endif
@@ -329,8 +334,7 @@ grow_closure(datum *op, uint grow_len, na_fn_free fn, void *data)
         *(fz - 1) = DATUM_INFO(DATUM_TYPE_FZ, FZ_LEN);
         fz[0] = (size_t) fn;
         fz[1] = (size_t) fz_list;
-        fz[2] = (size_t) d;
-        fz_list = fz;
+        fz[2] = (size_t) d; fz_list = fz;
     }
 
     become(op, &d, 1);
@@ -346,19 +350,13 @@ make_closure(datum env, uint *table)
 datum
 make_bytes(uint bytes_len)
 {
-    uint words_len;
-
-    words_len = 1 + (bytes_len + 3) / 4;
-    return internal_cons(DATUM_TYPE_BYTES, words_len, (datum) bytes_len, nil);
+    return internal_cons(DATUM_TYPE_BYTES, bytes_len + 4, (datum) bytes_len, nil);
 }
 
 datum
 make_str(size_t size)
 {
-    uint words_size;
-
-    words_size = 1 + (size + 3) / 4;
-    return internal_cons(DATUM_TYPE_STR, words_size, (datum) size, nil);
+    return internal_cons(DATUM_TYPE_STR, size + 4, (datum) size, nil);
 }
 
 size_t
