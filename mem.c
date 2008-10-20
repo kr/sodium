@@ -122,9 +122,10 @@ relocate(datum refloc)
                 */
 
                 *j++ = *i++;
+                *j++ = *i++;
                 while (len--) *j++ = *i++;
 
-                ((datum *) p)[1] = 1 + (datum) &free_chunks[free_index];
+                ((datum *) p)[1] = 2 + (datum) &free_chunks[free_index];
                 free_index = ((datum) j) - free_chunks;
 #if GC_DEBUG
                 fprintf(stderr, "Relocated\n");
@@ -134,7 +135,7 @@ relocate(datum refloc)
 
                 /* fall through */
             case DATUM_TYPE_BROKEN_HEART:
-                *refloc += p[1] - ((size_t) (p + 1));
+                *refloc += p[1] - ((size_t) (p + 2));
                 return;
 
             /*
@@ -176,10 +177,10 @@ gc(int c, ...)
         relocate((datum) &become_a);
         relocate((datum) &become_b);
         if (old_become_a != become_a) {
-            ((datum *) old_become_a)[0] = become_b;
+            ((datum *) old_become_a)[-1] = become_b;
         }
         if (old_become_b != become_b && !become_keep_b) {
-            ((datum *) old_become_b)[0] = become_a;
+            ((datum *) old_become_b)[-1] = become_a;
         }
     }
 
@@ -211,19 +212,22 @@ gc(int c, ...)
     np = free_chunks;
     while (np < &free_chunks[free_index]) {
         ++live;
-        datum p = np + 1;
+        datum p = np + 2;
         size_t descr = *np, len = DATUM_LEN(descr);
         switch (DATUM_TYPE(descr)) {
             case DATUM_TYPE_STR:
             case DATUM_TYPE_BYTES:
-                np += (len + 3) / 4 + 1;
+                np += (len + 3) / 4 + 2;
                 break;
             case DATUM_TYPE_PAIR:
             case DATUM_TYPE_CLOSURE:
             case DATUM_TYPE_FZ:
             case DATUM_TYPE_ARRAY:
             default:
-                np += len + 1;
+#if GC_DEBUG
+                prdesc("scanning", descr);
+#endif
+                np += len + 2;
                 assert(p < np);
                 while (p < np) relocate(p++);
         }
@@ -240,11 +244,11 @@ gc(int c, ...)
     fz_prev = &fz_list;
     for (fzp = fz_list; fzp != nil; fzp = ((datum *)fzp)[1]) {
         datum p = ((datum *) fzp)[2];
-        if (IS_BROKEN_HEART(*(p - 1))) {
+        if (IS_BROKEN_HEART(*(p - 2))) {
             ((datum *) fzp)[2] = (datum) *p;
             fz_prev = (datum *) (fzp + 2); /* update the prev pointer */
         } else {
-            ((na_fn_free) fzp[0])((datum) (DATUM_LEN(*(p - 1)) > 2 ? p[2] : 0));
+            ((na_fn_free) fzp[0])((datum) (DATUM_LEN(*(p - 2)) > 2 ? p[2] : 0));
             *fz_prev = (datum) fzp[1]; /* remove fzp from the list */
         }
     }
@@ -270,24 +274,26 @@ internal_cons(unsigned char type, uint len, datum x, datum y)
         wlen = len + 3 / 4;
     }
 
-    if ((free_index + (wlen + 1)) >= HEAP_SIZE) gc(2, &x, &y);
-    if ((free_index + (wlen + 1)) >= HEAP_SIZE) die("cons -- OOM after gc");
+    if ((free_index + (wlen + 2)) >= HEAP_SIZE) gc(2, &x, &y);
+    if ((free_index + (wlen + 2)) >= HEAP_SIZE) die("cons -- OOM after gc");
     p = busy_chunks + free_index++;
     *p = DATUM_INFO(type, len);
-    if (wlen > 0) p[1] = (size_t) x;
-    if (wlen > 1) p[2] = (size_t) y;
+    p[1] = nil;
+    free_index++;
+    if (wlen > 0) p[2] = (size_t) x;
+    if (wlen > 1) p[3] = (size_t) y;
     free_index += wlen;
 #if GC_DEBUG
     prdesc("Allocated", *p);
 #endif
-    return p + 1;
+    return p + 2;
 }
 
 size_t
 datum_size(datum d)
 {
     if (((size_t) d) & 1) return 4;
-    return DATUM_LEN(*(d - 1));
+    return DATUM_LEN(*(d - 2));
 }
 
 datum
@@ -322,9 +328,9 @@ grow_closure(datum *op, uint grow_len, na_fn_free fn, void *data)
 {
     datum d, fz;
     closure c = datum2closure(*op);
-    int new_len, ex = fn ? 1 + FZ_LEN : 0;
+    int new_len, ex = fn ? 2 + FZ_LEN : 0;
 
-    new_len = DATUM_LEN(*(*op - 1)) + grow_len;
+    new_len = DATUM_LEN(*(*op - 2)) + grow_len;
     regs[R_GC0] = *op;
     d = internal_cons(DATUM_TYPE_CLOSURE, new_len + ex, c->env,
             (datum) c->table);
@@ -332,9 +338,9 @@ grow_closure(datum *op, uint grow_len, na_fn_free fn, void *data)
     regs[R_GC0] = nil;
     if (grow_len) d[2] = (size_t) data;
     if (fn) {
-        *(d - 1) = DATUM_INFO(DATUM_TYPE_CLOSURE, new_len);
-        fz = d + new_len + 1;
-        *(fz - 1) = DATUM_INFO(DATUM_TYPE_FZ, FZ_LEN);
+        *(d - 2) = DATUM_INFO(DATUM_TYPE_CLOSURE, new_len);
+        fz = d + new_len + 2;
+        *(fz - 2) = DATUM_INFO(DATUM_TYPE_FZ, FZ_LEN);
         fz[0] = (size_t) fn;
         fz[1] = (size_t) fz_list;
         fz[2] = (size_t) d; fz_list = fz;
@@ -373,7 +379,7 @@ datum
 array_get(datum arr, uint index)
 {
     if (!arrayp(arr)) die1("array_get -- not an array", arr);
-    if (index >= DATUM_LEN(*(arr - 1))) die("array_get -- index out of bounds");
+    if (index >= DATUM_LEN(*(arr - 2))) die("array_get -- index out of bounds");
     return (datum) arr[index];
 }
 
@@ -381,51 +387,51 @@ datum
 array_put(datum arr, uint index, datum val)
 {
     if (!arrayp(arr)) die1("array_put -- not an array", arr);
-    if (index >= DATUM_LEN(*(arr - 1))) die("array_put -- index out of bounds");
+    if (index >= DATUM_LEN(*(arr - 2))) die("array_put -- index out of bounds");
     return (datum) (arr[index] = (size_t) val);
 }
 
 uint
 array_len(datum arr)
 {
-    return DATUM_LEN(*(arr - 1));
+    return DATUM_LEN(*(arr - 2));
 }
 
 int
 pair_tag_matches(datum o)
 {
-    return DATUM_TYPE(*(o - 1)) == DATUM_TYPE_PAIR;
+    return DATUM_TYPE(*(o - 2)) == DATUM_TYPE_PAIR;
 }
 
 int
 closure_tag_matches(datum o)
 {
-    return DATUM_TYPE(*(o - 1)) == DATUM_TYPE_CLOSURE;
+    return DATUM_TYPE(*(o - 2)) == DATUM_TYPE_CLOSURE;
 }
 
 int
 array_tag_matches(datum arr)
 {
-    return DATUM_TYPE(*(arr - 1)) == DATUM_TYPE_ARRAY;
+    return DATUM_TYPE(*(arr - 2)) == DATUM_TYPE_ARRAY;
 }
 
 int
 bytes_tag_matches(datum arr)
 {
-    return DATUM_TYPE(*(arr - 1)) == DATUM_TYPE_BYTES;
+    return DATUM_TYPE(*(arr - 2)) == DATUM_TYPE_BYTES;
 }
 
 int
 str_tag_matches(datum str)
 {
-    return DATUM_TYPE(*(str - 1)) == DATUM_TYPE_STR;
+    return DATUM_TYPE(*(str - 2)) == DATUM_TYPE_STR;
 }
 
 
 int
 broken_heart_tag_matches(datum bh)
 {
-    return DATUM_TYPE(*(bh - 1)) == DATUM_TYPE_BROKEN_HEART;
+    return DATUM_TYPE(*(bh - 2)) == DATUM_TYPE_BROKEN_HEART;
 }
 
 inline pair
