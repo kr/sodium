@@ -45,7 +45,7 @@ def str ():
     copy_str_contents(s1, rcv, az);
     copy_str_contents(s2, n_x, bz);
 
-    s = make_str(az + bz + 1);
+    s = make_str(az + bz);
     memcpy(s, s1, az);
     memcpy(((char *) s) + az, s2, bz);
 
