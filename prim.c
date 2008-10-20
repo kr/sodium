@@ -114,8 +114,7 @@ prx(datum d)
         str s = datum2str(d);
         write(1, s->data, s->size);
     } else if (bytesp(d)) {
-        bytes b = datum2bytes(d);
-        write(1, b->data, b->size);
+        write(1, d, datum_size(d));
     } else if (pairp(d)) {
         write(1, "(", 1);
         pr_pair(d, 0);

@@ -28,8 +28,8 @@ def module ():
 
   inline C (load-file name) <<end
     uint *addr;
-    char name[bytes_len(n_name) + 1];
-    copy_bytes_contents0(name, n_name, bytes_len(n_name) + 1);
+    char name[datum_size(n_name) + 1];
+    copy_bytes_contents0(name, n_name, datum_size(n_name) + 1);
     addr = load_module_file(name);
 
     start_body(addr);

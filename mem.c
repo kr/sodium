@@ -286,6 +286,13 @@ internal_cons(unsigned char type, uint len, datum x, datum y)
     return p + 1;
 }
 
+size_t
+datum_size(datum d)
+{
+    if (((size_t) d) & 1) return 4;
+    return DATUM_LEN(*(d - 1));
+}
+
 datum
 cons(datum x, datum y)
 {
@@ -347,9 +354,9 @@ make_closure(datum env, uint *table)
 }
 
 datum
-make_bytes(uint bytes_len)
+make_bytes(uint size)
 {
-    return internal_cons(DATUM_TYPE_BYTES, bytes_len + 4, (datum) bytes_len, nil);
+    return internal_cons(DATUM_TYPE_BYTES, size, nil, nil);
 }
 
 datum
@@ -358,18 +365,11 @@ make_str(size_t size)
     return internal_cons(DATUM_TYPE_STR, size + 4, (datum) size, nil);
 }
 
-size_t
-bytes_len(datum bytes)
-{
-    if (!bytesp(bytes)) die1("bytes_contents -- not an instance of bytes", bytes);
-    return *bytes;
-}
-
 char *
 bytes_contents(datum bytes)
 {
     if (!bytesp(bytes)) die1("bytes_contents -- not an instance of bytes", bytes);
-    return (char *) (bytes + 1);
+    return (char *) bytes;
 }
 
 datum

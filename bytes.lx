@@ -21,18 +21,11 @@ make_bytes_init(const char *s)
     return make_bytes_init_len(s, strlen(s));
 }
 
-inline bytes
-datum2bytes(datum d)
-{
-    if (!bytesp(d)) die1("not a bytes", d);
-    return (bytes) d;
-}
-
 size_t
 copy_bytes_contents(char *dest, datum bytes, size_t n)
 {
     char *x = bytes_contents(bytes);
-    if (bytes_len(bytes) < n) n = bytes_len(bytes);
+    if (datum_size(bytes) < n) n = datum_size(bytes);
     memcpy(dest, x, n);
     return n;
 }
@@ -50,24 +43,22 @@ end
 def surrogate ():
   inline C (/ x) <<end
     /* concatenate */
-    bytes new_str;
-    size_t l1 = bytes_len(rcv), l2 = bytes_len(n_x);
+    char *new_str;
+    size_t l1 = datum_size(rcv), l2 = datum_size(n_x);
     char s1[l1], s2[l2];
 
     copy_bytes_contents(s1, rcv, l1);
     copy_bytes_contents(s2, n_x, l2);
-    new_str = (bytes) make_bytes(l1 + l2);
-    memcpy(new_str->data, s1, l1);
-    memcpy(new_str->data + l1, s2, l2);
+    new_str = (char *) make_bytes(l1 + l2);
+    memcpy(new_str, s1, l1);
+    memcpy(new_str + l1, s2, l2);
 
     return (datum) new_str;
   end
 
   inline C (decode) <<end
-    bytes b = datum2bytes(rcv);
-
     /* TODO check for valid UTF-8 */
-    return make_str_init(b->size, b->data);
+    return make_str_init(datum_size(rcv), (char *) rcv);
   end
 
   inline C (run i) <<end
@@ -77,30 +68,29 @@ def surrogate ():
     if (!intp(n_i)) die("bytes -- expected int");
     i = datum2int(n_i);
 
-    if (i > bytes_len(rcv)) return nil;
+    if (i > datum_size(rcv)) return nil;
     return int2datum(bytes_contents(rcv)[i]);
   end
 
   inline C (length) <<end
-    return int2datum(bytes_len(rcv));
+    return int2datum(datum_size(rcv));
   end
 
   inline C (= x) <<end
-    size_t i;
-    bytes a = datum2bytes(rcv), b = datum2bytes(n_x);
+    size_t i, rcv_size = datum_size(rcv), n_x_size = datum_size(n_x);
 
-    if (a->size != b->size) return nil;
-    for (i = 0; i < a->size; i++) {
-        if (a->data[i] != b->data[i]) return nil;
+    if (rcv_size != n_x_size) return nil;
+    for (i = 0; i < rcv_size; i++) {
+        if (((char *) rcv)[i] != ((char *) n_x)[i]) return nil;
     }
     return int2datum(1);
   end
 
   inline C (substring start end) <<end
     int start, end;
-    size_t len = bytes_len(rcv);
+    size_t len = datum_size(rcv);
     char s[len];
-    bytes new;
+    datum new;
 
     copy_bytes_contents(s, rcv, len);
 
@@ -117,9 +107,9 @@ def surrogate ():
     if (start > len) start = len;
     if (end > len) end = len;
 
-    new = (bytes) make_bytes(end - start);
-    memcpy(new->data, s + start, end - start);
-    return (datum) new;
+    new = make_bytes(end - start);
+    memcpy(new, s + start, end - start);
+    return new;
   end
 
   (tail n) (surrogate.substring n (surrogate.length))

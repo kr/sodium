@@ -34,13 +34,13 @@ datum make_bytes(uint len);
 datum make_str(size_t size);
 datum make_closure(datum env, uint *table);
 datum grow_closure(datum *o, uint len, na_fn_free fn, void *data);
+size_t datum_size(datum d);
 
 
 datum array_get(datum arr, uint index);
 datum array_put(datum arr, uint index, datum val);
 uint array_len(datum arr);
 
-size_t bytes_len(datum bytes);
 char *bytes_contents(datum bytes);
 
 inline pair datum2pair(datum d);
