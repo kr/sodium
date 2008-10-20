@@ -121,9 +121,9 @@ relocate(datum refloc)
                 }
                 */
 
-                *j++ = *i++;
-                *j++ = *i++;
-                while (len--) *j++ = *i++;
+                *j++ = *i++; /* copy the descriptor */
+                *j++ = *i++; /* copy the method table pointer */
+                while (len--) *j++ = *i++; /* copy the body */
 
                 ((datum *) p)[1] = 2 + (datum) &free_chunks[free_index];
                 free_index = ((datum) j) - free_chunks;
