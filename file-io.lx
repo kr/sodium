@@ -96,10 +96,10 @@ def file ():
         if (bytesp(n_name)) {
             f = open(bytes_contents(n_name), flags);
         } else if (strp(n_name)) {
-            str name = datum2str(n_name);
-            char name0[name->size + 1];
+            size_t name_size = datum_size(n_name) + 1;
+            char name0[name_size];
 
-            copy_str_contents0(name0, n_name, name->size + 1);
+            copy_str_contents0(name0, n_name, name_size);
             prfmt(1, "opening ``%s''\n", name0);
             f = open(name0, flags);
         } else {

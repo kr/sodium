@@ -362,7 +362,7 @@ make_bytes(uint size)
 datum
 make_str(size_t size)
 {
-    return internal_cons(DATUM_TYPE_STR, size + 4, (datum) size, nil);
+    return internal_cons(DATUM_TYPE_STR, size, nil, nil);
 }
 
 char *

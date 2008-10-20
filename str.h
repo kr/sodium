@@ -10,8 +10,6 @@ typedef struct str {
 
 datum make_str_init(size_t size, const char *bytes);
 
-inline str datum2str(datum d);
-
 size_t copy_str_contents(char *dest, datum str, size_t n);
 size_t copy_str_contents0(char *dest, datum str, size_t n);
 

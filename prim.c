@@ -111,8 +111,7 @@ prx(datum d)
     } else if (symbolp(d)) {
         pr_symbol(d);
     } else if (strp(d)) {
-        str s = datum2str(d);
-        write(1, s->data, s->size);
+        write(1, d, datum_size(d));
     } else if (bytesp(d)) {
         write(1, d, datum_size(d));
     } else if (pairp(d)) {

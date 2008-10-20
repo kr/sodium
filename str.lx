@@ -9,29 +9,19 @@ inline C <<end
 
 static datum percent_star_sym;
 
-inline str
-datum2str(datum d)
-{
-    if (!in_chunk_range(d)) die1("not a str", d);
-    if (!str_tag_matches(d)) die1("not a str", d);
-    return (str) d;
-}
-
 datum
 make_str_init(size_t size, const char *bytes)
 {
-    str s = (str) make_str(size);
-    memcpy(s->data, bytes, size);
+    datum s = make_str(size);
+    memcpy(s, bytes, size);
     return (datum) s;
 }
 
 size_t
-copy_str_contents(char *dest, datum x, size_t n)
+copy_str_contents(char *dest, datum s, size_t n)
 {
-    str s = datum2str(x);
-
-    if (s->size < n) n = s->size;
-    memcpy(dest, s->data, n);
+    if (datum_size(s) < n) n = datum_size(s);
+    memcpy(dest, s, n);
     return n;
 }
 
@@ -48,76 +38,65 @@ end
 def str ():
   inline C (/ x) <<end
     /* concatenate */
-    str s, a = datum2str(rcv), b = datum2str(n_x);
-    size_t az = a->size, bz = b->size;
+    datum s;
+    size_t az = datum_size(rcv), bz = datum_size(n_x);
     char s1[az], s2[bz];
 
     copy_str_contents(s1, rcv, az);
     copy_str_contents(s2, n_x, bz);
 
-    s = (str) make_str(az + bz + 1);
-    memcpy(s->data, s1, az);
-    memcpy(s->data + az, s2, bz);
+    s = make_str(az + bz + 1);
+    memcpy(s, s1, az);
+    memcpy(((char *) s) + az, s2, bz);
 
-    return (datum) s;
+    return s;
   end
 
   inline C (run i) <<end
     /* index a single char */
     int i;
-    str a;
     char s[2];
-
-    a = datum2str(rcv);
 
     if (!intp(n_i)) die("str -- expected int");
     i = datum2int(n_i);
-    s[0] = a->data[i];
+    s[0] = ((char *) rcv)[i];
     s[1] = '\0';
     return make_str_init(1, s);
   end
 
   inline C (encode) <<end
-    str s = datum2str(rcv);
-    return make_bytes_init_len(s->data, s->size);
+    return make_bytes_init_len((char *) rcv, datum_size(rcv));
   end
 
   inline C (length) <<end
-    return int2datum(datum2str(rcv)->size);
+    return int2datum(datum_size(rcv));
   end
 
   inline C (= x) <<end
-    str a, b;
-    int i;
+    size_t i, rcv_size = datum_size(rcv), n_x_size = datum_size(n_x);
 
-    a = datum2str(rcv);
-    b = datum2str(n_x);
+    if (rcv_size != n_x_size) return nil;
 
-    if (a->size != b->size) return nil;
-
-    for (i = 0; i < a->size; i++) {
-        if (a->data[i] != b->data[i]) return nil;
+    for (i = 0; i < rcv_size; i++) {
+        if (((char *) rcv)[i] != ((char *) n_x)[i]) return nil;
     }
     return int2datum(1);
   end
 
   inline C (substring start end) <<end
-    str s;
     int start, end;
-
-    s = datum2str(rcv);
 
     start = datum2int(n_start);
     if (start < 0) start = 0;
 
     end = datum2int(n_end);
-    if (end > s->size) end = s->size;
+    if (end > datum_size(rcv)) end = datum_size(rcv);
 
     {
         int i, j;
         char new[end - start + 1];
         for (i = 0, j = start; j < end; i++, j++) {
-            new[i] = s->data[j];
+            new[i] = ((char *) rcv)[j];
         }
         new[i] = '\0';
         return make_str_init(end - start, new);

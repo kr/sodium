@@ -30,22 +30,19 @@ def re ():
       end
 
       inline C (match subj opts) <<end
-        str subj;
         char *res;
         int rc, res_size, opts;
         pcre *re = (pcre *) rcv[2];
 
-        subj = datum2str(n_subj);
-
         opts = datum2int(n_opts);
 
-        rc = pcre_exec(re, NULL, subj->data, subj->size, 0, opts, ovector,
+        rc = pcre_exec(re, NULL, (char *) n_subj, datum_size(n_subj), 0, opts, ovector,
                        OVECCOUNT);
 
         if (rc < 0) return nil;
         if (rc == 0) return nil;
 
-        res = subj->data + ovector[0];
+        res = ((char *) n_subj) + ovector[0];
         res_size = ovector[1] - ovector[0];
         /* for now, assume UTF-8 len == res_size */
         return make_str_init(res_size, res);
@@ -54,12 +51,10 @@ def re ():
       inline C (prepare) <<end
         pcre *re;
         const char *error;
-        char *pattern;
         int erroffset, opts;
 
-        pattern = datum2str(n_pat)->data;
         opts = datum2int(n_opts);
-        re = pcre_compile(pattern, opts | PCRE_UTF8, &error, &erroffset, NULL);
+        re = pcre_compile((char *) n_pat, opts | PCRE_UTF8, &error, &erroffset, NULL);
         if (re == NULL) return nil;
 
         return grow_closure(&rcv, 1, free, re);
