@@ -105,7 +105,7 @@ relocate(datum refloc)
 
             case DATUM_TYPE_STR:
             case DATUM_TYPE_BYTES:
-                /* len = (len + 3) / 4; */
+                len = (len + 3) / 4;
 
                 /* fall through */
             case DATUM_TYPE_PAIR:
@@ -219,8 +219,7 @@ gc(int c, ...)
         switch (DATUM_TYPE(descr)) {
             case DATUM_TYPE_STR:
             case DATUM_TYPE_BYTES:
-                /* np += (len + 3) / 4 + 1; */
-                np += len + 1;
+                np += (len + 3) / 4 + 1;
                 break;
             case DATUM_TYPE_PAIR:
             case DATUM_TYPE_CLOSURE:
@@ -277,7 +276,7 @@ internal_cons(unsigned char type, uint len, datum x, datum y)
     if ((free_index + (wlen + 1)) >= HEAP_SIZE) gc(2, &x, &y);
     if ((free_index + (wlen + 1)) >= HEAP_SIZE) die("cons -- OOM after gc");
     p = busy_chunks + free_index++;
-    *p = DATUM_INFO(type, wlen);
+    *p = DATUM_INFO(type, len);
     if (wlen > 0) p[1] = (size_t) x;
     if (wlen > 1) p[2] = (size_t) y;
     free_index += wlen;
