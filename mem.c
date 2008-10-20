@@ -214,6 +214,7 @@ gc(int c, ...)
         ++live;
         datum p = np + 2;
         size_t descr = *np, len = DATUM_LEN(descr);
+        relocate(np + 1); /* relocate the method table pointer */
         switch (DATUM_TYPE(descr)) {
             case DATUM_TYPE_STR:
             case DATUM_TYPE_BYTES:
