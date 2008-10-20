@@ -33,7 +33,7 @@ def re ():
         str subj;
         char *res;
         int rc, res_size, opts;
-        pcre *re = (pcre *) ((chunk) rcv)->datums[2];
+        pcre *re = (pcre *) rcv[2];
 
         subj = datum2str(n_subj);
 

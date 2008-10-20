@@ -26,7 +26,7 @@ size_t static_datums_cap = 0, static_datums_fill = 0, static_datums_base;
 uint quit_inst[1] = {0x30000000};
 
 datum genv, regs[REG_COUNT];
-chunk stack = nil;
+datum stack = nil;
 
 #define MAX_INSTR_SETS 50
 uint *instr_bases[MAX_INSTR_SETS], *instr_ends[MAX_INSTR_SETS];
@@ -222,7 +222,7 @@ static datum
 load_list(int f)
 {
     int i = 0;
-    chunk l = nil;
+    datum l = nil;
     char c = readc(f);
     while (c != ')') {
         int n = read_int(f);
@@ -238,7 +238,7 @@ static datum
 init_list(uint value)
 {
     spair p = (spair) value;
-    chunk l = nil;
+    datum l = nil;
     datum x;
 
     while (p) {
@@ -392,7 +392,7 @@ setbang(datum env, datum val, datum name)
 void
 define(datum env, datum val, datum name)
 {
-    chunk p;
+    datum p;
     datum vals, names;
     if (env != genv) die("define -- env ought to be the global env\n");
     vals = car(env);
@@ -721,7 +721,7 @@ start_body(uint *start_addr)
 }
 
 datum
-call(datum o, datum m, chunk a)
+call(datum o, datum m, datum a)
 {
     if (!symbolp(m)) die1("call -- not a symbol", m);
     regs[R_PROC] = o;

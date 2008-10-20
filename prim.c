@@ -127,7 +127,7 @@ prx(datum d)
     } else if (closurep(d)) {
         prfmt(1, "<closure %p>", d);
     } else if (broken_heartp(d)) {
-        d = ((chunk) d)->datums[0];
+        d = (datum) *d;
         prfmt(1, "<broken-heart %p>", d);
         prx(d);
     } else {

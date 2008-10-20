@@ -1,7 +1,9 @@
 #ifndef GEN_H
 #define GEN_H
 
-typedef void * datum;
+#include <stdlib.h>
+
+typedef size_t * datum;
 
 #define INT_TAG 0x1
 #define int2datum(x) ((datum) (((x) << 1) | INT_TAG))

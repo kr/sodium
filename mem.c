@@ -12,14 +12,10 @@
 #endif
 
 int gc_in_progress = 0, become_keep_b = 0;
-struct chunk *busy_chunks, *old_chunks, *fz_list = nil;
-static struct chunk *free_chunks;
-size_t free_index = 0, scan_index = 0;
+datum busy_chunks, old_chunks, fz_list = nil;
+static datum free_chunks;
+static size_t free_index = 0, scan_index = 0;
 static datum become_a = nil, become_b = nil;
-
-#if GC_DEBUG
-size_t reloc_ct;
-#endif
 
 // int /*bool*/
 // arrayp(datum x) {
@@ -31,10 +27,7 @@ size_t reloc_ct;
 void
 init_mem(void)
 {
-    busy_chunks = malloc(sizeof(struct chunk) * HEAP_SIZE);
-#if GC_DEBUG
-    printf("busy_chunks = %p\n", busy_chunks);
-#endif
+    busy_chunks = malloc(sizeof(datum) * HEAP_SIZE);
     if (!busy_chunks) die("init_mem -- out of memory");
     free_index = 0;
 }
@@ -52,202 +45,219 @@ init_mem(void)
 #define DATUM_TYPE_FZ 13
 #define DATUM_TYPE_BROKEN_HEART 15
 
-#define IS_BROKEN_HEART(o) (DATUM_TYPE((o)->info) == DATUM_TYPE_BROKEN_HEART)
+#define IS_BROKEN_HEART(o) (((o) & 0xf) == DATUM_TYPE_BROKEN_HEART)
 
 #define FZ_LEN 3
 
-static inline void
-relocate(datum *d)
-{
-    chunk p, np;
-    int len;
+#if GC_DEBUG
+static const char *datum_types[] = {
+    "<unused>",
+    "DATUM_TYPE_PAIR",
+    "DATUM_TYPE_CLOSURE",
+    "DATUM_TYPE_ARRAY",
+    "DATUM_TYPE_BYTES",
+    "DATUM_TYPE_STR",
+    "DATUM_TYPE_FZ",
+    "DATUM_TYPE_BROKEN_HEART",
+};
 
-    p = *d;
+static void
+prdesc(const char *msg, size_t desc)
+{
+    if (desc &1) {
+        int type = DATUM_TYPE(desc);
+        fprintf(stderr, "%s %s (%d) len %u\n",
+                msg, datum_types[type >> 1], type, DATUM_LEN(desc));
+    } else {
+        fprintf(stderr, "%s <not a chunk>\n", msg);
+    }
+}
+#endif
+
+static inline void
+relocate(datum refloc)
+{
+    datum p, *i, *j;
+    size_t len;
+
+    p =  *((datum *) refloc);
 
     /* don't try to relocate an unboxed int */
-    if (((uint)p) & 1) return;
-
-#if GC_DEBUG
-    if (!in_chunk_range(p)) printf("ignoring %p\n", p);
-#endif
+    if (((size_t) p) & 1) return;
 
     if (!in_chunk_range(p)) return;
 
-#if GC_DEBUG_BH
-    if (IS_BROKEN_HEART(p)) {
-        printf("found broken heart %p -> %p\n", p, p->datums[0]);
-    }
-#endif
+    --p;
 
-    if (IS_BROKEN_HEART(p)) {
-        *d = p->datums[0];
-        return;
-    }
-
+    for (;;) {
+        len = DATUM_LEN(*p);
 #if GC_DEBUG
-    reloc_ct++;
-    printf("relocating chunk type %d (size %d) at %p\n",
-            DATUM_TYPE(p->info),
-            DATUM_LEN(p->info),
-            p);
+        prdesc("Relocating", *p);
+        fprintf(stderr, "at %p\n", p);
 #endif
 
-#if GC_DEBUG_STR
-    if (DATUM_TYPE(p->info) == DATUM_TYPE_BYTES) {
-        printf("copying bytes at %p\n", p);
-    }
-#endif
+        switch (DATUM_TYPE(*p)) {
+            /*
+            case DATUM_TYPE_BACKPTR:
+                p -= len;
+                continue;
+            */
 
-    np = &free_chunks[free_index++];
-    np->info = p->info;
-    for (len = DATUM_LEN(p->info); len--;) {
-        np->datums[len] = p->datums[len];
-        ++free_index;
-    }
+            case DATUM_TYPE_STR:
+            case DATUM_TYPE_BYTES:
+                /* len = (len + 3) / 4; */
 
+                /* fall through */
+            case DATUM_TYPE_PAIR:
+            case DATUM_TYPE_CLOSURE:
+            case DATUM_TYPE_ARRAY:
+            case DATUM_TYPE_FZ:
+                i = (datum *) p;
+                j = (datum *) free_chunks + free_index;
+
+                /*
+                while (j + len >= &free_chunks[free_index]) {
+                    to_lim = gmore();
+                }
+                */
+
+                *j++ = *i++;
+                while (len--) *j++ = *i++;
+
+                ((datum *) p)[1] = 1 + (datum) &free_chunks[free_index];
+                free_index = ((datum) j) - free_chunks;
 #if GC_DEBUG
-    printf("...copied to %p\n", np);
+                fprintf(stderr, "Relocated\n");
 #endif
 
-#if GC_DEBUG_STR
-    if (DATUM_TYPE(p->info) == DATUM_TYPE_BYTES) {
-        printf("copied ``%s'' to ``%s''\n",
-                (char *) p->datums, (char *) np->datums);
+                *p = DATUM_TYPE_BROKEN_HEART;
+
+                /* fall through */
+            case DATUM_TYPE_BROKEN_HEART:
+                *refloc += p[1] - ((size_t) (p + 1));
+                return;
+
+            /*
+            case DATUM_TYPE_EMBEDDED:
+            */
+            default:
+                assert(0);
+                /*
+                p--;
+                continue;
+                */
+        }
     }
-#endif
-
-    p->info = DATUM_INFO(DATUM_TYPE_BROKEN_HEART, DATUM_LEN(p->info));
-    *d = p->datums[0] = np;
 }
 
 static void
 gc(int c, ...)
 {
     int i, live = 0;
-    chunk np, fzp, *fz_prev;
-    free_index = 0;
-    datum old_become_a, old_become_b, *dp;
+    datum np, fzp, *fz_prev;
+    datum old_become_a, old_become_b, dp;
     va_list ap;
 
     if (gc_in_progress) die("ran out of memory during GC");
     gc_in_progress = 1;
 
 #if GC_DEBUG
-    printf("BEGIN GC\n");
+    fprintf(stderr, "Start GC\n");
 #endif
 
-    free_chunks = malloc(sizeof(struct chunk) * HEAP_SIZE);
+    free_chunks = malloc(sizeof(datum) * HEAP_SIZE);
     if (!free_chunks) die("gc -- out of memory");
+    free_index = 0;
 
 #if GC_DEBUG
-    printf("relocating roots\n");
-    reloc_ct = 0;
+    fprintf(stderr, "free_chunks is %p\n", free_chunks);
 #endif
 
     if (become_a && become_b) {
         old_become_a = become_a;
         old_become_b = become_b;
-        relocate(&become_a);
-        relocate(&become_b);
+        relocate((datum) &become_a);
+        relocate((datum) &become_b);
         if (old_become_a != become_a) {
-            ((chunk) old_become_a)->datums[0] = become_b;
+            ((datum *) old_become_a)[0] = become_b;
         }
         if (old_become_b != become_b && !become_keep_b) {
-            ((chunk) old_become_b)->datums[0] = become_a;
+            ((datum *) old_become_b)[0] = become_a;
         }
     }
 
-    relocate((datum *) &stack);
-    relocate(&genv);
-    relocate(&int_surrogate);
-    relocate(&str_surrogate);
-    relocate(&bytes_surrogate);
-    relocate(&pair_surrogate);
-    relocate(&array_surrogate);
-    relocate(&nil_surrogate);
-    relocate(&symbol_surrogate);
-    relocate((datum *) &fz_list);
+    relocate((datum) &stack);
+    relocate((datum) &genv);
+    relocate((datum) &int_surrogate);
+    relocate((datum) &str_surrogate);
+    relocate((datum) &bytes_surrogate);
+    relocate((datum) &pair_surrogate);
+    relocate((datum) &array_surrogate);
+    relocate((datum) &nil_surrogate);
+    relocate((datum) &symbol_surrogate);
+    relocate((datum) &fz_list);
     va_start(ap, c);
     for (; c; --c) {
-        dp = va_arg(ap, datum *);
+        dp = va_arg(ap, datum);
         relocate(dp);
     }
     va_end(ap);
     for (i = 0; i < REG_COUNT; ++i) {
-        relocate(&regs[i]);
+        relocate((datum) &regs[i]);
     }
     for (i = 0; i < static_datums_fill; ++i) {
-        relocate(&static_datums[i]);
+        relocate((datum) &static_datums[i]);
     }
-
-#if GC_DEBUG
-    printf("relocated %d roots\n", reloc_ct);
-#endif
 
     scan_index = 0;
 
-#if GC_DEBUG
-    printf("scan_index is %d, free_index is %d\n", scan_index, free_index);
-#endif
-    while (scan_index < free_index) {
-        np = &free_chunks[scan_index++];
+    np = free_chunks;
+    while (np < &free_chunks[free_index]) {
         ++live;
-        switch (DATUM_TYPE(np->info)) {
-            case DATUM_TYPE_ARRAY:
-                for (i = DATUM_LEN(np->info); i--;) {
-                    relocate(&np->datums[i]);
-                    ++scan_index;
-                }
+        datum p = np + 1;
+        size_t descr = *np, len = DATUM_LEN(descr);
+        switch (DATUM_TYPE(descr)) {
+            case DATUM_TYPE_STR:
+            case DATUM_TYPE_BYTES:
+                /* np += (len + 3) / 4 + 1; */
+                np += len + 1;
                 break;
             case DATUM_TYPE_PAIR:
             case DATUM_TYPE_CLOSURE:
             case DATUM_TYPE_FZ:
-                relocate(&np->datums[0]);
-                relocate(&np->datums[1]);
-                /* fall through */
-            case DATUM_TYPE_STR:
-            case DATUM_TYPE_BYTES:
-                scan_index += DATUM_LEN(np->info);
-                break;
+            case DATUM_TYPE_ARRAY:
             default:
-#if GC_DEBUG
-                printf("woah! got type %d\n", DATUM_TYPE(np->info));
-#endif
-                assert(0);
+                np += len + 1;
+                assert(p < np);
+                while (p < np) relocate(p++);
         }
     }
 
     old_chunks = busy_chunks;
     busy_chunks = free_chunks;
-#if GC_DEBUG
-    printf("busy_chunks = %p\n", busy_chunks);
-#endif
     if (free_index >= HEAP_SIZE) die("gc -- no progress");
-#if GC_STATS
-    printf("gc done (%d live)\n", live);
-#endif /*GC_STATS*/
 
     /* Now process the finalizer list. For each entry:
      *  - if the object survived, update the finalizer's pointer
      *  - else, call the free function and remove the finalizer
      */
     fz_prev = &fz_list;
-    for (fzp = fz_list; fzp != nil; fzp = fzp->datums[1]) {
-        chunk p = (chunk) fzp->datums[2];
-        if (IS_BROKEN_HEART(p)) {
-            fzp->datums[2] = p->datums[0];
-            fz_prev = (chunk *) &fzp->datums[1]; /* update the prev pointer */
+    for (fzp = fz_list; fzp != nil; fzp = ((datum *)fzp)[1]) {
+        datum p = ((datum *) fzp)[2];
+        if (IS_BROKEN_HEART(*(p - 1))) {
+            ((datum *) fzp)[2] = (datum) *p;
+            fz_prev = (datum *) (fzp + 2); /* update the prev pointer */
         } else {
-            ((na_fn_free) fzp->datums[0])(DATUM_LEN(p->info) > 2 ? p->datums[2] : 0);
-            *fz_prev = fzp->datums[1]; /* remove fzp from the list */
+            ((na_fn_free) fzp[0])((datum) (DATUM_LEN(*(p - 1)) > 2 ? p[2] : 0));
+            *fz_prev = (datum) fzp[1]; /* remove fzp from the list */
         }
     }
 
     free(old_chunks);
     old_chunks = 0;
 
-#if GC_DIE
-    die("GC_DIE");
+#if GC_DEBUG
+    fprintf(stderr, "Finish GC\n");
 #endif
 
     gc_in_progress = 0;
@@ -257,16 +267,19 @@ gc(int c, ...)
 static datum
 internal_cons(unsigned char type, uint len, datum x, datum y)
 {
-    chunk p;
+    datum p;
 
     if ((free_index + (len + 1)) >= HEAP_SIZE) gc(2, &x, &y);
     if ((free_index + (len + 1)) >= HEAP_SIZE) die("cons -- OOM after gc");
-    p = &busy_chunks[free_index++];
-    p->info = DATUM_INFO(type, len);
-    if (len > 0) p->datums[0] = x;
-    if (len > 1) p->datums[1] = y;
+    p = busy_chunks + free_index++;
+    *p = DATUM_INFO(type, len);
+    if (len > 0) p[1] = (size_t) x;
+    if (len > 1) p[2] = (size_t) y;
     free_index += len;
-    return p;
+#if GC_DEBUG
+    prdesc("Allocated", *p);
+#endif
+    return p + 1;
 }
 
 datum
@@ -278,12 +291,12 @@ cons(datum x, datum y)
 datum
 make_array(uint len)
 {
-    chunk p;
+    datum p;
 
     if (len < 1) return nil;
     if (len != CLIP_LEN(len)) die("make_array -- too big");
     p = internal_cons(DATUM_TYPE_ARRAY, len, nil, nil);
-    for (;len--;) p->datums[len] = nil;
+    for (;--len;) p[len] = nil;
     return p;
 }
 
@@ -297,26 +310,26 @@ become(datum *a, datum *b, int keep_b)
 }
 
 datum
-grow_closure(datum *op, uint len, na_fn_free fn, void *data)
+grow_closure(datum *op, uint grow_len, na_fn_free fn, void *data)
 {
-    chunk fz;
+    datum d, fz;
     closure c = datum2closure(*op);
-    int olen, ex = fn ? 1 + FZ_LEN : 0;
-    datum d;
+    int new_len, ex = fn ? 1 + FZ_LEN : 0;
 
-    olen = DATUM_LEN(c->info) + len;
+    new_len = DATUM_LEN(*(*op - 1)) + grow_len;
     regs[R_GC0] = *op;
-    d = internal_cons(DATUM_TYPE_CLOSURE, olen + ex, c->env, c->table);
+    d = internal_cons(DATUM_TYPE_CLOSURE, new_len + ex, c->env,
+            (datum) c->table);
     *op = regs[R_GC0];
     regs[R_GC0] = nil;
-    if (len) ((chunk) d)->datums[2] = data;
+    if (grow_len) d[2] = (size_t) data;
     if (fn) {
-        ((chunk) d)->info = DATUM_INFO(DATUM_TYPE_CLOSURE, olen);
-        fz = (chunk) d + 1 + olen;
-        fz->info = DATUM_INFO(DATUM_TYPE_FZ, FZ_LEN);
-        fz->datums[0] = fn;
-        fz->datums[1] = fz_list;
-        fz->datums[2] = d;
+        *(d - 1) = DATUM_INFO(DATUM_TYPE_CLOSURE, new_len);
+        fz = d + new_len + 1;
+        *(fz - 1) = DATUM_INFO(DATUM_TYPE_FZ, FZ_LEN);
+        fz[0] = (size_t) fn;
+        fz[1] = (size_t) fz_list;
+        fz[2] = (size_t) d;
         fz_list = fz;
     }
 
@@ -351,94 +364,74 @@ make_str(size_t size)
 size_t
 bytes_len(datum bytes)
 {
-    chunk p;
     if (!bytesp(bytes)) die1("bytes_contents -- not an instance of bytes", bytes);
-    p = (chunk) bytes;
-    return (size_t) p->datums[0];
+    return *bytes;
 }
 
 char *
 bytes_contents(datum bytes)
 {
-    chunk p;
     if (!bytesp(bytes)) die1("bytes_contents -- not an instance of bytes", bytes);
-    p = (chunk) bytes;
-    return (char *) &p->datums[1];
+    return (char *) (bytes + 1);
 }
-
-static chunk
-datum2arraychunk(datum d)
-{
-    if (!arrayp(d)) die1("datum2arraychunk -- not an array", d);
-    return (chunk) d;
-}
-
-#define acc(x,i) (((chunk)(x))->datums[(uint)(i)])
 
 datum
 array_get(datum arr, uint index)
 {
-    chunk p = datum2arraychunk(arr);
-    if (index >= DATUM_LEN(p->info)) die("array_get -- index out of bounds");
-    return acc(arr, index);
+    if (!arrayp(arr)) die1("array_get -- not an array", arr);
+    if (index >= DATUM_LEN(*(arr - 1))) die("array_get -- index out of bounds");
+    return (datum) arr[index];
 }
 
 datum
 array_put(datum arr, uint index, datum val)
 {
-    chunk p = datum2arraychunk(arr);
-    if (index >= DATUM_LEN(p->info)) die("array_put -- index out of bounds");
-    return acc(arr, index) = val;
+    if (!arrayp(arr)) die1("array_put -- not an array", arr);
+    if (index >= DATUM_LEN(*(arr - 1))) die("array_put -- index out of bounds");
+    return (datum) (arr[index] = (size_t) val);
 }
 
 uint
 array_len(datum arr)
 {
-    chunk p = datum2arraychunk(arr);
-    return DATUM_LEN(p->info);
+    return DATUM_LEN(*(arr - 1));
 }
 
 int
 pair_tag_matches(datum o)
 {
-    chunk p = (chunk) o;
-    return DATUM_TYPE(p->info) == DATUM_TYPE_PAIR;
+    return DATUM_TYPE(*(o - 1)) == DATUM_TYPE_PAIR;
 }
 
 int
 closure_tag_matches(datum o)
 {
-    chunk p = (chunk) o;
-    return DATUM_TYPE(p->info) == DATUM_TYPE_CLOSURE;
+    return DATUM_TYPE(*(o - 1)) == DATUM_TYPE_CLOSURE;
 }
 
 int
 array_tag_matches(datum arr)
 {
-    chunk p = (chunk) arr;
-    return DATUM_TYPE(p->info) == DATUM_TYPE_ARRAY;
+    return DATUM_TYPE(*(arr - 1)) == DATUM_TYPE_ARRAY;
 }
 
 int
 bytes_tag_matches(datum arr)
 {
-    chunk p = (chunk) arr;
-    return DATUM_TYPE(p->info) == DATUM_TYPE_BYTES;
+    return DATUM_TYPE(*(arr - 1)) == DATUM_TYPE_BYTES;
 }
 
 int
 str_tag_matches(datum str)
 {
-    chunk p = (chunk) str;
-    return DATUM_TYPE(p->info) == DATUM_TYPE_STR;
+    return DATUM_TYPE(*(str - 1)) == DATUM_TYPE_STR;
 }
 
 
 int
 broken_heart_tag_matches(datum bh)
 {
-    chunk p = (chunk) bh;
-    return DATUM_TYPE(p->info) == DATUM_TYPE_BROKEN_HEART;
+    return DATUM_TYPE(*(bh - 1)) == DATUM_TYPE_BROKEN_HEART;
 }
 
 inline pair

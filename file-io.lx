@@ -37,7 +37,7 @@ def file ():
         int r;
         uint len;
         datum bytes;
-        int f = (int) ((chunk) rcv)->datums[2];
+        int f = (int) rcv[2];
         char *s;
 
         if (!f) die("f:read -- this file is closed");
@@ -56,7 +56,7 @@ def file ():
       inline C (write s) <<end
         int r;
         uint len;
-        int f = (int) ((chunk) rcv)->datums[2];
+        int f = (int) rcv[2];
         char *s;
 
         if (!f) die("f:write -- this file is closed");
@@ -72,12 +72,12 @@ def file ():
 
       inline C (close) <<end
         int r;
-        int f = (int) ((chunk) rcv)->datums[2];
+        int f = (int) rcv[2];
 
         if (f) {
             r = close(f);
             if (-1 == r) die("close() error");
-            ((chunk) rcv)->datums[2] = 0;
+            rcv[2] = 0;
         }
         return ok_sym;
       end

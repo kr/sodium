@@ -4,7 +4,6 @@
 #define bytes_h
 
 typedef struct bytes {
-    uint info;
     size_t size;
     char data[];
 } *bytes;

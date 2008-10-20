@@ -76,11 +76,11 @@ uint *load_module_file(const char *name);
 datum lexical_lookup(datum env, uint level, uint index);
 datum lexical_setbang(datum env, uint level, uint index, datum val);
 datum extend_environment(datum env, datum argl, datum formals);
-datum call(datum o, datum m, chunk a);
+datum call(datum o, datum m, datum a);
 datum report_error(datum args);
 
 extern datum regs[REG_COUNT];
-extern chunk stack;
+extern datum stack;
 extern datum genv;
 
 extern datum run_sym, ok_sym;

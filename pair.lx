@@ -1,9 +1,7 @@
 
 def pair ():
   inline C (set-cdr! x) <<end
-    chunk p = rcv;
-
-    cdr(p) = n_x;
+    rcv[1] = (size_t) n_x;
     return ok_sym;
   end
 

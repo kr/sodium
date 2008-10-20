@@ -9,13 +9,7 @@
 
 typedef void(*na_fn_free)(void *);
 
-typedef struct chunk {
-    uint info;
-    datum datums[];
-} *chunk;
-
 typedef struct pair {
-    uint info;
     datum car, cdr;
 } *pair;
 
@@ -30,7 +24,6 @@ typedef struct method_table {
 } *method_table;
 
 typedef struct closure {
-    uint info;
     datum env;
     method_table table;
 } *closure;
@@ -68,15 +61,15 @@ inline closure datum2closure(datum d);
 
 #define HEAP_SIZE (2 * 1024 * 1024)
 
-extern struct chunk *busy_chunks, *old_chunks;
+extern size_t *busy_chunks, *old_chunks;
 
 void init_mem(void);
 
 /*bool*/
-#define in_busy_chunk_range(x) ((((chunk)(x)) >= busy_chunks) && \
-                               (((chunk)(x)) < &busy_chunks[HEAP_SIZE]))
-#define in_old_chunk_range(x) (old_chunks && (((chunk)(x)) >= old_chunks) && \
-                              (((chunk)(x)) < &old_chunks[HEAP_SIZE]))
+#define in_busy_chunk_range(x) (((x) >= busy_chunks) && \
+                               ((x) < &busy_chunks[HEAP_SIZE]))
+#define in_old_chunk_range(x) (old_chunks && ((x) >= old_chunks) && \
+                              ((x) < &old_chunks[HEAP_SIZE]))
 #define in_chunk_range(x) (in_busy_chunk_range(x) || in_old_chunk_range(x))
 
 /*bool*/
@@ -100,7 +93,7 @@ int broken_heart_tag_matches(datum bh);
 
 #define broken_heartp(x) (in_old_chunk_range(x) && broken_heart_tag_matches(x))
 
-#define nil ((chunk)0)
+#define nil (0)
 
 void become(datum *a, datum *b, int keep_b);
 

@@ -4,7 +4,6 @@
 #define str_h
 
 typedef struct str {
-    uint info;
     size_t size;
     char data[];
 } *str;
