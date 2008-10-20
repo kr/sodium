@@ -141,11 +141,8 @@ relocate(datum refloc)
             case DATUM_TYPE_EMBEDDED:
             */
             default:
-                assert(0);
-                /*
                 p--;
                 continue;
-                */
         }
     }
 }
