@@ -7,6 +7,14 @@ inline C <<end
 
 static datum percent_star_sym;
 
+datum bytes_mtab;
+
+void
+bytes_init()
+{
+    bytes_mtab = find_builtin_module("bytes") + 27;
+}
+
 datum
 make_bytes_init_len(const char *s, int len)
 {

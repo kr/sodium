@@ -7,6 +7,9 @@
 #include "obj.h"
 #include "prim.h"
 #include "pair.h"
+#include "array.h"
+#include "bytes.h"
+#include "str.h"
 #include "config.h"
 #if GC_DEBUG
 #include <stdio.h>
@@ -189,10 +192,13 @@ gc(int c, ...)
     relocate((datum) &genv);
     relocate((datum) &int_surrogate);
     relocate((datum) &str_surrogate);
+    relocate((datum) &str_mtab);
     relocate((datum) &bytes_surrogate);
+    relocate((datum) &bytes_mtab);
     relocate((datum) &pair_surrogate);
     relocate((datum) &pair_mtab);
     relocate((datum) &array_surrogate);
+    relocate((datum) &array_mtab);
     relocate((datum) &nil_surrogate);
     relocate((datum) &symbol_surrogate);
     relocate((datum) &fz_list);
@@ -312,7 +318,7 @@ make_array(uint len)
 
     if (len < 1) return nil;
     if (len != CLIP_LEN(len)) die("make_array -- too big");
-    p = dalloc(DATUM_TYPE_ARRAY, len, nil, nil, nil);
+    p = dalloc(DATUM_TYPE_ARRAY, len, array_mtab, nil, nil);
     for (;--len;) p[len] = nil;
     return p;
 }
@@ -335,7 +341,7 @@ grow_closure(datum *op, uint grow_len, na_fn_free fn, void *data)
 
     new_len = DATUM_LEN(*(*op - 2)) + grow_len;
     regs[R_GC0] = *op;
-    d = dalloc(DATUM_TYPE_CLOSURE, new_len + ex, nil, c->env,
+    d = dalloc(DATUM_TYPE_CLOSURE, new_len + ex, (datum) c->table, c->env,
             (datum) c->table);
     *op = regs[R_GC0];
     regs[R_GC0] = nil;
@@ -343,7 +349,8 @@ grow_closure(datum *op, uint grow_len, na_fn_free fn, void *data)
     if (fn) {
         *(d - 2) = DATUM_INFO(DATUM_TYPE_CLOSURE, new_len);
         fz = d + new_len + 2;
-        *(fz - 2) = DATUM_INFO(DATUM_TYPE_FZ, FZ_LEN);
+        fz[-2] = DATUM_INFO(DATUM_TYPE_FZ, FZ_LEN);
+        fz[-1] = nil; /* finalizer_mtab */
         fz[0] = (size_t) fn;
         fz[1] = (size_t) fz_list;
         fz[2] = (size_t) d; fz_list = fz;
@@ -356,19 +363,19 @@ grow_closure(datum *op, uint grow_len, na_fn_free fn, void *data)
 datum
 make_closure(datum env, uint *table)
 {
-    return dalloc(DATUM_TYPE_CLOSURE, 2, nil, env, (datum) table);
+    return dalloc(DATUM_TYPE_CLOSURE, 2, (datum) table, env, (datum) table);
 }
 
 datum
 make_bytes(uint size)
 {
-    return dalloc(DATUM_TYPE_BYTES, size, nil, nil, nil);
+    return dalloc(DATUM_TYPE_BYTES, size, bytes_mtab, nil, nil);
 }
 
 datum
 make_str(size_t size)
 {
-    return dalloc(DATUM_TYPE_STR, size, nil, nil, nil);
+    return dalloc(DATUM_TYPE_STR, size, str_mtab, nil, nil);
 }
 
 char *

@@ -8,6 +8,10 @@ typedef struct str {
     char data[];
 } *str;
 
+extern datum str_mtab;
+
+void str_init();
+
 datum make_str_init(size_t size, const char *bytes);
 
 size_t copy_str_contents(char *dest, datum str, size_t n);

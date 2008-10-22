@@ -9,6 +9,14 @@ inline C <<end
 
 static datum percent_star_sym;
 
+datum str_mtab;
+
+void
+str_init()
+{
+    str_mtab = find_builtin_module("str") + 27;
+}
+
 datum
 make_str_init(size_t size, const char *bytes)
 {

@@ -16,6 +16,9 @@
 #include "st.h"
 #include "lxc.h"
 #include "pair.h"
+#include "array.h"
+#include "bytes.h"
+#include "str.h"
 #include "config.h"
 #include "module-index.h"
 
@@ -778,6 +781,9 @@ main(int argc, char **argv)
 
     init_mem();
     pair_init();
+    array_init();
+    bytes_init();
+    str_init();
 
     genv = cons(nil, nil);
 

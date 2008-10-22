@@ -1,4 +1,14 @@
 
+inline C <<end
+datum array_mtab;
+
+void
+array_init()
+{
+    array_mtab = find_builtin_module("array") + 27;
+}
+end
+
 def array ():
   inline C (get i) <<end
     int i;
