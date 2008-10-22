@@ -302,7 +302,7 @@ datum_size(datum d)
 datum
 cons(datum x, datum y)
 {
-    return dalloc(DATUM_TYPE_PAIR, 2, nil, x, y);
+    return dalloc(DATUM_TYPE_PAIR, 2, pair_mtab, x, y);
 }
 
 datum
