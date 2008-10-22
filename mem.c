@@ -362,7 +362,7 @@ grow_closure(datum *op, uint grow_len, na_fn_free fn, void *data)
 datum
 make_closure(datum env, uint *table)
 {
-    return dalloc(DATUM_TYPE_CLOSURE, 2, (datum) table, env, (datum) table);
+    return dalloc(DATUM_TYPE_CLOSURE, 1, (datum) table, env, nil);
 }
 
 datum
