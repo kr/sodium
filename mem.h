@@ -66,15 +66,15 @@ void init_mem(void);
 #define in_chunk_range(x) (in_busy_chunk_range(x) || in_old_chunk_range(x))
 
 /*bool*/
-int pair_tag_matches(datum o);
 int closure_tag_matches(datum o);
 int array_tag_matches(datum arr);
 int bytes_tag_matches(datum bytes);
 int str_tag_matches(datum bytes);
 int broken_heart_tag_matches(datum bh);
 
+int pairp(datum x);
+
 /*bool*/
-#define pairp(x) (in_chunk_range(x) && pair_tag_matches(x))
 
 #define arrayp(x) (in_chunk_range(x) && array_tag_matches(x))
 

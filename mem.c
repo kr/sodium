@@ -407,9 +407,10 @@ array_len(datum arr)
 }
 
 int
-pair_tag_matches(datum o)
+pairp(datum x)
 {
-    return DATUM_TYPE(*(o - 2)) == DATUM_TYPE_PAIR;
+    return in_chunk_range(x) &&
+        (((datum) x[-1]) == pair_mtab) && (x != pair_surrogate);
 }
 
 int
@@ -446,7 +447,6 @@ broken_heart_tag_matches(datum bh)
 inline pair
 datum2pair(datum d)
 {
-    if (!in_chunk_range(d)) die1("not a pair", d);
-    if (!pair_tag_matches(d)) die1("not a pair", d);
+    if (!pairp(d)) die1("not a pair", d);
     return (pair) d;
 }

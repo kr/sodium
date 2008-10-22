@@ -90,13 +90,8 @@ closures_same_type(datum a, datum b)
 {
     datum surrogate;
 
-    if ((surrogate = get_primitive_surrogate(a))) {
-      return closures_same_type(surrogate, b);
-    }
-
-    if ((surrogate = get_primitive_surrogate(b))) {
-      return closures_same_type(a, surrogate);
-    }
+    if ((surrogate = get_primitive_surrogate(a))) a = surrogate;
+    if ((surrogate = get_primitive_surrogate(b))) b = surrogate;
 
     return cdr(a) == cdr(b);
 }
