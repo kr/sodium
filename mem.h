@@ -23,11 +23,6 @@ typedef struct method_table {
     struct method_item items[];
 } *method_table;
 
-typedef struct closure {
-    datum env;
-    method_table table;
-} *closure;
-
 datum cons(datum x, datum y);
 datum make_array(uint len);
 datum make_bytes(uint len);
@@ -44,8 +39,6 @@ uint array_len(datum arr);
 char *bytes_contents(datum bytes);
 
 inline pair datum2pair(datum d);
-
-inline closure datum2closure(datum d);
 
 #define car(x) (datum2pair(x)->car)
 #define cdr(x) (datum2pair(x)->cdr)

@@ -336,13 +336,12 @@ datum
 grow_closure(datum *op, uint grow_len, na_fn_free fn, void *data)
 {
     datum d, fz;
-    closure c = datum2closure(*op);
     int new_len, ex = fn ? 2 + FZ_LEN : 0;
 
     new_len = DATUM_LEN(*(*op - 2)) + grow_len;
     regs[R_GC0] = *op;
-    d = dalloc(DATUM_TYPE_CLOSURE, new_len + ex, (datum) c->table, c->env,
-            (datum) c->table);
+    d = dalloc(DATUM_TYPE_CLOSURE, new_len + ex,
+            (datum) (*op)[-1], (datum) **op, (datum) (*op)[1]);
     *op = regs[R_GC0];
     regs[R_GC0] = nil;
     if (grow_len) d[2] = (size_t) data;
@@ -450,12 +449,4 @@ datum2pair(datum d)
     if (!in_chunk_range(d)) die1("not a pair", d);
     if (!pair_tag_matches(d)) die1("not a pair", d);
     return (pair) d;
-}
-
-inline closure
-datum2closure(datum d)
-{
-    if (!in_chunk_range(d)) die1("not a closure", d);
-    if (!closure_tag_matches(d)) die1("not a closure", d);
-    return (closure) d;
 }
