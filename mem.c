@@ -268,7 +268,7 @@ gc(int c, ...)
 }
 
 static datum
-dalloc(unsigned char type, uint len, datum x, datum y)
+dalloc(unsigned char type, uint len, datum mtab, datum x, datum y)
 {
     datum p;
     size_t wlen = len;
@@ -281,7 +281,7 @@ dalloc(unsigned char type, uint len, datum x, datum y)
     if ((free_index + (wlen + 2)) >= HEAP_SIZE) die("dalloc -- OOM after gc");
     p = busy_chunks + free_index++;
     *p = DATUM_INFO(type, len);
-    p[1] = nil;
+    p[1] = (size_t) mtab;
     free_index++;
     if (wlen > 0) p[2] = (size_t) x;
     if (wlen > 1) p[3] = (size_t) y;
@@ -302,7 +302,7 @@ datum_size(datum d)
 datum
 cons(datum x, datum y)
 {
-    return dalloc(DATUM_TYPE_PAIR, 2, x, y);
+    return dalloc(DATUM_TYPE_PAIR, 2, nil, x, y);
 }
 
 datum
@@ -312,7 +312,7 @@ make_array(uint len)
 
     if (len < 1) return nil;
     if (len != CLIP_LEN(len)) die("make_array -- too big");
-    p = dalloc(DATUM_TYPE_ARRAY, len, nil, nil);
+    p = dalloc(DATUM_TYPE_ARRAY, len, nil, nil, nil);
     for (;--len;) p[len] = nil;
     return p;
 }
@@ -335,7 +335,7 @@ grow_closure(datum *op, uint grow_len, na_fn_free fn, void *data)
 
     new_len = DATUM_LEN(*(*op - 2)) + grow_len;
     regs[R_GC0] = *op;
-    d = dalloc(DATUM_TYPE_CLOSURE, new_len + ex, c->env,
+    d = dalloc(DATUM_TYPE_CLOSURE, new_len + ex, nil, c->env,
             (datum) c->table);
     *op = regs[R_GC0];
     regs[R_GC0] = nil;
@@ -356,19 +356,19 @@ grow_closure(datum *op, uint grow_len, na_fn_free fn, void *data)
 datum
 make_closure(datum env, uint *table)
 {
-    return dalloc(DATUM_TYPE_CLOSURE, 2, env, (datum) table);
+    return dalloc(DATUM_TYPE_CLOSURE, 2, nil, env, (datum) table);
 }
 
 datum
 make_bytes(uint size)
 {
-    return dalloc(DATUM_TYPE_BYTES, size, nil, nil);
+    return dalloc(DATUM_TYPE_BYTES, size, nil, nil, nil);
 }
 
 datum
 make_str(size_t size)
 {
-    return dalloc(DATUM_TYPE_STR, size, nil, nil);
+    return dalloc(DATUM_TYPE_STR, size, nil, nil, nil);
 }
 
 char *
