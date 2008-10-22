@@ -15,6 +15,7 @@
 #include "prim.h"
 #include "st.h"
 #include "lxc.h"
+#include "pair.h"
 #include "config.h"
 #include "module-index.h"
 
@@ -699,8 +700,22 @@ load_lxc_module(lxc_module mod)
     return mod->instrs;
 }
 
-static uint *
+datum
 find_builtin_module(const char *mname)
+{
+    int i;
+
+    for (i = 0; i < lxc_modules_count; i++) {
+        if (strcmp(lxc_modules[i]->name, mname) == 0) {
+            return lxc_modules[i]->instrs;
+        }
+    }
+
+    return 0;
+}
+
+static uint *
+find_and_link_builtin_module(const char *mname)
 {
     int i;
 
@@ -748,7 +763,7 @@ load_builtin_module(datum name)
 {
     uint *insts;
 
-    insts = find_builtin_module(symbol2charstar(name));
+    insts = find_and_link_builtin_module(symbol2charstar(name));
     if (!insts) return nil;
     start_body(insts);
     return regs[R_VAL]; /* return value from module */
@@ -762,6 +777,8 @@ main(int argc, char **argv)
     if (argc != 2) usage();
 
     init_mem();
+    pair_init();
+
     genv = cons(nil, nil);
 
     run_sym = intern("run");
@@ -772,7 +789,7 @@ main(int argc, char **argv)
     define(genv, args, intern("*args*"));
 
     /* load and execute the standard prelude */
-    start_body(find_builtin_module("prelude"));
+    start_body(find_and_link_builtin_module("prelude"));
 
     return 0;
 }

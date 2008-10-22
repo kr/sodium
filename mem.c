@@ -6,6 +6,7 @@
 #include "vm.h"
 #include "obj.h"
 #include "prim.h"
+#include "pair.h"
 #include "config.h"
 #if GC_DEBUG
 #include <stdio.h>
@@ -190,6 +191,7 @@ gc(int c, ...)
     relocate((datum) &str_surrogate);
     relocate((datum) &bytes_surrogate);
     relocate((datum) &pair_surrogate);
+    relocate((datum) &pair_mtab);
     relocate((datum) &array_surrogate);
     relocate((datum) &nil_surrogate);
     relocate((datum) &symbol_surrogate);

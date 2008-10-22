@@ -90,4 +90,6 @@ extern size_t static_datums_fill;
 
 void bail(const char *m);
 
+datum find_builtin_module(const char *mname);
+
 #endif /*vm_h*/
