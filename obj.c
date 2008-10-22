@@ -44,7 +44,7 @@ closure_env(datum d)
     }
 
     if (!closurep(d)) die1("not a closure", d);
-    return datum2closure(d)->env;
+    return (datum) *d;
 }
 
 uint *
@@ -52,15 +52,12 @@ closure_method(datum d, datum name)
 {
     int i, n;
     method_table table;
-    datum surrogate;
 
-    if ((surrogate = get_primitive_surrogate(d))) {
-        return closure_method(surrogate, name);
+    if ((d == nil) || intp(d) || symbolp(d)) {
+        d = get_primitive_surrogate(d);
     }
 
-    if (!closurep(d)) die1("closure_method -- bad closure", d);
-
-    table = datum2closure(d)->table;
+    table = (method_table) d[-1];
 
     n = datum2int(table->size);
     for (i = 0; i < n; ++i) {
@@ -74,15 +71,12 @@ closure_has_method(datum d, datum name)
 {
     int i, n;
     method_table table;
-    datum surrogate;
 
-    if ((surrogate = get_primitive_surrogate(d))) {
-        return closure_has_method(surrogate, name);
+    if ((d == nil) || intp(d) || symbolp(d)) {
+        d = get_primitive_surrogate(d);
     }
 
-    if (!closurep(d)) die1("closure_has_method -- bad closure", d);
-
-    table = datum2closure(d)->table;
+    table = (method_table) d[-1];
 
     n = datum2int(table->size);
     for (i = 0; i < n; ++i) {
@@ -112,16 +106,14 @@ closure_methods(datum d)
 {
     int i, n;
     method_table table;
-    datum surrogate, methods = nil;
+    datum methods = nil;
 
-    if ((surrogate = get_primitive_surrogate(d))) {
-        return closure_methods(surrogate);
+    if ((d == nil) || intp(d) || symbolp(d)) {
+        d = get_primitive_surrogate(d);
     }
 
-    if (!closurep(d)) die1("closure_methods -- bad closure", d);
-
     /* This pointer is stable. A garbage collection will not invalidate it */
-    table = datum2closure(d)->table;
+    table = (method_table) d[-1];
 
     n = datum2int(table->size);
     for (i = 0; i < n; ++i) methods = cons(table->items[i].name, methods);
