@@ -15,18 +15,18 @@
 #include <stdio.h>
 #endif
 
+/*bool*/
+#define in_busy_chunk_range(x) (((x) >= busy_chunks) && \
+                               ((x) < &busy_chunks[HEAP_SIZE]))
+#define in_old_chunk_range(x) (old_chunks && ((x) >= old_chunks) && \
+                              ((x) < &old_chunks[HEAP_SIZE]))
+#define in_chunk_range(x) (in_busy_chunk_range(x) || in_old_chunk_range(x))
+
 int gc_in_progress = 0, become_keep_b = 0;
 datum busy_chunks, old_chunks, fz_list = nil;
 static datum free_chunks;
 static size_t free_index = 0, scan_index = 0;
 static datum become_a = nil, become_b = nil;
-
-// int /*bool*/
-// arrayp(datum x) {
-//     return closurep(x) &&
-//         (((chunk)x) >= busy_chunks) &&
-//         (((chunk)x) < &busy_chunks[HEAP_SIZE]);
-// }
 
 void
 init_mem(void)
@@ -414,34 +414,37 @@ pairp(datum x)
 }
 
 int
-closure_tag_matches(datum o)
+arrayp(datum x)
 {
-    return DATUM_TYPE(*(o - 2)) == DATUM_TYPE_CLOSURE;
+    return in_chunk_range(x) &&
+        (((datum) x[-1]) == array_mtab) && (x != array_surrogate);
 }
 
 int
-array_tag_matches(datum arr)
+closurep(datum x)
 {
-    return DATUM_TYPE(*(arr - 2)) == DATUM_TYPE_ARRAY;
+    return !(((size_t) x) & 1) && in_chunk_range(x);
 }
 
 int
-bytes_tag_matches(datum arr)
+bytesp(datum x)
 {
-    return DATUM_TYPE(*(arr - 2)) == DATUM_TYPE_BYTES;
+    return in_chunk_range(x) &&
+        (((datum) x[-1]) == bytes_mtab) && (x != bytes_surrogate);
 }
 
 int
-str_tag_matches(datum str)
+strp(datum x)
 {
-    return DATUM_TYPE(*(str - 2)) == DATUM_TYPE_STR;
+    return in_chunk_range(x) &&
+        (((datum) x[-1]) == str_mtab) && (x != str_surrogate);
 }
 
-
 int
-broken_heart_tag_matches(datum bh)
+broken_heartp(datum x)
 {
-    return DATUM_TYPE(*(bh - 2)) == DATUM_TYPE_BROKEN_HEART;
+    return in_old_chunk_range(x) &&
+        (DATUM_TYPE(x[-2]) == DATUM_TYPE_BROKEN_HEART);
 }
 
 inline pair

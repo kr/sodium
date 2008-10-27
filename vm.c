@@ -530,7 +530,6 @@ start(uint *start_addr)
             case OP_BPRIM:
                 ra = I_R(inst);
                 tmp = (uint *) *++pc;
-                //if (!closurep(regs[ra])) pc = tmp - 1;
                 if (!addrp(regs[ra])) pc = tmp - 1;
                 break;
             case OP_LOAD_IMM:

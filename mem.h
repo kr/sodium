@@ -59,32 +59,14 @@ extern size_t *busy_chunks, *old_chunks;
 void init_mem(void);
 
 /*bool*/
-#define in_busy_chunk_range(x) (((x) >= busy_chunks) && \
-                               ((x) < &busy_chunks[HEAP_SIZE]))
-#define in_old_chunk_range(x) (old_chunks && ((x) >= old_chunks) && \
-                              ((x) < &old_chunks[HEAP_SIZE]))
-#define in_chunk_range(x) (in_busy_chunk_range(x) || in_old_chunk_range(x))
-
-/*bool*/
-int closure_tag_matches(datum o);
-int array_tag_matches(datum arr);
-int bytes_tag_matches(datum bytes);
-int str_tag_matches(datum bytes);
-int broken_heart_tag_matches(datum bh);
-
 int pairp(datum x);
+int arrayp(datum x);
+int closurep(datum x);
+int bytesp(datum x);
+int strp(datum x);
+int broken_heartp(datum x);
 
 /*bool*/
-
-#define arrayp(x) (in_chunk_range(x) && array_tag_matches(x))
-
-#define bytesp(x) (in_chunk_range(x) && bytes_tag_matches(x))
-
-#define strp(x) (in_chunk_range(x) && str_tag_matches(x))
-
-#define closurep(x) (in_chunk_range(x) && closure_tag_matches(x))
-
-#define broken_heartp(x) (in_old_chunk_range(x) && broken_heart_tag_matches(x))
 
 #define nil (0)
 
