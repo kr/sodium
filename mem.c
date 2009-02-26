@@ -431,7 +431,7 @@ bytesp(datum x)
 int
 strp(datum x)
 {
-    return in_chunk_range(x) && (((datum) x[-1]) == str_mtab);
+    return (x != nil && !(((size_t)x)&1) && ((datum) x[-1]) == str_mtab);
 }
 
 int
