@@ -170,13 +170,6 @@ def intern-syms ():
     return ok_sym;
   end
 
-def install-str ():
-  inline C (run sur) <<end
-    str_surrogate = n_sur;
-    return ok_sym;
-  end
-
 intern-syms
-install-str str
 
 . '()

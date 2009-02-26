@@ -191,7 +191,6 @@ gc(int c, ...)
     relocate((datum) &stack);
     relocate((datum) &genv);
     relocate((datum) &int_surrogate);
-    relocate((datum) &str_surrogate);
     relocate((datum) &str_mtab);
     relocate((datum) &bytes_surrogate);
     relocate((datum) &bytes_mtab);
@@ -436,8 +435,7 @@ bytesp(datum x)
 int
 strp(datum x)
 {
-    return in_chunk_range(x) &&
-        (((datum) x[-1]) == str_mtab) && (x != str_surrogate);
+    return in_chunk_range(x) && (((datum) x[-1]) == str_mtab);
 }
 
 int
