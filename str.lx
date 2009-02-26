@@ -43,7 +43,7 @@ copy_str_contents0(char *dest, datum str, size_t n)
 
 end
 
-def str ():
+def str: sobj:
   inline C (/ x) <<end
     /* concatenate */
     datum s;
@@ -111,12 +111,12 @@ def str ():
     }
   end
 
-  (tail n) (str.substring n (str.length))
+  (tail n) (self.substring n (self.length))
   (head n):
-    str.substring 0 n
+    self.substring 0 n
 
   (starts-with? sub):
-    (str.head (sub.length)) = sub
+    (self.head (sub.length)) = sub
 
   (find-from n sub):
     def (helper s i):
@@ -127,30 +127,30 @@ def str ():
           . i
         else:
           helper (s.tail 1) (i + 1)
-    helper (str.tail n) n
+    helper (self.tail n) n
 
   (find sub):
-    str.find-from 0 sub
+    self.find-from 0 sub
 
   # (% . a):
   #   pr "in %"
-  #   def i (str.find "%")
+  #   def i (self.find "%")
   #   if (not i):
-  #     . str
-  #     if ((str 0) = "%"):
-  #       (format (str 1) (a.car)) / ((str.tail 2) % . (a.cdr))
-  #       (str.head i) / ((str.tail i) % . a)
+  #     . self
+  #     if ((self 0) = "%"):
+  #       (format (self 1) (a.car)) / ((self.tail 2) % . (a.cdr))
+  #       (self.head i) / ((self.tail i) % . a)
 
   (%* a):
     def (format code val):
       to-str val
-    def l (str.length)
-    def i (str.find "%")
+    def l (self.length)
+    def i (self.find "%")
     if (is? i l):
-      . str
-      if ((str 0) = "%"):
-        (format (str 1) (a.car)) / ((str.tail 2).%* (a.cdr))
-        (str.head i) / ((str.tail i).%* a)
+      . self
+      if ((self 0) = "%"):
+        (format (self 1) (a.car)) / ((self.tail 2).%* (a.cdr))
+        (self.head i) / ((self.tail i).%* a)
 
   inline C % <<end
     regs[R_VM0] = rcv;
