@@ -1,0 +1,21 @@
+#!/home/kr/src/lx/lxi
+
+def x: sobj:
+  (foo):
+    . 7
+
+  (bar):
+    self.foo
+
+  (baz):
+    7 + 3
+    self.foo
+
+  (bay):
+    def x 1
+    self.foo
+
+pr x.foo
+pr x.bar
+pr x.baz
+pr x.bay

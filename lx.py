@@ -20,6 +20,7 @@ if_s = S('if')
 fn_s = S('fn')
 shfn_s = S(':shorthand-fn:')
 obj_s = S('obj')
+sobj_s = S('sobj')
 do_s = S('do')
 inline_s = S('inline')
 assign_s = S('::')
@@ -34,6 +35,7 @@ def compile(exp, target, linkage, cenv, pop_all_symbol):
     if tagged_list(exp, fn_s): return compile_obj(fn2obj(exp), target, linkage, cenv, pop_all_symbol)
     if tagged_list(exp, shfn_s): return compile_shfn(exp, target, linkage, cenv, pop_all_symbol)
     if tagged_list(exp, obj_s): return compile_obj(exp, target, linkage, cenv, pop_all_symbol)
+    if tagged_list(exp, sobj_s): return compile_sobj(exp, target, linkage, cenv, pop_all_symbol)
     if tagged_list(exp, do_s): return compile_do(exp, target, linkage, cenv, pop_all_symbol)
     if tagged_list(exp, inline_s): return compile_inline(exp)
     if tagged_list(exp, export_s): return compile(export2obj(exp), target, linkage, cenv, pop_all_symbol)
@@ -123,6 +125,8 @@ def compile_assignment(exp, target, linkage, cenv, pop_all_symbol):
     var = exp.cadr()
     get_value_code = compile(exp.caddr(), val_r, next_s, cenv, pop_all_symbol)
     addr = find_variable(var, cenv)
+    if var is self_s:
+        raise 'cannot assign to pseudo-variable %s' % (var,)
     if addr is not_found_s:
         return end_with_linkage(linkage,
                 preserving((), get_value_code,
@@ -172,7 +176,7 @@ def compile_sequence(seq, target, linkage, cenv, pop_all_symbol):
     if seq.nullp(): raise "value of null sequence is undefined"
     seq = expand_sequence(seq, cenv)
     if seq.cdr().nullp(): return compile(seq.car(), target, linkage, cenv, pop_all_symbol)
-    return preserving((env_r, continue_r),
+    return preserving((env_r, continue_r, proc_r),
         compile(seq.car(), target, next_s, cenv, pop_all_symbol),
         compile_sequence(seq.cdr(), target, linkage, cenv, pop_all_symbol), pop_all_symbol)
 
@@ -205,8 +209,41 @@ def compile_obj(exp, target, linkage, cenv, pop_all_symbol):
             tack_on_ir_seq(m_tabl_code, m_body_code)),
         after_obj)
 
+self_s = S('self')
+def compile_sobj(exp, target, linkage, cenv, pop_all_symbol):
+    obj_table = make_label('obj-table')
+    after_obj = make_label('after-obj')
+    m_tabl_code = make_ir_seq((), (),
+        obj_table,
+        DATUM(sobj_methods(exp).len()))
+    m_body_code = empty_instruction_seq()
+    for meth in sobj_methods(exp):
+        name = meth_name(meth)
+        #entry = make_label('method-entry')
+        entry = make_meth_entry(meth)
+        m_tabl_code = tack_on_ir_seq(m_tabl_code,
+                                     make_ir_seq((), (),
+                                        DATUM(name),
+                                        ADDR(entry)))
+        m_body_code = tack_on_ir_seq(m_body_code,
+                                     compile_smeth_body(meth, entry))
+    #meth_linkage = (linkage is next_s) if after_obj else linkage
+    meth_linkage = linkage
+    if linkage is next_s: meth_linkage = after_obj
+    return append_ir_seqs(
+        tack_on_ir_seq(
+            end_with_linkage(meth_linkage,
+                make_ir_seq((env_r,), (target, val_r),
+                    LOAD_ADDR(val_r, obj_table),
+                    MAKE_CLOSURE(target, env_r, val_r)), pop_all_symbol),
+            tack_on_ir_seq(m_tabl_code, m_body_code)),
+        after_obj)
+
 def exp_methods(exp):
     return exp.cddr()
+
+def sobj_methods(exp):
+    return exp.cdr()
 
 def is_inline_meth(meth):
     return tagged_list(meth, inline_s)
@@ -250,6 +287,22 @@ def compile_meth_body(meth, meth_entry, cenv):
         make_ir_seq((env_r, proc_r, argl_r), (env_r, tmp_r),
             meth_entry,
             CLOSURE_ENV(env_r, proc_r),
+            LOAD_IMM(tmp_r, formals),
+            EXTEND_ENVIRONMENT(env_r, env_r, argl_r, tmp_r)),
+        compile_sequence(body, val_r, return_s, cenv, pop_all_symbol))
+
+def compile_smeth_body(meth, meth_entry):
+    pop_all_symbol = make_label('pop-all')
+    if is_inline_meth(meth):
+        return compile_inline_meth_body(meth, meth_entry, nil)
+    formals = meth_params(meth)
+    body = meth_body(meth)
+    cenv = cons(formals, plist(plist(self_s)))
+    return append_ir_seqs(
+        make_ir_seq((env_r, proc_r, argl_r), (env_r, tmp_r),
+            meth_entry,
+            LIST(env_r, proc_r),
+            LIST(env_r, env_r),
             LOAD_IMM(tmp_r, formals),
             EXTEND_ENVIRONMENT(env_r, env_r, argl_r, tmp_r)),
         compile_sequence(body, val_r, return_s, cenv, pop_all_symbol))
@@ -684,6 +737,7 @@ def scan_out_xyz(exp):
     if tagged_list(exp, fn_s): return scan_out_xyz_obj(fn2obj(exp))
     if tagged_list(exp, shfn_s): return nil # impossible
     if tagged_list(exp, obj_s): return scan_out_xyz_obj(exp)
+    if tagged_list(exp, sobj_s): return scan_out_xyz_sobj(exp)
     if tagged_list(exp, do_s): return scan_out_xyz_do(exp)
     if tagged_list(exp, inline_s): return nil
     if pairp(exp): return scan_out_xyz_application(exp)
@@ -691,6 +745,9 @@ def scan_out_xyz(exp):
 
 def scan_out_xyz_obj(exp):
     return foldl(set_merge, nil, exp_methods(exp).map(scan_out_xyz_method))
+
+def scan_out_xyz_sobj(exp):
+    return foldl(set_merge, nil, sobj_methods(exp).map(scan_out_xyz_method))
 
 def memq(x, l):
     if l.nullp(): return False
