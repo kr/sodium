@@ -53,3 +53,5 @@ pr "3"
 pr (x .find "lo")
 pr ""
 
+pr 7.str
+pr ("%d".% 7)

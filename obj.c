@@ -47,17 +47,23 @@ closure_env(datum d)
     return (datum) *d;
 }
 
+static method_table
+obj_method_table(datum d)
+{
+    if ((d == nil) || intp(d) || symbolp(d)) {
+        d = get_primitive_surrogate(d);
+    }
+
+    return (method_table) d[-1];
+}
+
 uint *
 closure_method(datum d, datum name)
 {
     int i, n;
     method_table table;
 
-    if ((d == nil) || intp(d) || symbolp(d)) {
-        d = get_primitive_surrogate(d);
-    }
-
-    table = (method_table) d[-1];
+    table = obj_method_table(d);
 
     n = datum2int(table->size);
     for (i = 0; i < n; ++i) {
@@ -88,12 +94,7 @@ closure_has_method(datum d, datum name)
 int
 closures_same_type(datum a, datum b)
 {
-    datum surrogate;
-
-    if ((surrogate = get_primitive_surrogate(a))) a = surrogate;
-    if ((surrogate = get_primitive_surrogate(b))) b = surrogate;
-
-    return cdr(a) == cdr(b);
+    return obj_method_table(a) == obj_method_table(b);
 }
 
 datum
