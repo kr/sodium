@@ -118,6 +118,8 @@ class make_ir_seq:
         print >>fd, '#include "st.h"'
         print >>fd, '#include "vm.h"'
         print >>fd, '#include "lxc.h"'
+        print >>fd
+        print >>fd, 'extern struct lxc_module lxc_module_%s;' % (cname,)
 
         # inline code
         for c_def in self.c_defs:
