@@ -191,13 +191,9 @@ gc(int c, ...)
     relocate((datum) &stack);
     relocate((datum) &genv);
     relocate((datum) &int_surrogate);
-    relocate((datum) &str_mtab);
     relocate((datum) &bytes_surrogate);
-    relocate((datum) &bytes_mtab);
     relocate((datum) &pair_surrogate);
-    relocate((datum) &pair_mtab);
     relocate((datum) &array_surrogate);
-    relocate((datum) &array_mtab);
     relocate((datum) &nil_surrogate);
     relocate((datum) &symbol_surrogate);
     relocate((datum) &fz_list);
