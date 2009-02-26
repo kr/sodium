@@ -137,19 +137,25 @@ def str: sobj:
   #   def i (self.find "%")
   #   if (not i):
   #     . self
+  #   else:
   #     if ((self 0) = "%"):
   #       (format (self 1) (a.car)) / ((self.tail 2) % . (a.cdr))
+  #     else:
   #       (self.head i) / ((self.tail i) % . a)
 
   (%* a):
     def (format code val):
-      to-str val
+      if (inspect.same-type? val ""): return val
+      format code val.str
+
     def l (self.length)
     def i (self.find "%")
     if (is? i l):
       . self
+    else:
       if ((self 0) = "%"):
         (format (self 1) (a.car)) / ((self.tail 2).%* (a.cdr))
+      else:
         (self.head i) / ((self.tail i).%* a)
 
   inline C % <<end
@@ -169,11 +175,6 @@ def install-str ():
     str_surrogate = n_sur;
     return ok_sym;
   end
-
-def (to-str x):
-  if (inspect.same-type? x str):
-    . x
-    to-str (x.str)
 
 intern-syms
 install-str str
