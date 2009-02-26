@@ -14,7 +14,7 @@ datum str_mtab;
 void
 str_init()
 {
-    str_mtab = find_builtin_module("str") + 27;
+    str_mtab = (datum) lxc_module_str.instrs + lxc_module_str.label_offsets[4];
 }
 
 datum
