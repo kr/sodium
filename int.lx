@@ -86,6 +86,7 @@ def int ():
     def table "0123456789"
     if (int < 10):
       table int
+    else:
       (upper.str) / (table lower)
 
 def install-int ():
