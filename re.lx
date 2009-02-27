@@ -3,6 +3,8 @@ inline C <<end
 #include <string.h>
 #include <pcre.h>
 
+#include "pbox.h"
+
 #define OVECCOUNT 30
 
 int ovector[OVECCOUNT];
@@ -17,6 +19,21 @@ def re ():
   (run pat) (re.make pat (re.dotall))
 
   (make pat opts):
+    def compile: obj ():
+      inline C (run) <<end
+        pcre *re;
+        const char *error;
+        int erroffset, opts;
+
+        opts = datum2int(n_opts);
+        re = pcre_compile((char *) n_pat, opts | PCRE_UTF8, &error, &erroffset, NULL);
+        if (re == NULL) return nil;
+
+        return make_pbox(re, free);
+      end
+
+    def compiled (compile)
+
     def r ():
       (run subj) (r.match subj (r.runopts))
       (find subj) (r.match subj (r.findopts))
@@ -48,18 +65,7 @@ def re ():
         return make_str_init(res_size, res);
       end
 
-      inline C (prepare) <<end
-        pcre *re;
-        const char *error;
-        int erroffset, opts;
 
-        opts = datum2int(n_opts);
-        re = pcre_compile((char *) n_pat, opts | PCRE_UTF8, &error, &erroffset, NULL);
-        if (re == NULL) return nil;
-
-        return grow_closure(&rcv, 1, free, re);
-      end
-
-    r.prepare
+    . r
 
 . re

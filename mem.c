@@ -252,7 +252,7 @@ gc(int c, ...)
             ((datum *) fzp)[2] = (datum) *p;
             fz_prev = (datum *) (fzp + 2); /* update the prev pointer */
         } else {
-            ((na_fn_free) fzp[0])((datum) (DATUM_LEN(*(p - 2)) > 2 ? p[2] : 0));
+            ((na_fn_free) fzp[0])(p);
             *fz_prev = (datum) fzp[1]; /* remove fzp from the list */
         }
     }
@@ -327,31 +327,17 @@ become(datum *a, datum *b, int keep_b)
     gc(2, a, b);
 }
 
-datum
-grow_closure(datum *op, uint grow_len, na_fn_free fn, void *data)
+/* Note: *x must be the only pointer to x */
+void
+install_fz(datum *x, na_fn_free fn)
 {
-    datum d, fz;
-    int new_len, ex = fn ? 2 + FZ_LEN : 0;
+    datum fz;
 
-    new_len = DATUM_LEN(*(*op - 2)) + grow_len;
-    regs[R_GC0] = *op;
-    d = dalloc(DATUM_TYPE_CLOSURE, new_len + ex,
-            (datum) (*op)[-1], (datum) **op, (datum) (*op)[1]);
-    *op = regs[R_GC0];
+    regs[R_GC0] = *x;
+    fz = dalloc(DATUM_TYPE_FZ, 3, nil, (datum) fn, fz_list);
+    fz[2] = ((size_t) (*x = regs[R_GC0]));
     regs[R_GC0] = nil;
-    if (grow_len) d[2] = (size_t) data;
-    if (fn) {
-        *(d - 2) = DATUM_INFO(DATUM_TYPE_CLOSURE, new_len);
-        fz = d + new_len + 2;
-        fz[-2] = DATUM_INFO(DATUM_TYPE_FZ, FZ_LEN);
-        fz[-1] = nil; /* finalizer_mtab */
-        fz[0] = (size_t) fn;
-        fz[1] = (size_t) fz_list;
-        fz[2] = (size_t) d; fz_list = fz;
-    }
-
-    become(op, &d, 1);
-    return d;
+    fz_list = fz;
 }
 
 datum
@@ -367,9 +353,9 @@ make_bytes(uint size)
 }
 
 datum
-make_str(size_t size)
+make_opaque(size_t size, datum mtab)
 {
-    return dalloc(DATUM_TYPE_STR, size, str_mtab, nil, nil);
+    return dalloc(DATUM_TYPE_STR, size, mtab, nil, nil);
 }
 
 char *
@@ -426,12 +412,6 @@ bytesp(datum x)
 {
     return in_chunk_range(x) &&
         (((datum) x[-1]) == bytes_mtab) && (x != bytes_surrogate);
-}
-
-int
-strp(datum x)
-{
-    return (x != nil && !(((size_t)x)&1) && ((datum) x[-1]) == str_mtab);
 }
 
 int

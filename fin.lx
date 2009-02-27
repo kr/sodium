@@ -1,5 +1,6 @@
 inline C <<end
 #include "prim.h"
+#include "pbox.h"
 
 static void
 fin_test_fn(void *i)
@@ -14,11 +15,12 @@ fin_test_fn(void *i)
 end
 
 def (f):
-  def x ():
-    inline C prepare <<end
-      return grow_closure(&rcv, 1, (na_fn_free) fin_test_fn, (void *) 3);
+  def make-box: obj ():
+    inline C (run) <<end
+      return make_pbox((void *) 3, fin_test_fn);
     end
-
-  x.prepare
+  make-box
+  #def pbox (make-box)
+  #obj ()
 
 export f

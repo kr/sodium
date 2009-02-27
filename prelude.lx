@@ -15,6 +15,7 @@ module 'pair
 module 'array
 module 'nil
 module 'symbol
+module 'pbox
 
 def pr ():
   inline C (run x) <<end

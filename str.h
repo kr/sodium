@@ -8,9 +8,9 @@ typedef struct str {
     char data[];
 } *str;
 
-extern datum str_mtab;
-
 void str_init();
+
+int strp(datum x);
 
 datum make_str_init(size_t size, const char *bytes);
 
