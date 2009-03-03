@@ -232,3 +232,8 @@ def parse(tokens):
 
 def read(s, name='<string>'):
     return parse(T.lex(s, name))
+
+if __name__ == '__main__':
+    import sys
+    s = open(sys.argv[1]).read()
+    print read(s, sys.argv[1])
