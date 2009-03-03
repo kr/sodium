@@ -52,7 +52,7 @@ class Lexer:
                         if (not best) or len(lexeme) > len(best[1]):
                             best = (name, lexeme)
 
-                if not best: raise 'lexical error'
+                if not best: raise 'lexical error at %s:%d:%d' % (fname, self.line, self.col)
                 return best
 
             def update_line_count(lexeme):
