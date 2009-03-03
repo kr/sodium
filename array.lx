@@ -72,14 +72,6 @@ def array-instance: sobj:
   (assq name):
     ? (is? (self.car.car) name) (self.car) (self.cdr.assq name)
 
-def install-array ():
-  inline C (run sur) <<end
-    array_surrogate = n_sur;
-    return ok_sym;
-  end
-
-install-array array
-
 def array: sobj:
   inline C (make size) <<end
     if (!intp(n_size)) die1("array.make -- not an int", n_size);

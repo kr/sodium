@@ -192,7 +192,6 @@ gc(int c, ...)
     relocate((datum) &int_surrogate);
     relocate((datum) &bytes_surrogate);
     relocate((datum) &pair_surrogate);
-    relocate((datum) &array_surrogate);
     relocate((datum) &symbol_surrogate);
     relocate((datum) &fz_list);
     va_start(ap, c);
@@ -389,8 +388,7 @@ pairp(datum x)
 int
 arrayp(datum x)
 {
-    return in_chunk_range(x) &&
-        (((datum) x[-1]) == array_mtab) && (x != array_surrogate);
+    return in_chunk_range(x) && (((datum) x[-1]) == array_mtab);
 }
 
 int

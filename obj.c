@@ -7,7 +7,7 @@
 #include "vm.h"
 
 datum int_surrogate, bytes_surrogate, pair_surrogate,
-      array_surrogate, symbol_surrogate;
+      symbol_surrogate;
 
 static datum
 get_primitive_surrogate(datum d)
@@ -16,7 +16,6 @@ get_primitive_surrogate(datum d)
     if (symbolp(d)) return symbol_surrogate;
 
     if (pairp(d)) return pair_surrogate;
-    if (arrayp(d)) return array_surrogate;
     if (bytesp(d)) return bytes_surrogate;
     return 0;
 }
