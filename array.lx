@@ -2,12 +2,27 @@
 inline C <<end
 datum array_mtab;
 
+#define CLIP_LEN(l) ((l) & 0x0fffffff)
+
 void
 array_init()
 {
     array_mtab = (datum) lxc_module_array.instrs +
                          lxc_module_array.label_offsets[4];
 }
+
+datum
+make_array(uint len)
+{
+    datum p;
+
+    if (len < 1) return nil;
+    if (len != CLIP_LEN(len)) die("make_array -- too big");
+    p = make_record(len, array_mtab, nil, nil);
+    for (;--len;) p[len] = (size_t) nil;
+    return p;
+}
+
 end
 
 def array ():
@@ -57,4 +72,10 @@ def install-array ():
 
 install-array array
 
-. '()
+def make-array: sobj:
+  inline C (run size) <<end
+    if (!intp(n_size)) die1("make-array -- not an int", n_size);
+    return make_array(datum2int(n_size));
+  end
+
+return make-array

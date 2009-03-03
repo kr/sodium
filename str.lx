@@ -15,6 +15,8 @@ void
 str_init()
 {
     str_mtab = (datum) lxc_module_str.instrs + lxc_module_str.label_offsets[4];
+    percent_star_sym = intern("%*");
+    load_lxc_module(&lxc_module_str);
 }
 
 int
@@ -169,13 +171,5 @@ def str: sobj:
     args = cons(args, nil);
     return call(regs[R_VM0], percent_star_sym, args);
   end
-
-def intern-syms ():
-  inline C run <<end
-    percent_star_sym = intern("%*");
-    return ok_sym;
-  end
-
-intern-syms
 
 . '()

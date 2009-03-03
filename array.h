@@ -7,4 +7,6 @@ extern datum array_mtab;
 
 void array_init();
 
+datum make_array(uint len);
+
 #endif /*array_h*/

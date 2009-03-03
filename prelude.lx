@@ -10,9 +10,8 @@ def module (): inline C (run name) "return load_builtin_module(n_name);"
 # This must be done before using any methods on these types of objects.
 module 'int
 module 'bytes
-module 'str
 module 'pair
-module 'array
+import array
 module 'nil
 module 'symbol
 module 'pbox
@@ -139,11 +138,7 @@ def (make-dict):
       . '()
   . dict
 
-def make-array ():
-  inline C (run size) <<end
-    if (!intp(n_size)) die1("make-array -- not an int", n_size);
-    return make_array(datum2int(n_size));
-  end
+def make-array array
 
 import (file-io as open)
 

@@ -684,7 +684,7 @@ load_module_file(const char *name)
     return insts;
 }
 
-static uint *
+uint *
 load_lxc_module(lxc_module mod)
 {
     static_datums_cap += mod->static_datums_count;

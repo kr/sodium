@@ -24,7 +24,6 @@ typedef struct method_table {
 } *method_table;
 
 datum cons(datum x, datum y);
-datum make_array(uint len);
 datum make_bytes(uint len);
 datum make_closure(datum env, uint *table);
 
@@ -35,6 +34,7 @@ size_t datum_size(datum d);
 
 
 datum make_opaque(size_t size, datum mtab);
+datum make_record(size_t len, datum mtab, datum a, datum b);
 
 
 datum array_get(datum arr, uint index);

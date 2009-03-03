@@ -36,7 +36,6 @@ init_mem(void)
     free_index = 0;
 }
 
-#define CLIP_LEN(l) ((l) & 0x0fffffff)
 #define DATUM_INFO(t,l) (((l) << 4) | ((t) & 0xf))
 #define DATUM_TYPE(i) ((i) & 0xf)
 #define DATUM_LEN(i) ((i) >> 4)
@@ -305,18 +304,6 @@ cons(datum x, datum y)
     return dalloc(DATUM_TYPE_PAIR, 2, pair_mtab, x, y);
 }
 
-datum
-make_array(uint len)
-{
-    datum p;
-
-    if (len < 1) return nil;
-    if (len != CLIP_LEN(len)) die("make_array -- too big");
-    p = dalloc(DATUM_TYPE_ARRAY, len, array_mtab, nil, nil);
-    for (;--len;) p[len] = (size_t) nil;
-    return p;
-}
-
 void
 become(datum *a, datum *b, int keep_b)
 {
@@ -355,6 +342,12 @@ datum
 make_opaque(size_t size, datum mtab)
 {
     return dalloc(DATUM_TYPE_STR, size, mtab, nil, nil);
+}
+
+datum
+make_record(size_t len, datum mtab, datum a, datum b)
+{
+    return dalloc(DATUM_TYPE_ARRAY, len, mtab, a, b);
 }
 
 char *

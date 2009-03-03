@@ -2,6 +2,7 @@
 #define vm_h
 
 #include <stdlib.h>
+#include "lxc.h"
 #include "mem.h"
 
 #define OP_NOP 0x00
@@ -71,6 +72,8 @@ void define(datum env, datum val, datum name);
 
 datum lookup(datum env, datum name);
 datum load_builtin_module(datum name);
+uint *load_lxc_module(lxc_module mod);
+
 void start_body(uint *start_addr);
 uint *load_module_file(const char *name);
 datum lexical_lookup(datum env, uint level, uint index);
