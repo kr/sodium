@@ -101,7 +101,7 @@ prfmt(int fd, char *fmt, ...)
 void
 prx(datum d)
 {
-    if (!d) {
+    if (d == nil) {
         write(1, "()", 2);
     } else if (intp(d)) {
         int i = datum2int(d);

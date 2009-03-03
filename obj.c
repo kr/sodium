@@ -19,7 +19,7 @@ get_primitive_surrogate(datum d)
     if (pairp(d)) return pair_surrogate;
     if (arrayp(d)) return array_surrogate;
     if (bytesp(d)) return bytes_surrogate;
-    return nil;
+    return 0;
 }
 
 static datum

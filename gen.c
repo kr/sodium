@@ -13,7 +13,7 @@
 int
 truep(datum d)
 {
-    return !!d;
+    return d != nil;
 }
 
 void
