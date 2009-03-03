@@ -25,11 +25,11 @@ make_array(uint len)
 
 end
 
-def array: sobj:
+def array-instance: sobj:
   inline C (get i) <<end
     int i;
 
-    if (!intp(n_i)) die1("array.get -- not an int", n_i);
+    if (!intp(n_i)) die1("array#get -- not an int", n_i);
 
     i = datum2int(n_i);
     return array_get(rcv, i);
@@ -38,7 +38,7 @@ def array: sobj:
   inline C (put! i v) <<end
     int i;
 
-    if (!intp(n_i)) die1("array.put! -- not an int", n_i);
+    if (!intp(n_i)) die1("array#put! -- not an int", n_i);
 
     i = datum2int(n_i);
     array_put(rcv, i, n_v);
@@ -80,10 +80,10 @@ def install-array ():
 
 install-array array
 
-def make-array: sobj:
+def array: sobj:
   inline C (make size) <<end
-    if (!intp(n_size)) die1("make-array -- not an int", n_size);
+    if (!intp(n_size)) die1("array.make -- not an int", n_size);
     return make_array(datum2int(n_size));
   end
 
-return make-array
+return array
