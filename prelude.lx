@@ -137,8 +137,6 @@ def (make-dict):
       . '()
   . dict
 
-def make-array array
-
 import (file-io as open)
 
 def (make-queue):

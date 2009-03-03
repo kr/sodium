@@ -1,6 +1,6 @@
 #!/home/kr/src/lx/lxi
 
-def d (make-array 5)
+def d (array.make 5)
 
 d.put! 0 42
 pr (d.get 0)

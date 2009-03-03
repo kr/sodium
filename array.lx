@@ -73,7 +73,7 @@ def install-array ():
 install-array array
 
 def make-array: sobj:
-  inline C (run size) <<end
+  inline C (make size) <<end
     if (!intp(n_size)) die1("make-array -- not an int", n_size);
     return make_array(datum2int(n_size));
   end
