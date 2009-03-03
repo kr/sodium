@@ -11,7 +11,6 @@ def module (): inline C (run name) "return load_builtin_module(n_name);"
 module 'int
 module 'bytes
 module 'pair
-import array
 module 'nil
 module 'symbol
 module 'pbox
@@ -28,17 +27,12 @@ def prx ():
     return ok_sym;
   end
 
-# Now load the real module module so we can load any module.
-module :: (module 'module)
-
 def π 3.14159
 
 def false '()
 def true 1
 
 def (not x) (? x false true)
-
-def (make-blank-module) (obj ())
 
 def become ():
   inline C (run x y keep_y) <<end
@@ -90,6 +84,11 @@ def cons ():
   inline C (run x y) <<end
     return cons(n_x, n_y);
   end
+
+# Now load the real module module so we can load any module.
+module :: (module 'module)
+
+import array
 
 def (map f a):
   if (is? a '()): return a

@@ -17,6 +17,8 @@ def (load-module name):
   if x: return x
   compile-module name
 
+def (make-blank-module) (obj ())
+
 def module ():
   (run name):
     def ent (*modules*.assq name)
