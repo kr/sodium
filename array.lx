@@ -45,15 +45,23 @@ def array ():
     return ok_sym;
   end
 
+  inline C (length) <<end
+    return int2datum(datum_size(rcv));
+  end
+
   (filter f):
     def rest ((array.cdr).filter f)
     ? (f (array.car)):
       cons (array.car) rest
       . rest
 
-  (run f):
-    f (array.car)
-    (array.cdr) f
+  (each f):
+    def (iter i):
+      if (i > array.length): return 'ok
+      if (i = array.length): return 'ok
+      f (array.get i)
+      iter (i + 1)
+    iter 0
     . 'ok
 
   (= p):
