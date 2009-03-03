@@ -388,7 +388,7 @@ pairp(datum x)
 int
 arrayp(datum x)
 {
-    return in_chunk_range(x) && (((datum) x[-1]) == array_mtab);
+    return !(((size_t) x) & 1) && (((datum) x[-1]) == array_mtab);
 }
 
 int
