@@ -401,12 +401,6 @@ arrayp(datum x)
 }
 
 int
-closurep(datum x)
-{
-    return !(((size_t) x) & 1) && in_chunk_range(x);
-}
-
-int
 bytesp(datum x)
 {
     return in_chunk_range(x) &&

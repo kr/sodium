@@ -122,8 +122,6 @@ prx(datum d)
         write(1, "(array ", 7);
         pr_array(d);
         write(1, ")", 1);
-    } else if (closurep(d)) {
-        prfmt(1, "<closure %p>", d);
     } else if (broken_heartp(d)) {
         d = (datum) *d;
         prfmt(1, "<broken-heart %p>", d);

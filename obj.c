@@ -41,7 +41,6 @@ closure_env(datum d)
         return replace_1st_of_1st(env, d);
     }
 
-    if (!closurep(d)) die1("not a closure", d);
     return (datum) *d;
 }
 

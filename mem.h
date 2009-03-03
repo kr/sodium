@@ -66,7 +66,6 @@ void init_mem(void);
 /*bool*/
 int pairp(datum x);
 int arrayp(datum x);
-int closurep(datum x);
 int bytesp(datum x);
 int broken_heartp(datum x);
 
