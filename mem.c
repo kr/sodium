@@ -356,39 +356,11 @@ bytes_contents(datum bytes)
     return (char *) bytes;
 }
 
-datum
-array_get(datum arr, uint index)
-{
-    if (!arrayp(arr)) die1("array_get -- not an array", arr);
-    if (index >= DATUM_LEN(*(arr - 2))) die("array_get -- index out of bounds");
-    return (datum) arr[index];
-}
-
-datum
-array_put(datum arr, uint index, datum val)
-{
-    if (!arrayp(arr)) die1("array_put -- not an array", arr);
-    if (index >= DATUM_LEN(*(arr - 2))) die("array_put -- index out of bounds");
-    return (datum) (arr[index] = (size_t) val);
-}
-
-uint
-array_len(datum arr)
-{
-    return DATUM_LEN(*(arr - 2));
-}
-
 int
 pairp(datum x)
 {
     return in_chunk_range(x) &&
         (((datum) x[-1]) == pair_mtab) && (x != pair_surrogate);
-}
-
-int
-arrayp(datum x)
-{
-    return !(((size_t) x) & 1) && (((datum) x[-1]) == array_mtab);
 }
 
 int

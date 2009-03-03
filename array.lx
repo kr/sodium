@@ -1,5 +1,7 @@
 
 inline C <<end
+#include "array.h"
+
 datum array_mtab;
 
 #define CLIP_LEN(l) ((l) & 0x0fffffff)
@@ -21,6 +23,34 @@ make_array(uint len)
     p = make_record(len, array_mtab, nil, nil);
     for (;--len;) p[len] = (size_t) nil;
     return p;
+}
+
+datum
+array_get(datum arr, uint index)
+{
+    if (!arrayp(arr)) die1("array_get -- not an array", arr);
+    if (index >= datum_size(arr)) die("array_get -- index out of bounds");
+    return (datum) arr[index];
+}
+
+datum
+array_put(datum arr, uint index, datum val)
+{
+    if (!arrayp(arr)) die1("array_put -- not an array", arr);
+    if (index >= datum_size(arr)) die("array_put -- index out of bounds");
+    return (datum) (arr[index] = (size_t) val);
+}
+
+uint
+array_len(datum arr)
+{
+    return datum_size(arr);
+}
+
+int
+arrayp(datum x)
+{
+    return !(((size_t) x) & 1) && (((datum) x[-1]) == array_mtab);
 }
 
 end

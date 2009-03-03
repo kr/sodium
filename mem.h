@@ -37,9 +37,6 @@ datum make_opaque(size_t size, datum mtab);
 datum make_record(size_t len, datum mtab, datum a, datum b);
 
 
-datum array_get(datum arr, uint index);
-datum array_put(datum arr, uint index, datum val);
-uint array_len(datum arr);
 
 char *bytes_contents(datum bytes);
 
@@ -65,7 +62,6 @@ void init_mem(void);
 
 /*bool*/
 int pairp(datum x);
-int arrayp(datum x);
 int bytesp(datum x);
 int broken_heartp(datum x);
 

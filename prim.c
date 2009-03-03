@@ -4,6 +4,7 @@
 #include "gen.h"
 #include "prim.h"
 #include "obj.h"
+#include "array.h"
 #include "st.h"
 #include "vm.h"
 
