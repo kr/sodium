@@ -1,18 +1,24 @@
+inline C <<end
+struct nil_struct nil_s;
 
-def nil ():
+void
+nil_init()
+{
+    datum t, mtab;
+
+    mtab = (datum) lxc_module_nil.instrs + lxc_module_nil.label_offsets[4];
+    t = make_opaque(0, mtab);
+    nil[-2] = t[-2];
+    nil[-1] = t[-1];
+}
+end
+
+def nil: sobj:
   (str) "()"
   (filter f) '()
   (run f) 'ok
   (schedule f) 'ok
   (= x) (is? x nil)
   (assq name) '()
-
-def install-nil ():
-  inline C (run sur) <<end
-    nil_surrogate = n_sur;
-    return ok_sym;
-  end
-
-install-nil nil
 
 . '()

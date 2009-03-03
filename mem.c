@@ -194,7 +194,6 @@ gc(int c, ...)
     relocate((datum) &bytes_surrogate);
     relocate((datum) &pair_surrogate);
     relocate((datum) &array_surrogate);
-    relocate((datum) &nil_surrogate);
     relocate((datum) &symbol_surrogate);
     relocate((datum) &fz_list);
     va_start(ap, c);
@@ -314,7 +313,7 @@ make_array(uint len)
     if (len < 1) return nil;
     if (len != CLIP_LEN(len)) die("make_array -- too big");
     p = dalloc(DATUM_TYPE_ARRAY, len, array_mtab, nil, nil);
-    for (;--len;) p[len] = nil;
+    for (;--len;) p[len] = (size_t) nil;
     return p;
 }
 

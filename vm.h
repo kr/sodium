@@ -79,6 +79,15 @@ datum extend_environment(datum env, datum argl, datum formals);
 datum call(datum o, datum m, datum a);
 datum report_error(datum args);
 
+struct nil_struct {
+    datum desc;
+    datum mtab;
+    void *payload[0];
+};
+
+extern struct nil_struct nil_s;
+#define nil ((datum) &nil_s.payload)
+
 extern datum regs[REG_COUNT];
 extern datum stack;
 extern datum genv;

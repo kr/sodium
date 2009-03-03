@@ -7,12 +7,11 @@
 #include "vm.h"
 
 datum int_surrogate, bytes_surrogate, pair_surrogate,
-      array_surrogate, nil_surrogate, symbol_surrogate;
+      array_surrogate, symbol_surrogate;
 
 static datum
 get_primitive_surrogate(datum d)
 {
-    if (d == nil) return nil_surrogate;
     if (intp(d)) return int_surrogate;
     if (symbolp(d)) return symbol_surrogate;
 
@@ -49,7 +48,7 @@ closure_env(datum d)
 static method_table
 obj_method_table(datum d)
 {
-    if ((d == nil) || intp(d) || symbolp(d)) {
+    if (intp(d) || symbolp(d)) {
         d = get_primitive_surrogate(d);
     }
 
@@ -77,7 +76,7 @@ closure_has_method(datum d, datum name)
     int i, n;
     method_table table;
 
-    if ((d == nil) || intp(d) || symbolp(d)) {
+    if (intp(d) || symbolp(d)) {
         d = get_primitive_surrogate(d);
     }
 
@@ -103,7 +102,7 @@ closure_methods(datum d)
     method_table table;
     datum methods = nil;
 
-    if ((d == nil) || intp(d) || symbolp(d)) {
+    if (intp(d) || symbolp(d)) {
         d = get_primitive_surrogate(d);
     }
 

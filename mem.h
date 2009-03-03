@@ -72,8 +72,6 @@ int broken_heartp(datum x);
 
 /*bool*/
 
-#define nil (0)
-
 void become(datum *a, datum *b, int keep_b);
 
 #endif /*mem_h*/

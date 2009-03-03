@@ -19,6 +19,7 @@
 #include "array.h"
 #include "bytes.h"
 #include "str.h"
+#include "nil.h"
 #include "config.h"
 #include "module-index.h"
 
@@ -30,6 +31,7 @@ size_t static_datums_cap = 0, static_datums_fill = 0, static_datums_base;
 uint quit_inst[1] = {0x30000000};
 
 datum genv, regs[REG_COUNT];
+
 datum stack = nil;
 
 #define MAX_INSTR_SETS 50
@@ -779,6 +781,7 @@ main(int argc, char **argv)
     if (argc != 2) usage();
 
     init_mem();
+    nil_init();
     pair_init();
     array_init();
     bytes_init();
