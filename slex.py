@@ -58,8 +58,10 @@ class Lexer:
             def update_line_count(lexeme):
                 nlc = lexeme.count('\n')
                 self.line += nlc
-                if nlc == 0: self.col = 1
-                self.col += len(lexeme) - lexeme.rfind('\n')
+                if nlc == 0:
+                    self.col += len(lexeme) - lexeme.rfind('\n')
+                else:
+                    self.col = 1
 
             def decorate(toks, p):
                 return [(n,l,p) for n,l in toks]
