@@ -5,7 +5,8 @@ datum pair_mtab;
 void
 pair_init()
 {
-    pair_mtab = find_builtin_module("pair") + 27;
+    pair_mtab = (datum) lxc_module_pair.instrs +
+                        lxc_module_pair.label_offsets[4];
 }
 end
 

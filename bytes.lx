@@ -12,7 +12,8 @@ datum bytes_mtab;
 void
 bytes_init()
 {
-    bytes_mtab = find_builtin_module("bytes") + 27;
+    bytes_mtab = (datum) lxc_module_bytes.instrs +
+                         lxc_module_bytes.label_offsets[4];
 }
 
 datum

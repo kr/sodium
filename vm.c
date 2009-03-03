@@ -704,20 +704,6 @@ load_lxc_module(lxc_module mod)
     return mod->instrs;
 }
 
-datum
-find_builtin_module(const char *mname)
-{
-    int i;
-
-    for (i = 0; i < lxc_modules_count; i++) {
-        if (strcmp(lxc_modules[i]->name, mname) == 0) {
-            return lxc_modules[i]->instrs;
-        }
-    }
-
-    return 0;
-}
-
 static uint *
 find_and_link_builtin_module(const char *mname)
 {
