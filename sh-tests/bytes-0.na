@@ -3,3 +3,5 @@ def x (bytes 65 66 12)
 pr (x 1)
 pr (x 2)
 pr (x 0)
+
+pr (x.tail 1)

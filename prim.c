@@ -100,6 +100,18 @@ prfmt(int fd, char *fmt, ...)
     va_end(ap);
 }
 
+static void
+pr_bytes(datum d)
+{
+    char *b = (char *) d;
+    uint i, len;
+    prfmt(1, "%d", b[0]);
+    len = datum_size(d);
+    for (i = 1; i < len; i++) {
+        prfmt(1, " %d", b[i]);
+    }
+}
+
 void
 prx(datum d)
 {
@@ -115,7 +127,9 @@ prx(datum d)
     } else if (strp(d)) {
         write(1, d, datum_size(d));
     } else if (bytesp(d)) {
-        write(1, d, datum_size(d));
+        write(1, "(bytes ", 7);
+        pr_bytes(d);
+        write(1, ")", 1);
     } else if (pairp(d)) {
         write(1, "(", 1);
         pr_pair(d, 0);
