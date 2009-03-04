@@ -25,13 +25,12 @@ datum2pair(datum d)
 int
 pairp(datum x)
 {
-    return (!(((size_t) x) & 1)) &&
-        (((datum) x[-1]) == pair_mtab) && (x != pair_surrogate);
+    return (!(((size_t) x) & 1)) && (((datum) x[-1]) == pair_mtab);
 }
 
 end
 
-def pair ():
+def pair: sobj:
   inline C (set-cdr! x) <<end
     rcv[1] = (size_t) n_x;
     return ok_sym;
@@ -46,30 +45,22 @@ def pair ():
   end
 
   (filter f):
-    def rest ((pair.cdr).filter f)
-    ? (f (pair.car)):
-      cons (pair.car) rest
+    def rest ((self.cdr).filter f)
+    ? (f (self.car)):
+      cons (self.car) rest
       . rest
 
   (run f):
-    f (pair.car)
-    (pair.cdr) f
+    f (self.car)
+    (self.cdr) f
     . 'ok
 
   (= p):
-    ? ((pair.car) = (p.car)):
-      ? ((pair.cdr) = (p.cdr)) true false
+    ? ((self.car) = (p.car)):
+      ? ((self.cdr) = (p.cdr)) true false
       . false
 
   (assq name):
-    ? (is? (pair.car.car) name) (pair.car) (pair.cdr.assq name)
-
-def init ():
-  inline C (run sur) <<end
-    pair_surrogate = n_sur;
-    return ok_sym;
-  end
-
-init pair
+    ? (is? (self.car.car) name) (self.car) (self.cdr.assq name)
 
 . '()

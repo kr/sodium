@@ -187,7 +187,6 @@ gc(int c, ...)
     relocate((datum) &stack);
     relocate((datum) &genv);
     relocate((datum) &int_surrogate);
-    relocate((datum) &pair_surrogate);
     relocate((datum) &symbol_surrogate);
     relocate((datum) &fz_list);
     va_start(ap, c);

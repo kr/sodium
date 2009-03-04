@@ -6,7 +6,7 @@
 
 #include "vm.h"
 
-datum int_surrogate, pair_surrogate, symbol_surrogate;
+datum int_surrogate, symbol_surrogate;
 
 static datum
 get_primitive_surrogate(datum d)
@@ -14,7 +14,6 @@ get_primitive_surrogate(datum d)
     if (intp(d)) return int_surrogate;
     if (symbolp(d)) return symbol_surrogate;
 
-    if (pairp(d)) return pair_surrogate;
     return 0;
 }
 
