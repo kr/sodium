@@ -66,6 +66,10 @@ class cons:
             return '%s%r%s' % (sp, self.a, self.d.bare_repr(' '))
         return '%s%r . %r' % (sp, self.a, self.d)
 
+    def __eq__(a, b):
+        if type(b) != type(a): return False
+        return a.car() == b.car() and a.cdr() == b.cdr()
+
 setattr(cons, 'set-car!', cons.set_car_)
 setattr(cons, 'set-cdr!', cons.set_cdr_)
 
@@ -112,6 +116,9 @@ class nilcons(cons):
         return '()'
     def bare_repr(self, ign):
         return ''
+
+    def __eq__(a, b):
+        return a is nil and b is nil
 
 nil = nilcons(None, None)
 

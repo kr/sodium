@@ -188,7 +188,7 @@ def compile_obj(exp, target, linkage, cenv, pop_all_symbol):
         DATUM(exp_methods(exp).len()))
     m_body_code = empty_instruction_seq()
     for meth in exp_methods(exp):
-        name = meth_name(meth)
+        name = S(meth_name(meth))
         #entry = make_label('method-entry')
         entry = make_meth_entry(meth)
         m_tabl_code = tack_on_ir_seq(m_tabl_code,
@@ -218,7 +218,7 @@ def compile_sobj(exp, target, linkage, cenv, pop_all_symbol):
         DATUM(sobj_methods(exp).len()))
     m_body_code = empty_instruction_seq()
     for meth in sobj_methods(exp):
-        name = meth_name(meth)
+        name = S(meth_name(meth))
         #entry = make_label('method-entry')
         entry = make_meth_entry(meth)
         m_tabl_code = tack_on_ir_seq(m_tabl_code,
@@ -394,12 +394,12 @@ def message_send(exp):
 def call_app(exp):
     if exp.len() < 2: return False
     m = exp.cadr()
-    return symbolp(m) and (m[0] == '.' or str(m) in PUNC)
+    return (type(m) is Mess) and (m.name[0] != ':')
 
 def send_app(exp):
     if exp.len() < 2: return False
     m = exp.cadr()
-    return symbolp(m) and (m[0] == ':' or str(m) in PUNC)
+    return (type(m) is Mess) and (m.name[0] == ':')
 
 send_s = S('send')
 def exp_object(exp):
@@ -408,6 +408,7 @@ def exp_object(exp):
     if send_app(exp): return send_s
 
 def extract_message(token):
+    token = token.name
     if token[0] in (':', '.'): return S(token[1:])
     return token
 
@@ -588,10 +589,10 @@ def make_def(name, exp):
   return plist(def_s, name, exp)
 
 def make_call(rcv, msg, *args):
-  return plist(rcv, S('.' + str(msg)), *args)
+  return plist(rcv, Mess(S('.' + str(msg))), *args)
 
 def make_send(rcv, msg, *args):
-  return plist(rcv, S(':' + str(msg)), *args)
+  return plist(rcv, Mess(S(':' + str(msg))), *args)
 
 def make_if(test, consequent, alternative=None):
   if alternative is None: return plist(if_s, test, consequent)
@@ -791,7 +792,4 @@ def scan_out_xyz_sequence(seq):
     if seq.nullp(): return nil
     exp = seq.car()
     return set_merge(scan_out_xyz(exp), scan_out_xyz_sequence(seq.cdr()))
-
-
-PUNC = '+-*/%=<>'
 

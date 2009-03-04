@@ -160,7 +160,7 @@ def surrogate ():
         (format (surrogate 1) (a.car)) / ((surrogate.tail 2).%* (a.cdr))
         (surrogate.head i) / ((surrogate.tail i).%* a)
 
-  inline C % <<end
+  inline C "%" <<end
     regs[R_VM0] = rcv;
     args = cons(args, nil);
     return call(regs[R_VM0], percent_star_sym, args);

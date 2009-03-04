@@ -92,7 +92,8 @@ mole :
 
     def __message(self):
       stype, lexeme, pos = self.xmatch(*MESSAGE_TOKENS)
-      return lx.S(lexeme)
+      if stype == T.ASSIGN: return lx.S(lexeme)
+      return lx.Mess(lexeme)
 
     def gobble_messages_reverse(self, l):
       if self.peek not in MESSAGE_TOKENS: return l

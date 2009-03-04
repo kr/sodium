@@ -166,7 +166,7 @@ def str: sobj:
       else:
         (self.head i) / ((self.tail i).%* a)
 
-  inline C % <<end
+  inline C "%" <<end
     regs[R_VM0] = rcv;
     args = cons(args, nil);
     return call(regs[R_VM0], percent_star_sym, args);

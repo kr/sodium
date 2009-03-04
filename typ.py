@@ -19,11 +19,13 @@ def op_smod(f, *a): return objectify(operator.mod(f, a))
 class S(object):
     all = {}
     def __new__(clas, s):
+        if type(s) is S: return s
         if s not in clas.all:
             clas.all[s] = object.__new__(clas)
         return clas.all[s]
 
     def __init__(self, s):
+        if type(s) is str:
             self.s = s
 
     def __str__(self): return self.s
@@ -35,6 +37,13 @@ class S(object):
 
     def __getitem__(self, k):
         return self.s[k]
+
+class Mess(object):
+    def __init__(self, s):
+        self.name = S(s)
+
+    def __str__(self): return str(self.name)
+    def __repr__(self): return repr(self.name)
 
 class Integer(int):
     pass
