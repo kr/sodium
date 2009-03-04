@@ -4,13 +4,12 @@
 #define mem_h
 
 #include "gen.h"
+
+/* These are used commonly, so they're here for convenience. */
 #include "str.h"
+#include "pair.h"
 
 typedef void(*na_fn_free)(datum);
-
-typedef struct pair {
-    datum car, cdr;
-} *pair;
 
 typedef struct method_item {
     datum name;
@@ -22,7 +21,6 @@ typedef struct method_table {
     struct method_item items[];
 } *method_table;
 
-datum cons(datum x, datum y);
 datum make_closure(datum env, uint *table);
 
 /* Note: *x must be the only pointer to x */
@@ -35,20 +33,6 @@ datum make_opaque(size_t size, datum mtab);
 datum make_record(size_t len, datum mtab, datum a, datum b);
 
 
-inline pair datum2pair(datum d);
-
-#define car(x) (datum2pair(x)->car)
-#define cdr(x) (datum2pair(x)->cdr)
-
-#define caar(x) (car(car(x)))
-#define cadr(x) (car(cdr(x)))
-#define cdar(x) (cdr(car(x)))
-#define cddr(x) (cdr(cdr(x)))
-
-#define caddr(x) (car(cddr(x)))
-
-#define cdaddr(x) (cdr(caddr(x)))
-
 #define HEAP_SIZE (2 * 1024 * 1024)
 
 extern size_t *busy_chunks, *old_chunks;
@@ -56,7 +40,6 @@ extern size_t *busy_chunks, *old_chunks;
 void init_mem(void);
 
 /*bool*/
-int pairp(datum x);
 int broken_heartp(datum x);
 
 /*bool*/

@@ -8,6 +8,27 @@ pair_init()
     pair_mtab = (datum) lxc_module_pair.instrs +
                         lxc_module_pair.label_offsets[4];
 }
+
+datum
+cons(datum x, datum y)
+{
+    return make_record(2, pair_mtab, x, y);
+}
+
+inline pair
+datum2pair(datum d)
+{
+    if (!pairp(d)) die1("not a pair", d);
+    return (pair) d;
+}
+
+int
+pairp(datum x)
+{
+    return (!(((size_t) x) & 1)) &&
+        (((datum) x[-1]) == pair_mtab) && (x != pair_surrogate);
+}
+
 end
 
 def pair ():

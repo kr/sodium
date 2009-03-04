@@ -292,12 +292,6 @@ datum_size(datum d)
     return DATUM_LEN(*(d - 2));
 }
 
-datum
-cons(datum x, datum y)
-{
-    return dalloc(DATUM_TYPE_PAIR, 2, pair_mtab, x, y);
-}
-
 void
 become(datum *a, datum *b, int keep_b)
 {
@@ -339,22 +333,8 @@ make_record(size_t len, datum mtab, datum a, datum b)
 }
 
 int
-pairp(datum x)
-{
-    return (!(((size_t) x) & 1)) &&
-        (((datum) x[-1]) == pair_mtab) && (x != pair_surrogate);
-}
-
-int
 broken_heartp(datum x)
 {
     return in_old_chunk_range(x) &&
         (DATUM_TYPE(x[-2]) == DATUM_TYPE_BROKEN_HEART);
-}
-
-inline pair
-datum2pair(datum d)
-{
-    if (!pairp(d)) die1("not a pair", d);
-    return (pair) d;
 }
