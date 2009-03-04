@@ -7,9 +7,7 @@
 #include "obj.h"
 #include "prim.h"
 #include "pair.h"
-#include "array.h"
 #include "bytes.h"
-#include "str.h"
 #include "config.h"
 #if GC_DEBUG
 #include <stdio.h>
