@@ -357,14 +357,14 @@ bytes_contents(datum bytes)
 int
 pairp(datum x)
 {
-    return in_chunk_range(x) &&
+    return (!(((size_t) x) & 1)) &&
         (((datum) x[-1]) == pair_mtab) && (x != pair_surrogate);
 }
 
 int
 bytesp(datum x)
 {
-    return in_chunk_range(x) &&
+    return (!(((size_t) x) & 1)) &&
         (((datum) x[-1]) == bytes_mtab) && (x != bytes_surrogate);
 }
 
