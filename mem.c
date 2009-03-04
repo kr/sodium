@@ -37,10 +37,11 @@ init_mem(void)
 #define DATUM_TYPE(i) ((i) & 0xf)
 #define DATUM_LEN(i) ((i) >> 4)
 
+#define DATUM_TYPE_unused 1
 #define DATUM_TYPE_PAIR 3
 #define DATUM_TYPE_CLOSURE 5
 #define DATUM_TYPE_ARRAY 7
-#define DATUM_TYPE_BYTES 9
+#define DATUM_TYPE_unused2 9
 #define DATUM_TYPE_STR 11
 #define DATUM_TYPE_FZ 13
 #define DATUM_TYPE_BROKEN_HEART 15
@@ -55,7 +56,7 @@ static const char *datum_types[] = {
     "DATUM_TYPE_PAIR",
     "DATUM_TYPE_CLOSURE",
     "DATUM_TYPE_ARRAY",
-    "DATUM_TYPE_BYTES",
+    "DATUM_TYPE_unused2",
     "DATUM_TYPE_STR",
     "DATUM_TYPE_FZ",
     "DATUM_TYPE_BROKEN_HEART",
@@ -104,7 +105,6 @@ relocate(datum refloc)
             */
 
             case DATUM_TYPE_STR:
-            case DATUM_TYPE_BYTES:
                 len = (len + 3) / 4;
 
                 /* fall through */
@@ -213,7 +213,6 @@ gc(int c, ...)
         relocate(np + 1); /* relocate the method table pointer */
         switch (DATUM_TYPE(descr)) {
             case DATUM_TYPE_STR:
-            case DATUM_TYPE_BYTES:
                 np += (len + 3) / 4 + 2;
                 break;
             case DATUM_TYPE_PAIR:
@@ -267,7 +266,7 @@ dalloc(unsigned char type, uint len, datum mtab, datum x, datum y)
     datum p;
     size_t wlen = len;
 
-    if (type == DATUM_TYPE_STR || type == DATUM_TYPE_BYTES) {
+    if (type == DATUM_TYPE_STR) {
         wlen = len + 3 / 4;
     }
 
