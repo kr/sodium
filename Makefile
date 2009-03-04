@@ -28,7 +28,7 @@ module-index.c: $(lxmodules)
 prelude.lxc.c: prelude.lx
 	./lx1c --generate-c --output=$@ $<
 
-%.lxc.c: %.lx
+%.lxc.c: %.lx *.py
 	./lx1c --module --generate-c --output=$@ $<
 
 check: vm
