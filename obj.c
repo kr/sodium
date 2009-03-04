@@ -3,6 +3,7 @@
 #include "mem.h"
 #include "st.h"
 #include "prim.h"
+#include "bytes.h"
 
 #include "vm.h"
 

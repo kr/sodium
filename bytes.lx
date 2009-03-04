@@ -3,6 +3,7 @@ inline C <<end
 
 #include <string.h>
 
+#include "bytes.h"
 #include "prim.h"
 
 static datum percent_star_sym;
@@ -14,6 +15,12 @@ bytes_init()
 {
     bytes_mtab = (datum) lxc_module_bytes.instrs +
                          lxc_module_bytes.label_offsets[4];
+}
+
+datum
+make_bytes(uint size)
+{
+    return make_opaque(size, bytes_mtab);
 }
 
 datum
@@ -45,6 +52,20 @@ copy_bytes_contents0(char *dest, datum bytes, size_t n)
     n = copy_bytes_contents(dest, bytes, n - 1);
     dest[n] = 0;
     return n + 1;
+}
+
+char *
+bytes_contents(datum bytes)
+{
+    if (!bytesp(bytes)) die1("bytes_contents -- not an instance of bytes", bytes);
+    return (char *) bytes;
+}
+
+int
+bytesp(datum x)
+{
+    return (!(((size_t) x) & 1)) &&
+        (((datum) x[-1]) == bytes_mtab) && (x != bytes_surrogate);
 }
 
 end

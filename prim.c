@@ -5,6 +5,7 @@
 #include "prim.h"
 #include "obj.h"
 #include "array.h"
+#include "bytes.h"
 #include "st.h"
 #include "vm.h"
 

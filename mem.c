@@ -7,7 +7,6 @@
 #include "obj.h"
 #include "prim.h"
 #include "pair.h"
-#include "bytes.h"
 #include "config.h"
 #if GC_DEBUG
 #include <stdio.h>
@@ -330,12 +329,6 @@ make_closure(datum env, uint *table)
 }
 
 datum
-make_bytes(uint size)
-{
-    return dalloc(DATUM_TYPE_BYTES, size, bytes_mtab, nil, nil);
-}
-
-datum
 make_opaque(size_t size, datum mtab)
 {
     return dalloc(DATUM_TYPE_STR, size, mtab, nil, nil);
@@ -347,25 +340,11 @@ make_record(size_t len, datum mtab, datum a, datum b)
     return dalloc(DATUM_TYPE_ARRAY, len, mtab, a, b);
 }
 
-char *
-bytes_contents(datum bytes)
-{
-    if (!bytesp(bytes)) die1("bytes_contents -- not an instance of bytes", bytes);
-    return (char *) bytes;
-}
-
 int
 pairp(datum x)
 {
     return (!(((size_t) x) & 1)) &&
         (((datum) x[-1]) == pair_mtab) && (x != pair_surrogate);
-}
-
-int
-bytesp(datum x)
-{
-    return (!(((size_t) x) & 1)) &&
-        (((datum) x[-1]) == bytes_mtab) && (x != bytes_surrogate);
 }
 
 int

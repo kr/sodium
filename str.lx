@@ -5,6 +5,7 @@ inline C <<end
 
 #include <string.h>
 
+#include "bytes.h"
 #include "prim.h"
 
 static datum percent_star_sym;

@@ -1,3 +1,8 @@
+
+inline C <<end
+#include "bytes.h"
+end
+
 def *modules* '()
 
 def (find-module-file name):

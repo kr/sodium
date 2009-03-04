@@ -6,6 +6,7 @@ inline C <<end
 #include <sys/stat.h>
 
 #include "vm.h"
+#include "bytes.h"
 #include "prim.h"
 #include "pbox.h"
 
