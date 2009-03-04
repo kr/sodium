@@ -64,13 +64,12 @@ bytes_contents(datum bytes)
 int
 bytesp(datum x)
 {
-    return (!(((size_t) x) & 1)) &&
-        (((datum) x[-1]) == bytes_mtab) && (x != bytes_surrogate);
+    return (!(((size_t) x) & 1)) && (((datum) x[-1]) == bytes_mtab);
 }
 
 end
 
-def surrogate ():
+def surrogate: sobj:
   inline C (/ x) <<end
     /* concatenate */
     char *new_str;
@@ -142,12 +141,12 @@ def surrogate ():
     return new;
   end
 
-  (tail n) (surrogate.substring n (surrogate.length))
+  (tail n) (self.substring n (self.length))
   (head n):
-    surrogate.substring 0 n
+    self.substring 0 n
 
   (starts-with? sub):
-    (surrogate.head (sub.length)) = sub
+    (self.head (sub.length)) = sub
 
   (find-from n sub):
     def (helper s i):
@@ -156,30 +155,30 @@ def surrogate ():
         ? (s.starts-with? sub):
           . i
           helper (s.tail 1) (i + 1)
-    helper (surrogate.tail n) n
+    helper (self.tail n) n
 
   (find sub):
-    surrogate.find-from 0 sub
+    self.find-from 0 sub
 
   # (% . a):
   #   pr "in %"
-  #   def i (surrogate.find "%")
+  #   def i (self.find "%")
   #   ? (not i):
-  #     . surrogate
-  #     ? ((surrogate 0) = "%"):
-  #       (format (surrogate 1) (a.car)) / ((surrogate.tail 2) % . (a.cdr))
-  #       (surrogate.head i) / ((surrogate.tail i) % . a)
+  #     . self
+  #     ? ((self 0) = "%"):
+  #       (format (self 1) (a.car)) / ((self.tail 2) % . (a.cdr))
+  #       (self.head i) / ((self.tail i) % . a)
 
   (%* a):
     def (format code val):
       to-str val
-    def l (surrogate.length)
-    def i (surrogate.find "%")
+    def l (self.length)
+    def i (self.find "%")
     ? (is? i l):
-      . surrogate
-      ? ((surrogate 0) = "%"):
-        (format (surrogate 1) (a.car)) / ((surrogate.tail 2).%* (a.cdr))
-        (surrogate.head i) / ((surrogate.tail i).%* a)
+      . self
+      ? ((self 0) = "%"):
+        (format (self 1) (a.car)) / ((self.tail 2).%* (a.cdr))
+        (self.head i) / ((self.tail i).%* a)
 
   inline C "%" <<end
     regs[R_VM0] = rcv;
@@ -193,18 +192,11 @@ def intern-syms ():
     return ok_sym;
   end
 
-def install-surrogate ():
-  inline C (run sur) <<end
-    bytes_surrogate = n_sur;
-    return ok_sym;
-  end
-
 def (to-str x):
   ? (inspect.same-type? x str):
     . x
     to-str (x.str)
 
 intern-syms
-install-surrogate surrogate
 
 . '()
