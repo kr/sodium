@@ -13,7 +13,7 @@
 #include "mem.h"
 #include "obj.h"
 #include "prim.h"
-#include "st.h"
+#include "symbol.h"
 #include "lxc.h"
 #include "pair.h"
 #include "array.h"

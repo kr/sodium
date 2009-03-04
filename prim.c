@@ -6,7 +6,7 @@
 #include "obj.h"
 #include "array.h"
 #include "bytes.h"
-#include "st.h"
+#include "symbol.h"
 #include "vm.h"
 
 #define VOID ((void) 0)

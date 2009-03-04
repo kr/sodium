@@ -1,7 +1,7 @@
-/* st.h - Symbol Table header */
+/* symbol.h - symbol type header */
 
-#ifndef st_h
-#define st_h
+#ifndef symbol_h
+#define symbol_h
 
 #include "gen.h"
 
@@ -12,4 +12,5 @@ const char * symbol2charstar(datum s);
 void dump_symbol(void *s);
 void pr_symbol(void *s);
 
-#endif /*st_h*/
+
+#endif /*symbol_h*/

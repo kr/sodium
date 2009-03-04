@@ -4,7 +4,7 @@
 #include "gen.h"
 #include "mem.h"
 #include "obj.h"
-#include "st.h"
+#include "symbol.h"
 #include "prim.h"
 #include "vm.h"
 
