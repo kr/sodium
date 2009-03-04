@@ -15,7 +15,7 @@ class Lexer:
 
             crules = []
             for name, pat, action in even_out(rules):
-                r = re.compile(pat, re.DOTALL)
+                r = re.compile(pat, re.DOTALL|re.UNICODE)
                 crules.append((name, r, action))
             return crules
 

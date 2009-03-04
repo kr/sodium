@@ -26,7 +26,10 @@ HEREDOC = 'HEREDOC'
 HEREDOC_BODY = 'HEREDOC_BODY'
 
 # anything except parens, quotes, space, colon, and dot
-name_class = r"[^\][()'" + '"' + "\s#:\.]"
+name_class = r"[^()'" + '"' + "\s#:\.[\]]"
+name_pat = '(?:' + name_class + r'*\w' + name_class + '*)'
+non_name_class = r"[^\w()'" + '"' + "\s#:\.[\]]"
+non_name_pat = non_name_class + '+'
 
 cork = False
 collector = []
@@ -113,9 +116,9 @@ lexer = slex.Lexer((
     (HEREDOC, r'<<:?[a-zA-Z0-9]+', heredoc),
     (DEC,     r'-?([0-9]*\.[0-9]+|[0-9]+)'),
     (INT,     r'-?[0-9]+',             ),
-    (SMESS,   ':' + name_class + '+',  ),
-    (IMESS,   r'\.' + name_class + r'+|\+|\*|=|<|>|/|%',),
-    (NAME,    name_class + '+',        ),
+    (SMESS,   ':' + name_pat + '|' + ':' + non_name_pat,  ),
+    (IMESS,   r'\.' + name_pat + r'|\.' + non_name_pat + '|' + non_name_pat,),
+    (NAME,    name_pat,        ),
     (ASSIGN,  r'::',                   ),
     (DOT,     r'\.',                   ),
     (DOTS,    r':',                    ),
