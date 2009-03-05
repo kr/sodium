@@ -29,6 +29,15 @@ static datum intern_pres(const char *s, symbol sym);
 static size_t cap = 0, fill = 0, threshold = 0;
 static st_ent *symbols = 0;
 
+static datum symbol_mtab;
+
+void
+symbol_init()
+{
+    symbol_mtab = (datum) lxc_module_symbol.instrs +
+                          lxc_module_symbol.label_offsets[4];
+}
+
 static void
 init(size_t size)
 {

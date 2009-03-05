@@ -5,6 +5,8 @@
 
 #include "gen.h"
 
+void symbol_init();
+
 datum intern(const char *s);
 int symbolp(datum d);
 const char * symbol2charstar(datum s);

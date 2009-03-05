@@ -772,6 +772,7 @@ main(int argc, char **argv)
     array_init();
     bytes_init();
     str_init();
+    symbol_init();
 
     genv = cons(nil, nil);
 
