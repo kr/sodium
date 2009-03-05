@@ -34,6 +34,14 @@ make_str_init(size_t size, const char *bytes)
     return (datum) s;
 }
 
+datum
+make_str_init_permanent(size_t size, const char *bytes)
+{
+    datum s = make_opaque_permanent(size, str_mtab);
+    memcpy(s, bytes, size);
+    return (datum) s;
+}
+
 size_t
 copy_str_contents(char *dest, datum s, size_t n)
 {
