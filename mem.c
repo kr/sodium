@@ -258,7 +258,8 @@ gc(int c, ...)
 }
 
 static datum
-dalloc(unsigned char type, uint len, datum mtab, datum x, datum y)
+dalloc(size_t *base, size_t *free,
+       unsigned char type, uint len, datum mtab, datum x, datum y)
 {
     datum p;
     size_t delta = len + 2;
@@ -267,14 +268,14 @@ dalloc(unsigned char type, uint len, datum mtab, datum x, datum y)
         delta = (len + 3 / 4) + 2;
     }
 
-    if ((free_index + delta) >= HEAP_SIZE) gc(2, &x, &y);
-    if ((free_index + delta) >= HEAP_SIZE) die("dalloc -- OOM after gc");
-    p = busy_chunks + free_index;
+    if ((*free + delta) >= HEAP_SIZE) gc(2, &x, &y);
+    if ((*free + delta) >= HEAP_SIZE) die("dalloc -- OOM after gc");
+    p = base + *free;
     *p = DATUM_INFO(type, len);
     p[1] = (size_t) mtab;
     if (delta > 2) p[2] = (size_t) x;
     if (delta > 3) p[3] = (size_t) y;
-    free_index += delta;
+    *free += delta;
 #if GC_DEBUG
     prdesc("Allocated", *p);
 #endif
@@ -304,7 +305,8 @@ install_fz(datum *x, na_fn_free fn)
     datum fz;
 
     regs[R_GC0] = *x;
-    fz = dalloc(DATUM_TYPE_FZ, 3, nil, (datum) fn, fz_list);
+    fz = dalloc(busy_chunks, &free_index,
+                DATUM_TYPE_FZ, 3, nil, (datum) fn, fz_list);
     fz[2] = ((size_t) (*x = regs[R_GC0]));
     regs[R_GC0] = nil;
     fz_list = fz;
@@ -313,19 +315,22 @@ install_fz(datum *x, na_fn_free fn)
 datum
 make_closure(datum env, uint *table)
 {
-    return dalloc(DATUM_TYPE_CLOSURE, 1, (datum) table, env, nil);
+    return dalloc(busy_chunks, &free_index,
+                  DATUM_TYPE_CLOSURE, 1, (datum) table, env, nil);
 }
 
 datum
 make_opaque(size_t size, datum mtab)
 {
-    return dalloc(DATUM_TYPE_STR, size, mtab, nil, nil);
+    return dalloc(busy_chunks, &free_index,
+                  DATUM_TYPE_STR, size, mtab, nil, nil);
 }
 
 datum
 make_record(size_t len, datum mtab, datum a, datum b)
 {
-    return dalloc(DATUM_TYPE_ARRAY, len, mtab, a, b);
+    return dalloc(busy_chunks, &free_index,
+                  DATUM_TYPE_ARRAY, len, mtab, a, b);
 }
 
 int
