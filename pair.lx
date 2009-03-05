@@ -1,6 +1,6 @@
 
 inline C <<end
-datum pair_mtab;
+static datum pair_mtab;
 
 void
 pair_init()

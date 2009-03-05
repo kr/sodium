@@ -10,7 +10,7 @@ inline C <<end
 
 static datum percent_star_sym;
 
-datum str_mtab;
+static datum str_mtab;
 
 void
 str_init()

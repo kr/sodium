@@ -2,7 +2,7 @@
 inline C <<end
 #include "array.h"
 
-datum array_mtab;
+static datum array_mtab;
 
 #define CLIP_LEN(l) ((l) & 0x0fffffff)
 

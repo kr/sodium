@@ -3,8 +3,6 @@
 #ifndef pair_h
 #define pair_h
 
-extern datum pair_mtab;
-
 typedef struct pair {
     datum car, cdr;
 } *pair;

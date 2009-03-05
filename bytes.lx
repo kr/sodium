@@ -8,7 +8,7 @@ inline C <<end
 
 static datum percent_star_sym;
 
-datum bytes_mtab;
+static datum bytes_mtab;
 
 void
 bytes_init()

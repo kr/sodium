@@ -2,7 +2,7 @@ inline C <<end
 
 typedef void(*fn_free)(void *);
 
-datum pbox_mtab = 0;
+static datum pbox_mtab = 0;
 
 void
 pbox_free(datum x)

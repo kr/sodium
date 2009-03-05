@@ -3,8 +3,6 @@
 #ifndef bytes_h
 #define bytes_h
 
-extern datum bytes_mtab;
-
 void bytes_init();
 
 datum make_bytes(uint len);
