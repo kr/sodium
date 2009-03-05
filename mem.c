@@ -20,14 +20,18 @@
 #define in_chunk_range(x) (in_busy_chunk_range(x) || in_old_chunk_range(x))
 
 int gc_in_progress = 0, become_keep_b = 0;
-datum busy_chunks, old_chunks, fz_list = nil;
+datum perm_busy_chunks, busy_chunks, old_chunks, fz_list = nil;
 static datum free_chunks;
-static size_t free_index = 0, scan_index = 0;
+static size_t perm_free_index = 0, free_index = 0, scan_index = 0;
 static datum become_a = nil, become_b = nil;
 
 void
 init_mem(void)
 {
+    perm_busy_chunks = malloc(sizeof(datum) * HEAP_SIZE);
+    if (!perm_busy_chunks) die("init_mem -- out of memory");
+    perm_free_index = 0;
+
     busy_chunks = malloc(sizeof(datum) * HEAP_SIZE);
     if (!busy_chunks) die("init_mem -- out of memory");
     free_index = 0;
@@ -330,6 +334,20 @@ datum
 make_record(size_t len, datum mtab, datum a, datum b)
 {
     return dalloc(busy_chunks, &free_index,
+                  DATUM_TYPE_ARRAY, len, mtab, a, b);
+}
+
+datum
+make_opaque_permanent(size_t size, datum mtab)
+{
+    return dalloc(perm_busy_chunks, &perm_free_index,
+                  DATUM_TYPE_STR, size, mtab, nil, nil);
+}
+
+datum
+make_record_permanent(size_t len, datum mtab, datum a, datum b)
+{
+    return dalloc(perm_busy_chunks, &perm_free_index,
                   DATUM_TYPE_ARRAY, len, mtab, a, b);
 }
 

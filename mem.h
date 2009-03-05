@@ -32,6 +32,8 @@ size_t datum_size(datum d);
 datum make_opaque(size_t size, datum mtab);
 datum make_record(size_t len, datum mtab, datum a, datum b);
 
+datum make_opaque_permanent(size_t size, datum mtab);
+datum make_record_permanent(size_t len, datum mtab, datum a, datum b);
 
 #define HEAP_SIZE (2 * 1024 * 1024)
 
