@@ -9,7 +9,7 @@ void symbol_init();
 
 datum intern(const char *s);
 int symbolp(datum d);
-const char * symbol2charstar(datum s);
+size_t symbol_copy0(char *dest, size_t n, datum sym);
 
 void dump_symbol(void *s);
 void pr_symbol(void *s);

@@ -17,7 +17,7 @@ typedef struct symbol *symbol;
 
 struct symbol {
     symbol next;
-    char chars[];
+    datum str;
 };
 
 static size_t cap = 0, fill = 0;
@@ -71,7 +71,7 @@ rehash()
 }
 
 static uint
-hash(const char *s)
+hash(size_t n, const char *s)
 {
     return 0;
 }
@@ -83,7 +83,7 @@ store(symbol ent)
 
     if (fill >= (cap << 2)) rehash();
 
-    i = hash(ent->chars) % cap;
+    i = hash(datum_size(ent->str), (char *) ent->str) % cap;
 
     ent->next = symbols[i];
     symbols[i] = ent;
@@ -97,8 +97,8 @@ make_st_ent(const char *s)
 {
     symbol ent;
 
-    ent = malloc(sizeof(struct symbol) + sizeof(char) * (strlen(s) + 1));
-    strcpy(ent->chars, s);
+    ent = malloc(sizeof(struct symbol));
+    ent->str = make_str_init_permanent(strlen(s), s);
 
     return ent;
 }
@@ -111,10 +111,10 @@ lookup_sym(const char *s)
 
     if (!cap) return nil;
 
-    i = hash(s) % cap;
+    i = hash(strlen(s), s) % cap;
 
     for (sh = symbols[i]; sh; sh = sh->next) {
-        if (strcmp(s, sh->chars) == 0) {
+        if (str_cmp_charstar(sh->str, s) == 0) {
             return symbol2datum(sh);
         }
     }
@@ -141,7 +141,8 @@ dump_symbol(void *s)
         return;
     }
     sym = datum2symbol(s);
-    prfmt(1, "symbol\n  %s", sym->chars);
+    prfmt(1, "symbol\n  ");
+    pr(sym->str);
 }
 
 void
@@ -153,7 +154,7 @@ pr_symbol(void *s)
         return;
     }
     sym = datum2symbol(s);
-    prfmt(1, "%s", sym->chars);
+    prx(sym->str);
 }
 
 int
@@ -162,27 +163,19 @@ symbolp(datum d)
     return ((((uint) d) & 0x3) == CHAR_STAR_TAG);
 }
 
-const char *
-symbol2charstar(datum s)
+size_t
+symbol_copy0(char *dest, size_t n, datum sym)
 {
-    symbol sym;
-
-    if (!symbolp(s)) die1("symbol2charstar -- not a symbol", s);
-
-    sym = datum2symbol(s);
-    return sym->chars;
+    symbol s = datum2symbol(sym);
+    return copy_str_contents0(dest, s->str, n);
 }
 
 end
 
 def symbol ():
   inline C str <<end
-    const char *cont;
-    size_t len;
-
-    cont = symbol2charstar(rcv);
-    len = strlen(cont);
-    return make_str_init(len, cont);
+    symbol s = datum2symbol(rcv);
+    return s->str;
   end
 
 def install-symbol ():

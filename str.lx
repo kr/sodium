@@ -58,6 +58,17 @@ copy_str_contents0(char *dest, datum str, size_t n)
     return n + 1;
 }
 
+int
+str_cmp_charstar(datum str, const char *s)
+{
+    int r;
+    size_t len = strlen(s);
+
+    r = strncmp((char *) str, s, datum_size(str));
+    if (r) return r;
+    return datum_size(str) - len;
+}
+
 end
 
 def str: sobj:

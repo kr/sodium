@@ -751,9 +751,13 @@ report_error(datum args)
 datum
 load_builtin_module(datum name)
 {
+    size_t n;
+    char buf[100];
     uint *insts;
 
-    insts = find_and_link_builtin_module(symbol2charstar(name));
+    n = symbol_copy0(buf, 100, name);
+    if (n == 100) die1("module name too long (> 100 chars)", name);
+    insts = find_and_link_builtin_module(buf);
     if (!insts) return nil;
     start_body(insts);
     return regs[R_VAL]; /* return value from module */
