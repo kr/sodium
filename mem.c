@@ -261,21 +261,20 @@ static datum
 dalloc(unsigned char type, uint len, datum mtab, datum x, datum y)
 {
     datum p;
-    size_t wlen = len;
+    size_t delta = len + 2;
 
     if (type == DATUM_TYPE_STR) {
-        wlen = len + 3 / 4;
+        delta = (len + 3 / 4) + 2;
     }
 
-    if ((free_index + (wlen + 2)) >= HEAP_SIZE) gc(2, &x, &y);
-    if ((free_index + (wlen + 2)) >= HEAP_SIZE) die("dalloc -- OOM after gc");
-    p = busy_chunks + free_index++;
+    if ((free_index + delta) >= HEAP_SIZE) gc(2, &x, &y);
+    if ((free_index + delta) >= HEAP_SIZE) die("dalloc -- OOM after gc");
+    p = busy_chunks + free_index;
     *p = DATUM_INFO(type, len);
     p[1] = (size_t) mtab;
-    free_index++;
-    if (wlen > 0) p[2] = (size_t) x;
-    if (wlen > 1) p[3] = (size_t) y;
-    free_index += wlen;
+    if (delta > 2) p[2] = (size_t) x;
+    if (delta > 3) p[3] = (size_t) y;
+    free_index += delta;
 #if GC_DEBUG
     prdesc("Allocated", *p);
 #endif
