@@ -13,7 +13,7 @@ typedef struct symbol *symbol;
 
 struct symbol {
     datum next;
-    datum str;
+    datum name;
 };
 
 static size_t cap = 0, fill = 0;
@@ -68,7 +68,7 @@ rehash()
 }
 
 static uint
-hash(size_t n, const char *s)
+hash(size_t n, const char *name)
 {
     return 0;
 }
@@ -80,7 +80,7 @@ store(symbol ent)
 
     if (fill >= (cap << 2)) rehash();
 
-    i = hash(datum_size(ent->str), (char *) ent->str) % cap;
+    i = hash(datum_size(ent->name), (char *) ent->name) % cap;
 
     fill++;
     ent->next = symbols[i];
@@ -88,26 +88,24 @@ store(symbol ent)
 }
 
 static datum
-make_st_ent(const char *s)
+make_symbol(const char *name)
 {
-    datum str;
-
-    str = make_str_init_permanent(strlen(s), s);
-    return make_record_permanent(2, symbol_mtab, nil, str);
+    return make_record_permanent(2, symbol_mtab, nil,
+            make_str_init_permanent(strlen(name), name));
 }
 
 static datum
-lookup_sym(const char *s)
+lookup_sym(const char *name)
 {
     int i;
     datum sh;
 
     if (!cap) return nil;
 
-    i = hash(strlen(s), s) % cap;
+    i = hash(strlen(name), name) % cap;
 
     for (sh = symbols[i]; sh != nil; sh = ((symbol) sh)->next) {
-        if (str_cmp_charstar(((symbol) sh)->str, s) == 0) {
+        if (str_cmp_charstar(((symbol) sh)->name, name) == 0) {
             return sh;
         }
     }
@@ -115,21 +113,21 @@ lookup_sym(const char *s)
 }
 
 datum
-intern(const char *s)
+intern(const char *name)
 {
     datum sym;
 
-    sym = lookup_sym(s);
+    sym = lookup_sym(name);
     if (sym != nil) return sym;
 
-    return store((symbol) make_st_ent(s));
+    return store((symbol) make_symbol(name));
 }
 
 void
 pr_symbol(datum sym)
 {
     if (!symbolp(sym)) return prfmt(1, "<bad-symbol>");
-    prx(((symbol) sym)->str);
+    prx(((symbol) sym)->name);
 }
 
 int
@@ -142,14 +140,14 @@ size_t
 symbol_copy0(char *dest, size_t n, datum sym)
 {
     if (!symbolp(sym)) die1("not a symbol", sym);
-    return copy_str_contents0(dest, ((symbol) sym)->str, n);
+    return copy_str_contents0(dest, ((symbol) sym)->name, n);
 }
 
 end
 
 def symbol ():
   inline C str <<end
-    return ((symbol) rcv)->str;
+    return ((symbol) rcv)->name;
   end
 
 def install-symbol ():
