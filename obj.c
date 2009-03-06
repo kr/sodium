@@ -6,32 +6,9 @@
 
 #include "vm.h"
 
-static datum
-get_primitive_surrogate(datum d)
-{
-    return 0;
-}
-
-static datum
-replace_1st_of_1st(datum env, datum x)
-{
-  datum frame;
-
-  regs[R_VM0] = cdr(env);
-  frame = cons(x, cdar(env));
-  return cons(frame, regs[R_VM0]);
-}
-
 datum
 closure_env(datum d)
 {
-    datum surrogate;
-
-    if ((surrogate = get_primitive_surrogate(d))) {
-        datum env = closure_env(surrogate);
-        return replace_1st_of_1st(env, d);
-    }
-
     return (datum) *d;
 }
 
