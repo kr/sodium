@@ -10,20 +10,32 @@ inline C <<end
 #include "prim.h"
 
 #define CHAR_STAR_TAG 0x2
-#define symbol2datum(x) ((datum) (((unsigned int)(x)) | CHAR_STAR_TAG))
-#define datum2symbol(x) ((symbol) (((unsigned int)(x)) & ~CHAR_STAR_TAG))
 
 typedef struct symbol *symbol;
 
 struct symbol {
-    symbol next;
+    datum next;
     datum str;
 };
 
 static size_t cap = 0, fill = 0;
-static symbol *symbols = 0;
+static datum *symbols = 0;
 
 static datum symbol_mtab;
+
+static inline datum
+symbol2datum(symbol s)
+{
+    if (!s) return nil;
+    return (datum) (CHAR_STAR_TAG | (size_t) s);
+}
+
+static inline symbol
+datum2symbol(datum d)
+{
+    if (d == nil) return 0;
+    return (symbol) ((size_t) d & ~CHAR_STAR_TAG);
+}
 
 void
 symbol_init()
@@ -51,19 +63,20 @@ static datum store(symbol ent);
 static void
 rehash()
 {
-    symbol *old = symbols;
+    datum *old = symbols;
     size_t old_cap = cap, i;
 
     cap = next_prime(cap << 1);
     symbols = malloc(sizeof(datum) * cap);
     if (!symbols) die("OOM allocating symbol table");
     fill = 0;
+    for (i = 0; i < cap; i++) symbols[i] = nil;
 
     for (i = 0; i < old_cap; i++) {
-        while (old[i]) {
-            symbol ent = old[i];
+        while (old[i] != nil) {
+            symbol ent = datum2symbol(old[i]);
             old[i] = ent->next;
-            ent->next = 0;
+            ent->next = nil;
             store(ent);
         }
     }
@@ -86,7 +99,7 @@ store(symbol ent)
     i = hash(datum_size(ent->str), (char *) ent->str) % cap;
 
     ent->next = symbols[i];
-    symbols[i] = ent;
+    symbols[i] = symbol2datum(ent);
     fill++;
 
     return symbol2datum(ent);
@@ -113,7 +126,7 @@ lookup_sym(const char *s)
 
     i = hash(strlen(s), s) % cap;
 
-    for (sh = symbols[i]; sh; sh = sh->next) {
+    for (sh = datum2symbol(symbols[i]); sh; sh = datum2symbol(sh->next)) {
         if (str_cmp_charstar(sh->str, s) == 0) {
             return symbol2datum(sh);
         }
