@@ -152,12 +152,4 @@ def symbol ():
     return ((symbol) rcv)->name;
   end
 
-def install-symbol ():
-  inline C (run sur) <<end
-    symbol_surrogate = n_sur;
-    return ok_sym;
-  end
-
-install-symbol symbol
-
 . '()

@@ -6,13 +6,12 @@
 
 #include "vm.h"
 
-datum int_surrogate, symbol_surrogate;
+datum int_surrogate;
 
 static datum
 get_primitive_surrogate(datum d)
 {
     if (intp(d)) return int_surrogate;
-    if (symbolp(d)) return symbol_surrogate;
 
     return 0;
 }
@@ -43,9 +42,7 @@ closure_env(datum d)
 static method_table
 obj_method_table(datum d)
 {
-    if (intp(d) || symbolp(d)) {
-        d = get_primitive_surrogate(d);
-    }
+    if (intp(d)) d = get_primitive_surrogate(d);
 
     return (method_table) d[-1];
 }
@@ -71,9 +68,7 @@ closure_has_method(datum d, datum name)
     int i, n;
     method_table table;
 
-    if (intp(d) || symbolp(d)) {
-        d = get_primitive_surrogate(d);
-    }
+    if (intp(d)) d = get_primitive_surrogate(d);
 
     table = (method_table) d[-1];
 
@@ -97,9 +92,7 @@ closure_methods(datum d)
     method_table table;
     datum methods = nil;
 
-    if (intp(d) || symbolp(d)) {
-        d = get_primitive_surrogate(d);
-    }
+    if (intp(d)) d = get_primitive_surrogate(d);
 
     /* This pointer is stable. A garbage collection will not invalidate it */
     table = (method_table) d[-1];
