@@ -9,8 +9,6 @@ inline C <<end
 #include "obj.h"
 #include "prim.h"
 
-#define CHAR_STAR_TAG 0x2
-
 typedef struct symbol *symbol;
 
 struct symbol {
@@ -27,14 +25,14 @@ static inline datum
 symbol2datum(symbol s)
 {
     if (!s) return nil;
-    return (datum) (CHAR_STAR_TAG | (size_t) s);
+    return (datum) s;
 }
 
 static inline symbol
 datum2symbol(datum d)
 {
     if (d == nil) return 0;
-    return (symbol) ((size_t) d & ~CHAR_STAR_TAG);
+    return (symbol) d;
 }
 
 void
@@ -172,9 +170,9 @@ pr_symbol(void *s)
 }
 
 int
-symbolp(datum d)
+symbolp(datum x)
 {
-    return ((((uint) d) & 0x3) == CHAR_STAR_TAG);
+    return (!(((size_t)x)&1) && ((datum) x[-1]) == symbol_mtab);
 }
 
 size_t
