@@ -8,6 +8,7 @@ inline C <<end
 #include "gen.h"
 #include "obj.h"
 #include "prim.h"
+#include "array.h"
 
 typedef struct symbol *symbol;
 
@@ -16,8 +17,8 @@ struct symbol {
     datum name;
 };
 
-static size_t cap = 0, fill = 0;
-static datum *symbols = 0;
+static size_t fill = 0;
+datum symbols = nil;
 
 static datum symbol_mtab;
 
@@ -47,14 +48,16 @@ static datum store(symbol ent);
 static void
 rehash()
 {
-    datum *old = symbols;
-    size_t old_cap = cap, i;
+    datum *old, *new;
+    size_t old_cap = datum_size(symbols), i;
 
-    cap = next_prime(cap << 1);
-    symbols = malloc(sizeof(datum) * cap);
-    if (!symbols) die("OOM allocating symbol table");
+    new = (datum *) make_array(next_prime(datum_size(symbols) << 1));
+
+    /* do this after allocating new array; the old one might have moved */
+    old = (datum *) symbols;
+    symbols = (datum) new;
+
     fill = 0;
-    for (i = 0; i < cap; i++) symbols[i] = nil;
 
     for (i = 0; i < old_cap; i++) {
         while (old[i] != nil) {
@@ -64,7 +67,6 @@ rehash()
             store(ent);
         }
     }
-    free(old);
 }
 
 static uint
@@ -78,13 +80,13 @@ store(symbol ent)
 {
     int i;
 
-    if (fill >= (cap << 2)) rehash();
+    if (fill >= (datum_size(symbols) << 2)) rehash();
 
-    i = hash(datum_size(ent->name), (char *) ent->name) % cap;
+    i = hash(datum_size(ent->name), (char *) ent->name) % datum_size(symbols);
 
     fill++;
-    ent->next = symbols[i];
-    return symbols[i] = (datum) ent;
+    ent->next = (datum) symbols[i];
+    return ((datum *) symbols)[i] = (datum) ent;
 }
 
 static datum
@@ -100,11 +102,11 @@ lookup_sym(const char *name)
     int i;
     datum sh;
 
-    if (!cap) return nil;
+    if (!datum_size(symbols)) return nil;
 
-    i = hash(strlen(name), name) % cap;
+    i = hash(strlen(name), name) % datum_size(symbols);
 
-    for (sh = symbols[i]; sh != nil; sh = ((symbol) sh)->next) {
+    for (sh = (datum) symbols[i]; sh != nil; sh = ((symbol) sh)->next) {
         if (str_cmp_charstar(((symbol) sh)->name, name) == 0) {
             return sh;
         }

@@ -7,6 +7,7 @@
 #include "obj.h"
 #include "prim.h"
 #include "pair.h"
+#include "symbol.h"
 #include "config.h"
 #if GC_DEBUG
 #include <stdio.h>
@@ -191,6 +192,7 @@ gc(int c, ...)
     relocate((datum) &genv);
     relocate((datum) &int_surrogate);
     relocate((datum) &symbol_surrogate);
+    relocate((datum) &symbols);
     relocate((datum) &fz_list);
     va_start(ap, c);
     for (; c; --c) {

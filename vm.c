@@ -771,10 +771,10 @@ main(int argc, char **argv)
     if (argc != 2) usage();
 
     init_mem();
+    array_init();
     symbol_init();
     nil_init();
     pair_init();
-    array_init();
     bytes_init();
     str_init();
 

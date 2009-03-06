@@ -7,6 +7,8 @@
 
 void symbol_init();
 
+extern datum symbols;
+
 datum intern(const char *name);
 int symbolp(datum d);
 size_t symbol_copy0(char *dest, size_t n, datum sym);
