@@ -67,9 +67,7 @@ closure_has_method(datum d, datum name)
     int i, n;
     method_table table;
 
-    if (intp(d)) d = get_primitive_surrogate(d);
-
-    table = (method_table) d[-1];
+    table = obj_method_table(d);
 
     n = datum2int(table->size);
     for (i = 0; i < n; ++i) {
@@ -91,10 +89,8 @@ closure_methods(datum d)
     method_table table;
     datum methods = nil;
 
-    if (intp(d)) d = get_primitive_surrogate(d);
-
     /* This pointer is stable. A garbage collection will not invalidate it */
-    table = (method_table) d[-1];
+    table = obj_method_table(d);
 
     n = datum2int(table->size);
     for (i = 0; i < n; ++i) methods = cons(table->items[i].name, methods);
