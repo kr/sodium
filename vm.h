@@ -81,6 +81,7 @@ datum lexical_setbang(datum env, uint level, uint index, datum val);
 datum extend_environment(datum env, datum argl, datum formals);
 datum call(datum o, datum m, datum a);
 datum report_error(datum args);
+datum closure_env(datum d);
 
 struct nil_struct {
     datum desc;

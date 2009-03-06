@@ -3,7 +3,6 @@
 #include <stdlib.h>
 #include "gen.h"
 #include "mem.h"
-#include "obj.h"
 #include "symbol.h"
 #include "prim.h"
 #include "vm.h"

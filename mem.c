@@ -4,7 +4,6 @@
 #include <stdarg.h>
 #include "mem.h"
 #include "vm.h"
-#include "obj.h"
 #include "prim.h"
 #include "int.h"
 #include "symbol.h"

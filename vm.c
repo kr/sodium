@@ -11,7 +11,6 @@
 #include "vm.h"
 #include "gen.h"
 #include "mem.h"
-#include "obj.h"
 #include "prim.h"
 #include "symbol.h"
 #include "lxc.h"
@@ -485,6 +484,12 @@ closure_method(datum d, datum name)
         if (table->items[i].name == name) return table->items[i].addr;
     }
     return die1("closure_method -- no such method", name);
+}
+
+datum
+closure_env(datum d)
+{
+    return (datum) *d;
 }
 
 static void

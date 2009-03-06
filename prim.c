@@ -3,7 +3,6 @@
 #include <sys/stat.h>
 #include "gen.h"
 #include "prim.h"
-#include "obj.h"
 #include "array.h"
 #include "bytes.h"
 #include "symbol.h"

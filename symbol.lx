@@ -6,7 +6,6 @@ inline C <<end
 #include <string.h>
 #include "symbol.h"
 #include "gen.h"
-#include "obj.h"
 #include "prim.h"
 #include "array.h"
 
