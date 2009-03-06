@@ -7,6 +7,7 @@
 #include "obj.h"
 #include "prim.h"
 #include "pair.h"
+#include "int.h"
 #include "symbol.h"
 #include "config.h"
 #if GC_DEBUG
@@ -289,6 +290,13 @@ datum_size(datum d)
 {
     if (((size_t) d) & 1) return 4;
     return DATUM_LEN(*(d - 2));
+}
+
+datum
+datum_mtab(datum d)
+{
+    if (intp(d)) return int_mtab;
+    return (datum) d[-1];
 }
 
 void

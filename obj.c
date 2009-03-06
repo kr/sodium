@@ -12,21 +12,13 @@ closure_env(datum d)
     return (datum) *d;
 }
 
-static method_table
-obj_method_table(datum d)
-{
-    if (intp(d)) return (method_table) int_mtab;
-
-    return (method_table) d[-1];
-}
-
 uint *
 closure_method(datum d, datum name)
 {
     int i, n;
     method_table table;
 
-    table = obj_method_table(d);
+    table = (method_table) datum_mtab(d);
 
     n = datum2int(table->size);
     for (i = 0; i < n; ++i) {
@@ -41,7 +33,7 @@ closure_has_method(datum d, datum name)
     int i, n;
     method_table table;
 
-    table = obj_method_table(d);
+    table = (method_table) datum_mtab(d);
 
     n = datum2int(table->size);
     for (i = 0; i < n; ++i) {
@@ -53,7 +45,7 @@ closure_has_method(datum d, datum name)
 int
 closures_same_type(datum a, datum b)
 {
-    return obj_method_table(a) == obj_method_table(b);
+    return datum_mtab(a) == datum_mtab(b);
 }
 
 datum
@@ -64,7 +56,7 @@ closure_methods(datum d)
     datum methods = nil;
 
     /* This pointer is stable. A garbage collection will not invalidate it */
-    table = obj_method_table(d);
+    table = (method_table) datum_mtab(d);
 
     n = datum2int(table->size);
     for (i = 0; i < n; ++i) methods = cons(table->items[i].name, methods);

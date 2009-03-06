@@ -25,6 +25,7 @@ typedef struct method_table {
 void install_fz(datum *, na_fn_free);
 
 size_t datum_size(datum d);
+datum datum_mtab(datum d);
 
 
 datum make_opaque(size_t size, datum mtab);
