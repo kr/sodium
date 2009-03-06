@@ -472,6 +472,21 @@ make_closure(size_t *mtab, datum env)
     return make_record(1, mtab, env, nil);
 }
 
+static uint *
+closure_method(datum d, datum name)
+{
+    int i, n;
+    method_table table;
+
+    table = (method_table) datum_mtab(d);
+
+    n = datum2int(table->size);
+    for (i = 0; i < n; ++i) {
+        if (table->items[i].name == name) return table->items[i].addr;
+    }
+    return die1("closure_method -- no such method", name);
+}
+
 static void
 start(uint *start_addr)
 {

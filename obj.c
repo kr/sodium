@@ -12,21 +12,6 @@ closure_env(datum d)
     return (datum) *d;
 }
 
-uint *
-closure_method(datum d, datum name)
-{
-    int i, n;
-    method_table table;
-
-    table = (method_table) datum_mtab(d);
-
-    n = datum2int(table->size);
-    for (i = 0; i < n; ++i) {
-        if (table->items[i].name == name) return table->items[i].addr;
-    }
-    return die1("closure_method -- no such method", name);
-}
-
 int
 closure_has_method(datum d, datum name)
 {
