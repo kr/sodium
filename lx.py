@@ -113,7 +113,7 @@ def compile_variable(exp, target, linkage, cenv, pop_all_symbol):
         if exp is percent_s:
             raise 'lookup of %'
         return end_with_linkage(linkage,
-            make_ir_seq((), (target),
+            make_ir_seq((), (target,),
                 LOOKUP(target, global_r, exp)), pop_all_symbol)
     return end_with_linkage(linkage,
             make_ir_seq((env_r,), (target,),
@@ -439,7 +439,7 @@ def construct_arglist(operand_codes, pop_all_symbol):
 cons_s = S('cons')
 def code_to_get_rest_args(operand_codes, pop_all_symbol):
     code_for_next_arg = preserving((argl_r,), operand_codes.car(),
-                                   make_ir_seq((val_r, argl_r), (argl_r),
+                                   make_ir_seq((val_r, argl_r), (argl_r,),
                                        CONS(argl_r, val_r, argl_r)), pop_all_symbol)
     if operand_codes.cdr().nullp(): return code_for_next_arg
     return preserving((env_r,), code_for_next_arg,

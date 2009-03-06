@@ -87,9 +87,16 @@ def gen_unique_c_name():
     unique_c_name_counter += 1
     return 'datum_pair_%d' % (unique_c_name_counter,)
 
+def suitable_register_list(x):
+    return isinstance(x, tuple) or isinstance(x, frozenset)
+
 the_labels = None
 class make_ir_seq:
     def __init__(self, needs, modifies, *statements):
+        if not suitable_register_list(needs):
+            raise RuntimeError('unsuitable needs: %r' % needs)
+        if not suitable_register_list(modifies):
+            raise RuntimeError('unsuitable modifies: %r' % modifies)
         self.needs = frozenset(needs)
         self.modifies = frozenset(modifies)
         self.statements = statements
