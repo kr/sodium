@@ -37,42 +37,52 @@ init_mem(void)
     free_index = 0;
 }
 
-#define DATUM_INFO(t,l) (((l) << 4) | ((t) & 0xf))
-#define DATUM_TYPE(i) ((i) & 0xf)
-#define DATUM_LEN(i) ((i) >> 4)
+static inline size_t
+make_desc(char format, size_t len)
+{
+    return ((len << 4) | (format & 0xf));
+}
 
-#define DATUM_TYPE_unused1 1
-#define DATUM_TYPE_unused3 3
-#define DATUM_TYPE_unused5 5
-#define DATUM_TYPE_ARRAY 7
-#define DATUM_TYPE_unused9 9
-#define DATUM_TYPE_STR 11
-#define DATUM_TYPE_FZ 13
-#define DATUM_TYPE_BROKEN_HEART 15
+static inline char
+datum_desc_format(size_t desc)
+{
+    return (desc & 0xf);
+}
 
-#define IS_BROKEN_HEART(o) (((o) & 0xf) == DATUM_TYPE_BROKEN_HEART)
+static inline size_t
+datum_desc_len(size_t desc)
+{
+    return (desc >> 4);
+}
 
-#define FZ_LEN 3
+#define DATUM_FORMAT_RECORD 1
+#define DATUM_FORMAT_BROKEN_HEART 3
+#define DATUM_FORMAT_unused5 5
+#define DATUM_FORMAT_unused7 7
+#define DATUM_FORMAT_unused9 9
+#define DATUM_FORMAT_unused11 11
+#define DATUM_FORMAT_FZ 13
+#define DATUM_FORMAT_OPAQUE 15
 
 #if GC_DEBUG
 static const char *datum_types[] = {
-    "<unused 1>",
-    "<unused 3>",
+    "DATUM_FORMAT_RECORD",
+    "DATUM_FORMAT_BROKEN_HEART",
     "<unused 5>",
-    "DATUM_TYPE_ARRAY",
+    "<unused 7>",
     "<unused 9>",
-    "DATUM_TYPE_STR",
-    "DATUM_TYPE_FZ",
-    "DATUM_TYPE_BROKEN_HEART",
+    "<unused 11>",
+    "DATUM_FORMAT_FZ",
+    "DATUM_FORMAT_OPAQUE",
 };
 
 static void
 prdesc(const char *msg, size_t desc)
 {
     if (desc &1) {
-        int type = DATUM_TYPE(desc);
+        int type = datum_desc_format(desc);
         fprintf(stderr, "%s %s (%d) len %u\n",
-                msg, datum_types[type >> 1], type, DATUM_LEN(desc));
+                msg, datum_types[type >> 1], type, datum_desc_len(desc));
     } else {
         fprintf(stderr, "%s <not a chunk>\n", msg);
     }
@@ -95,25 +105,25 @@ relocate(datum refloc)
     --p;
 
     for (;;) {
-        len = DATUM_LEN(*p);
+        len = datum_desc_len(*p);
 #if GC_DEBUG
         prdesc("Relocating", *p);
         fprintf(stderr, "at %p\n", p);
 #endif
 
-        switch (DATUM_TYPE(*p)) {
+        switch (datum_desc_format(*p)) {
             /*
-            case DATUM_TYPE_BACKPTR:
+            case DATUM_FORMAT_BACKPTR:
                 p -= len;
                 continue;
             */
 
-            case DATUM_TYPE_STR:
+            case DATUM_FORMAT_OPAQUE:
                 len = (len + 3) / 4;
 
                 /* fall through */
-            case DATUM_TYPE_ARRAY:
-            case DATUM_TYPE_FZ:
+            case DATUM_FORMAT_RECORD:
+            case DATUM_FORMAT_FZ:
                 i = (datum *) p;
                 j = (datum *) free_chunks + free_index;
 
@@ -133,15 +143,15 @@ relocate(datum refloc)
                 fprintf(stderr, "Relocated\n");
 #endif
 
-                *p = DATUM_TYPE_BROKEN_HEART;
+                *p = DATUM_FORMAT_BROKEN_HEART;
 
                 /* fall through */
-            case DATUM_TYPE_BROKEN_HEART:
+            case DATUM_FORMAT_BROKEN_HEART:
                 *refloc += p[1] - ((size_t) (p + 2));
                 return;
 
             /*
-            case DATUM_TYPE_EMBEDDED:
+            case DATUM_FORMAT_EMBEDDED:
             */
             default:
                 p--;
@@ -209,14 +219,14 @@ gc(int c, ...)
     while (np < &free_chunks[free_index]) {
         ++live;
         datum p = np + 2;
-        size_t descr = *np, len = DATUM_LEN(descr);
+        size_t descr = *np, len = datum_desc_len(descr);
         relocate(np + 1); /* relocate the method table pointer */
-        switch (DATUM_TYPE(descr)) {
-            case DATUM_TYPE_STR:
+        switch (datum_desc_format(descr)) {
+            case DATUM_FORMAT_OPAQUE:
                 np += (len + 3) / 4 + 2;
                 break;
-            case DATUM_TYPE_FZ:
-            case DATUM_TYPE_ARRAY:
+            case DATUM_FORMAT_FZ:
+            case DATUM_FORMAT_RECORD:
             default:
 #if GC_DEBUG
                 prdesc("scanning", descr);
@@ -238,7 +248,7 @@ gc(int c, ...)
     fz_prev = &fz_list;
     for (fzp = fz_list; fzp != nil; fzp = ((datum *)fzp)[1]) {
         datum p = ((datum *) fzp)[2];
-        if (IS_BROKEN_HEART(*(p - 2))) {
+        if (datum_desc_format(p[-2]) == DATUM_FORMAT_BROKEN_HEART) {
             ((datum *) fzp)[2] = (datum) *p;
             fz_prev = (datum *) (fzp + 2); /* update the prev pointer */
         } else {
@@ -265,14 +275,14 @@ dalloc(size_t *base, size_t *free,
     datum p;
     size_t delta = len + 2;
 
-    if (type == DATUM_TYPE_STR) {
+    if (type == DATUM_FORMAT_OPAQUE) {
         delta = (len + 3 / 4) + 2;
     }
 
     if ((*free + delta) >= HEAP_SIZE) gc(2, &x, &y);
     if ((*free + delta) >= HEAP_SIZE) die("dalloc -- OOM after gc");
     p = base + *free;
-    *p = DATUM_INFO(type, len);
+    *p = make_desc(type, len);
     p[1] = (size_t) mtab;
     if (delta > 2) p[2] = (size_t) x;
     if (delta > 3) p[3] = (size_t) y;
@@ -287,7 +297,7 @@ size_t
 datum_size(datum d)
 {
     if (((size_t) d) & 1) return 4;
-    return DATUM_LEN(*(d - 2));
+    return datum_desc_len(*(d - 2));
 }
 
 datum
@@ -314,7 +324,7 @@ install_fz(datum *x, na_fn_free fn)
 
     regs[R_GC0] = *x;
     fz = dalloc(busy_chunks, &free_index,
-                DATUM_TYPE_FZ, 3, nil, (datum) fn, fz_list);
+                DATUM_FORMAT_FZ, 3, nil, (datum) fn, fz_list);
     fz[2] = ((size_t) (*x = regs[R_GC0]));
     regs[R_GC0] = nil;
     fz_list = fz;
@@ -324,33 +334,33 @@ datum
 make_opaque(size_t size, datum mtab)
 {
     return dalloc(busy_chunks, &free_index,
-                  DATUM_TYPE_STR, size, mtab, nil, nil);
+                  DATUM_FORMAT_OPAQUE, size, mtab, nil, nil);
 }
 
 datum
 make_record(size_t len, datum mtab, datum a, datum b)
 {
     return dalloc(busy_chunks, &free_index,
-                  DATUM_TYPE_ARRAY, len, mtab, a, b);
+                  DATUM_FORMAT_RECORD, len, mtab, a, b);
 }
 
 datum
 make_opaque_permanent(size_t size, datum mtab)
 {
     return dalloc(perm_busy_chunks, &perm_free_index,
-                  DATUM_TYPE_STR, size, mtab, nil, nil);
+                  DATUM_FORMAT_OPAQUE, size, mtab, nil, nil);
 }
 
 datum
 make_record_permanent(size_t len, datum mtab, datum a, datum b)
 {
     return dalloc(perm_busy_chunks, &perm_free_index,
-                  DATUM_TYPE_ARRAY, len, mtab, a, b);
+                  DATUM_FORMAT_RECORD, len, mtab, a, b);
 }
 
 int
 broken_heartp(datum x)
 {
     return in_old_chunk_range(x) &&
-        (DATUM_TYPE(x[-2]) == DATUM_TYPE_BROKEN_HEART);
+        (datum_desc_format(x[-2]) == DATUM_FORMAT_BROKEN_HEART);
 }
