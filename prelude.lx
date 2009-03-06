@@ -55,17 +55,31 @@ def error ():
   end
 
 def inspect ():
-  inline C (has-method? c m) <<end
-    if (closure_has_method(n_c, n_m)) return int2datum(1);
-    return nil;
-  end
+  (has-method? c m):
+    def (scan x):
+      if (is? x '()): return false
+      if (is? m x.car): return true
+      return scan x.cdr
+    scan inspect.methods c
   inline C (same-type? x y) <<end
     if (datum_mtab(n_x) == datum_mtab(n_y)) return int2datum(1);
     return nil;
   end
-  inline C (methods c) <<end
-    return (datum) closure_methods(n_c);
+  inline C (method-count c) <<end
+    return ((method_table) datum_mtab(n_c))->size;
   end
+  inline C (method-name c n) <<end
+    size_t n = datum2int(n_n);
+    method_table table;
+
+    table = (method_table) datum_mtab(n_c);
+    return table->items[n].name;
+  end
+  (methods c):
+    def (build n methods):
+      if n > (inspect.method-count c) - 1: return methods
+      return (build (n + 1) (cons (inspect.method-name c n) methods))
+    build 0 '()
 
 # TODO replace this with 
 def (promise? x): inspect.has-method? x 'wait
