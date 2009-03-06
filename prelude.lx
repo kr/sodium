@@ -60,7 +60,7 @@ def inspect ():
     return nil;
   end
   inline C (same-type? x y) <<end
-    if (closures_same_type(n_x, n_y)) return int2datum(1);
+    if (datum_mtab(n_x) == datum_mtab(n_y)) return int2datum(1);
     return nil;
   end
   inline C (methods c) <<end

@@ -42,12 +42,6 @@ closure_has_method(datum d, datum name)
     return 0;
 }
 
-int
-closures_same_type(datum a, datum b)
-{
-    return datum_mtab(a) == datum_mtab(b);
-}
-
 datum
 closure_methods(datum d)
 {
