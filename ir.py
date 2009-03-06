@@ -693,11 +693,16 @@ class OP_L(OP):
 class OP_RR(OP):
     def __init__(self, op, r1, r2):
         OP.__init__(self, op)
+        self.r1n = r1
+        self.r2n = r2
         self.r1 = lookup_reg(r1)
         self.r2 = lookup_reg(r2)
 
     def get_body(self, labels, datums):
         return pack((5, self.r1), (5, self.r2))
+
+    def __repr__(self):
+        return '%s %s %s' % (self.op, self.r1n, self.r2n)
 
 class OP_RL(OP):
     def __init__(self, op, r, l):
@@ -744,6 +749,9 @@ class OP_RD(OP):
 class OP_RRR(OP):
     def __init__(self, op, r1, r2, r3):
         OP.__init__(self, op)
+        self.r1n = r1
+        self.r2n = r2
+        self.r3n = r3
         self.r1 = lookup_reg(r1)
         self.r2 = lookup_reg(r2)
         self.r3 = lookup_reg(r3)
@@ -752,7 +760,7 @@ class OP_RRR(OP):
         return pack((5, self.r1), (5, self.r2), (5, self.r3))
 
     def __repr__(self):
-        return '%s %s %s %s' % (self.op, self.r1, self.r2, self.r3)
+        return '%s %s %s %s' % (self.op, self.r1n, self.r2n, self.r3n)
 
 class OP_RRD(OP):
     def __init__(self, op, r1, r2, d):
