@@ -9,7 +9,7 @@ inline C <<end
 #define bigint(x) (prfmt(1, "%u\n", (x)), die1("no bigints yet", nil))
 end
 
-def int ():
+def int: sobj:
   inline C (cmp b) <<end
     register long a, b;
 
@@ -18,9 +18,9 @@ def int ():
     return (a < b) ? int2datum(-1) : (a > b) ? int2datum(1) : int2datum(0);
   end
 
-  (= x) (is? (int.cmp x) 0)
-  (> x) (is? (int.cmp x) 1)
-  (< x) (is? (int.cmp x) -1)
+  (= x) (is? (self.cmp x) 0)
+  (> x) (is? (self.cmp x) 1)
+  (< x) (is? (self.cmp x) -1)
 
   inline C (+ b) <<end
     register long a, b, r;
@@ -81,11 +81,11 @@ def int ():
   (** x) (error "not implemented")
 
   (str):
-    def upper (int / 10)
-    def lower (int % 10)
+    def upper (self / 10)
+    def lower (self % 10)
     def table "0123456789"
-    if (int < 10):
-      table int
+    if (self < 10):
+      table self
     else:
       (upper.str) / (table lower)
 
