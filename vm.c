@@ -20,6 +20,7 @@
 #include "bytes.h"
 #include "str.h"
 #include "nil.h"
+#include "int.h"
 #include "config.h"
 #include "module-index.h"
 
@@ -783,6 +784,7 @@ main(int argc, char **argv)
     pair_init();
     bytes_init();
     str_init();
+    int_init();
 
     genv = cons(nil, nil);
 

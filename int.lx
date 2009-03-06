@@ -7,6 +7,16 @@ inline C <<end
 #define MIN_LX_INT (-0x40000000)
 
 #define bigint(x) (prfmt(1, "%u\n", (x)), die1("no bigints yet", nil))
+
+datum int_mtab;
+
+void
+int_init()
+{
+    int_mtab = (datum) lxc_module_int.instrs +
+                       lxc_module_int.label_offsets[4];
+}
+
 end
 
 def int: sobj:
