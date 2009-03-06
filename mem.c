@@ -318,13 +318,6 @@ install_fz(datum *x, na_fn_free fn)
 }
 
 datum
-make_closure(datum env, uint *table)
-{
-    return dalloc(busy_chunks, &free_index,
-                  DATUM_TYPE_CLOSURE, 1, (datum) table, env, nil);
-}
-
-datum
 make_opaque(size_t size, datum mtab)
 {
     return dalloc(busy_chunks, &free_index,

@@ -465,6 +465,12 @@ extend_environment(datum env, datum argl, datum formals)
     return cons(argl, env);
 }
 
+static datum
+make_closure(size_t *mtab, datum env)
+{
+    return make_record(1, mtab, env, nil);
+}
+
 static void
 start(uint *start_addr)
 {
@@ -562,7 +568,7 @@ start(uint *start_addr)
                 ra = I_R(inst);
                 rb = I_RR(inst);
                 rc = I_RRR(inst);
-                regs[ra] = make_closure(regs[rb], regs[rc]);
+                regs[ra] = make_closure(regs[rc], regs[rb]);
                 break;
             case OP_CLOSURE_METHOD:
                 ra = I_R(inst);

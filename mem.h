@@ -21,8 +21,6 @@ typedef struct method_table {
     struct method_item items[];
 } *method_table;
 
-datum make_closure(datum env, uint *table);
-
 /* Note: *x must be the only pointer to x */
 void install_fz(datum *, na_fn_free);
 
