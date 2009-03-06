@@ -284,7 +284,7 @@ def compile_meth_body(meth, meth_entry, cenv):
     body = meth_body(meth)
     cenv = cons(formals, cenv)
     return append_ir_seqs(
-        make_ir_seq((env_r, proc_r, argl_r), (env_r, tmp_r),
+        make_ir_seq((proc_r, argl_r), (env_r, tmp_r),
             meth_entry,
             CLOSURE_ENV(env_r, proc_r),
             LOAD_IMM(tmp_r, formals),
@@ -299,7 +299,7 @@ def compile_smeth_body(meth, meth_entry):
     body = meth_body(meth)
     cenv = cons(formals, plist(plist(self_s)))
     return append_ir_seqs(
-        make_ir_seq((env_r, proc_r, argl_r), (env_r, tmp_r),
+        make_ir_seq((proc_r, argl_r), (env_r, tmp_r),
             meth_entry,
             LIST(env_r, proc_r),
             LIST(env_r, env_r),
