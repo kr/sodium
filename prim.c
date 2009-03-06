@@ -55,6 +55,7 @@ prfmt(int fd, char *fmt, ...)
 {
     va_list ap;
     char *p, *sval;
+    datum dval;
     int ival;
     unsigned int uval;
 
@@ -91,6 +92,14 @@ prfmt(int fd, char *fmt, ...)
             case 's':
                 sval = va_arg(ap, char *);
                 write(fd, sval, strlen(sval));
+                break;
+            case 'o':
+                dval = va_arg(ap, datum);
+                if (fd == 1) {
+                    prx(dval);
+                } else {
+                    write(fd, "object", 6);
+                }
                 break;
             default:
                 write(fd, p, 1);
