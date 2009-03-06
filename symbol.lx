@@ -21,20 +21,6 @@ static datum *symbols = 0;
 
 static datum symbol_mtab;
 
-static inline datum
-symbol2datum(symbol s)
-{
-    if (!s) return nil;
-    return (datum) s;
-}
-
-static inline symbol
-datum2symbol(datum d)
-{
-    if (d == nil) return 0;
-    return (symbol) d;
-}
-
 void
 symbol_init()
 {
@@ -72,7 +58,7 @@ rehash()
 
     for (i = 0; i < old_cap; i++) {
         while (old[i] != nil) {
-            symbol ent = datum2symbol(old[i]);
+            symbol ent = (symbol) old[i];
             old[i] = ent->next;
             ent->next = nil;
             store(ent);
@@ -96,38 +82,33 @@ store(symbol ent)
 
     i = hash(datum_size(ent->str), (char *) ent->str) % cap;
 
-    ent->next = symbols[i];
-    symbols[i] = symbol2datum(ent);
     fill++;
-
-    return symbol2datum(ent);
+    ent->next = symbols[i];
+    return symbols[i] = (datum) ent;
 }
 
-static symbol
+static datum
 make_st_ent(const char *s)
 {
     datum str;
-    symbol ent;
 
     str = make_str_init_permanent(strlen(s), s);
-    ent = (symbol) make_record_permanent(2, symbol_mtab, nil, str);
-
-    return ent;
+    return make_record_permanent(2, symbol_mtab, nil, str);
 }
 
 static datum
 lookup_sym(const char *s)
 {
     int i;
-    symbol sh;
+    datum sh;
 
     if (!cap) return nil;
 
     i = hash(strlen(s), s) % cap;
 
-    for (sh = datum2symbol(symbols[i]); sh; sh = datum2symbol(sh->next)) {
-        if (str_cmp_charstar(sh->str, s) == 0) {
-            return symbol2datum(sh);
+    for (sh = symbols[i]; sh != nil; sh = ((symbol) sh)->next) {
+        if (str_cmp_charstar(((symbol) sh)->str, s) == 0) {
+            return sh;
         }
     }
     return nil;
@@ -141,32 +122,14 @@ intern(const char *s)
     sym = lookup_sym(s);
     if (sym != nil) return sym;
 
-    return store(make_st_ent(s));
+    return store((symbol) make_st_ent(s));
 }
 
 void
-dump_symbol(void *s)
+pr_symbol(datum sym)
 {
-    symbol sym;
-    if (!symbolp(s)) {
-        prfmt(1, "<bad-symbol>");
-        return;
-    }
-    sym = datum2symbol(s);
-    prfmt(1, "symbol\n  ");
-    pr(sym->str);
-}
-
-void
-pr_symbol(void *s)
-{
-    symbol sym;
-    if (!symbolp(s)) {
-        prfmt(1, "<bad-symbol>");
-        return;
-    }
-    sym = datum2symbol(s);
-    prx(sym->str);
+    if (!symbolp(sym)) return prfmt(1, "<bad-symbol>");
+    prx(((symbol) sym)->str);
 }
 
 int
@@ -178,16 +141,15 @@ symbolp(datum x)
 size_t
 symbol_copy0(char *dest, size_t n, datum sym)
 {
-    symbol s = datum2symbol(sym);
-    return copy_str_contents0(dest, s->str, n);
+    if (!symbolp(sym)) die1("not a symbol", sym);
+    return copy_str_contents0(dest, ((symbol) sym)->str, n);
 }
 
 end
 
 def symbol ():
   inline C str <<end
-    symbol s = datum2symbol(rcv);
-    return s->str;
+    return ((symbol) rcv)->str;
   end
 
 def install-symbol ():

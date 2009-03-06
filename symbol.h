@@ -11,8 +11,7 @@ datum intern(const char *s);
 int symbolp(datum d);
 size_t symbol_copy0(char *dest, size_t n, datum sym);
 
-void dump_symbol(void *s);
-void pr_symbol(void *s);
+void pr_symbol(datum s);
 
 
 #endif /*symbol_h*/
