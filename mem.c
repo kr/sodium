@@ -44,7 +44,7 @@ init_mem(void)
 
 #define DATUM_TYPE_unused1 1
 #define DATUM_TYPE_unused3 3
-#define DATUM_TYPE_CLOSURE 5
+#define DATUM_TYPE_unused5 5
 #define DATUM_TYPE_ARRAY 7
 #define DATUM_TYPE_unused9 9
 #define DATUM_TYPE_STR 11
@@ -59,7 +59,7 @@ init_mem(void)
 static const char *datum_types[] = {
     "<unused 1>",
     "<unused 3>",
-    "DATUM_TYPE_CLOSURE",
+    "<unused 5>",
     "DATUM_TYPE_ARRAY",
     "<unused 9>",
     "DATUM_TYPE_STR",
@@ -113,7 +113,6 @@ relocate(datum refloc)
                 len = (len + 3) / 4;
 
                 /* fall through */
-            case DATUM_TYPE_CLOSURE:
             case DATUM_TYPE_ARRAY:
             case DATUM_TYPE_FZ:
                 i = (datum *) p;
@@ -218,7 +217,6 @@ gc(int c, ...)
             case DATUM_TYPE_STR:
                 np += (len + 3) / 4 + 2;
                 break;
-            case DATUM_TYPE_CLOSURE:
             case DATUM_TYPE_FZ:
             case DATUM_TYPE_ARRAY:
             default:
