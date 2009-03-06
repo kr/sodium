@@ -35,7 +35,7 @@ def referencable_from_code(x):
     return (isinstance(x, S) or
             isinstance(x, Integer) or
             isinstance(x, String) or
-            isinstance(x, pair.cons) or
+            isinstance(x, pair.nilcons) or
             isinstance(x, Decimal))
 
 def tr(s, old, new):

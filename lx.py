@@ -109,7 +109,17 @@ def compile_literal(exp, target, linkage, cenv, pop_all_symbol):
   if self_evaluatingp(exp) or symbolp(exp) or exp is nil:
     return compile_self_evaluating(exp, target, linkage, cenv, pop_all_symbol)
   if pairp(exp):
-    return compile_self_evaluating(exp, target, linkage, cenv, pop_all_symbol)
+    reg = tmp_r
+    if reg is target: reg = val_r # this feels like a hack
+    d = compile_literal(exp.cdr(), target, linkage, cenv, pop_all_symbol)
+    a = compile_literal(exp.car(), reg, linkage, cenv, pop_all_symbol)
+    return append_ir_seqs(
+            d,
+            preserving((target,),
+                a,
+                make_ir_seq((reg, target), (target,),
+                    CONS(target, reg, target)),
+                pop_all_symbol))
   raise RuntimeError("Can't compile literal: %r" % exp)
 
 def compile_quoted(exp, target, linkage, cenv, pop_all_symbol):
