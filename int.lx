@@ -99,12 +99,4 @@ def int: sobj:
     else:
       (upper.str) / (table lower)
 
-def install-int ():
-  inline C (run surrogate) <<end
-    int_surrogate = n_surrogate;
-    return ok_sym;
-  end
-
-install-int int
-
 . '()

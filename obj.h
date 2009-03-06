@@ -5,8 +5,6 @@
 #include "gen.h"
 #include "mem.h"
 
-extern datum int_surrogate;
-
 datum closure_env(datum d);
 uint *closure_method(datum d, datum name);
 int closure_has_method(datum d, datum name);

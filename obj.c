@@ -1,17 +1,14 @@
 #include "gen.h"
 #include "obj.h"
 #include "mem.h"
+#include "int.h"
 #include "prim.h"
 
 #include "vm.h"
 
-datum int_surrogate;
-
 static datum
 get_primitive_surrogate(datum d)
 {
-    if (intp(d)) return int_surrogate;
-
     return 0;
 }
 
@@ -41,7 +38,7 @@ closure_env(datum d)
 static method_table
 obj_method_table(datum d)
 {
-    if (intp(d)) d = get_primitive_surrogate(d);
+    if (intp(d)) return (method_table) int_mtab;
 
     return (method_table) d[-1];
 }
