@@ -108,10 +108,11 @@ store(symbol ent)
 static symbol
 make_st_ent(const char *s)
 {
+    datum str;
     symbol ent;
 
-    ent = malloc(sizeof(struct symbol));
-    ent->str = make_str_init_permanent(strlen(s), s);
+    str = make_str_init_permanent(strlen(s), s);
+    ent = (symbol) make_record_permanent(2, symbol_mtab, nil, str);
 
     return ent;
 }
