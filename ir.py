@@ -30,6 +30,14 @@ def quote(s):
         r += c
     return '"' + r + '"'
 
+def referencable_from_code(x):
+    import pair
+    return (isinstance(x, S) or
+            isinstance(x, Integer) or
+            isinstance(x, String) or
+            isinstance(x, pair.cons) or
+            isinstance(x, Decimal))
+
 def tr(s, old, new):
     for a,b in zip(old, new):
         s = s.replace(a, b)
@@ -704,6 +712,8 @@ class OP_RD(OP):
         OP.__init__(self, op)
         self.reg = r
         self.r = lookup_reg(r)
+        if not referencable_from_code(d):
+            raise AssemblingError('d cannot be referenced from code: %r' % d)
         self.d = d
 
     def get_body(self, labels, datums):
