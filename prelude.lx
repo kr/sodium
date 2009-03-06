@@ -59,7 +59,7 @@ def inspect ():
     def (scan x):
       if (is? x '()): return false
       if (is? m x.car): return true
-      return scan x.cdr
+      scan x.cdr
     scan inspect.methods c
   inline C (same-type? x y) <<end
     if (datum_mtab(n_x) == datum_mtab(n_y)) return int2datum(1);
