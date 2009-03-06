@@ -6,7 +6,6 @@
 #include "vm.h"
 #include "obj.h"
 #include "prim.h"
-#include "pair.h"
 #include "int.h"
 #include "symbol.h"
 #include "config.h"
