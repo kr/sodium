@@ -104,9 +104,17 @@ percent_s = S('%')
 def compile_self_evaluating(exp, target, linkage, cenv, pop_all_symbol):
     return end_with_linkage(linkage,
             make_ir_seq((), (target,), LOAD_IMM(target, exp)), pop_all_symbol)
+
+def compile_literal(exp, target, linkage, cenv, pop_all_symbol):
+  if self_evaluatingp(exp) or symbolp(exp) or exp is nil:
+    return compile_self_evaluating(exp, target, linkage, cenv, pop_all_symbol)
+  if pairp(exp):
+    return compile_self_evaluating(exp, target, linkage, cenv, pop_all_symbol)
+  raise RuntimeError("Can't compile literal: %r" % exp)
+
 def compile_quoted(exp, target, linkage, cenv, pop_all_symbol):
-    return end_with_linkage(linkage,
-            make_ir_seq((), (target,), LOAD_IMM(target, exp.cadr())), pop_all_symbol)
+    return compile_literal(exp.cadr(), target, linkage, cenv, pop_all_symbol)
+
 def compile_variable(exp, target, linkage, cenv, pop_all_symbol):
     addr = find_variable(exp, cenv)
     if addr is not_found_s:
@@ -284,10 +292,11 @@ def compile_meth_body(meth, meth_entry, cenv):
     body = meth_body(meth)
     cenv = cons(formals, cenv)
     return append_ir_seqs(
-        make_ir_seq((proc_r, argl_r), (env_r, tmp_r),
+        make_ir_seq((proc_r,), (env_r,),
             meth_entry,
-            CLOSURE_ENV(env_r, proc_r),
-            LOAD_IMM(tmp_r, formals),
+            CLOSURE_ENV(env_r, proc_r)),
+        compile_literal(formals, tmp_r, next_s, cenv, pop_all_symbol),
+        make_ir_seq((env_r, tmp_r, argl_r), (env_r,),
             EXTEND_ENVIRONMENT(env_r, env_r, argl_r, tmp_r)),
         compile_sequence(body, val_r, return_s, cenv, pop_all_symbol))
 
@@ -299,11 +308,12 @@ def compile_smeth_body(meth, meth_entry):
     body = meth_body(meth)
     cenv = cons(formals, plist(plist(self_s)))
     return append_ir_seqs(
-        make_ir_seq((proc_r, argl_r), (env_r, tmp_r),
+        make_ir_seq((proc_r,), (env_r,),
             meth_entry,
             LIST(env_r, proc_r),
-            LIST(env_r, env_r),
-            LOAD_IMM(tmp_r, formals),
+            LIST(env_r, env_r)),
+        compile_literal(formals, tmp_r, next_s, cenv, pop_all_symbol),
+        make_ir_seq((env_r, argl_r, tmp_r), (env_r,),
             EXTEND_ENVIRONMENT(env_r, env_r, argl_r, tmp_r)),
         compile_sequence(body, val_r, return_s, cenv, pop_all_symbol))
 
