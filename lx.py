@@ -111,15 +111,16 @@ def compile_literal(exp, target, linkage, cenv, pop_all_symbol):
   if pairp(exp):
     reg = tmp_r
     if reg is target: reg = val_r # this feels like a hack
-    d = compile_literal(exp.cdr(), target, linkage, cenv, pop_all_symbol)
-    a = compile_literal(exp.car(), reg, linkage, cenv, pop_all_symbol)
-    return append_ir_seqs(
-            d,
-            preserving((target,),
-                a,
-                make_ir_seq((reg, target), (target,),
-                    CONS(target, reg, target)),
-                pop_all_symbol))
+    d = compile_literal(exp.cdr(), target, next_s, cenv, pop_all_symbol)
+    a = compile_literal(exp.car(), reg, next_s, cenv, pop_all_symbol)
+    return end_with_linkage(linkage,
+            append_ir_seqs(
+                d,
+                preserving((target,),
+                    a,
+                    make_ir_seq((reg, target), (target,),
+                        CONS(target, reg, target)),
+                    pop_all_symbol)), pop_all_symbol)
   raise RuntimeError("Can't compile literal: %r" % exp)
 
 def compile_quoted(exp, target, linkage, cenv, pop_all_symbol):
