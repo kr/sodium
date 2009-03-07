@@ -34,6 +34,7 @@ def referencable_from_code(x):
     return (isinstance(x, S) or
             isinstance(x, Integer) or
             isinstance(x, String) or
+            isinstance(x, InlineMethEntry) or
             isinstance(x, Decimal))
 
 def tr(s, old, new):
@@ -79,12 +80,6 @@ class AssemblingError(Exception):
 def make_datum_c_name(n):
     return 'datum_%d' % (n,)
 
-unique_c_name_counter = 0
-def gen_unique_c_name():
-    global unique_c_name_counter
-    unique_c_name_counter += 1
-    return 'datum_pair_%d' % (unique_c_name_counter,)
-
 def suitable_register_list(x):
     return isinstance(x, tuple) or isinstance(x, frozenset)
 
@@ -115,8 +110,7 @@ class make_ir_seq:
 
     def extract(self):
         global the_labels
-        datums = self.get_se_datums() + self.get_symbols()
-        datums = self.get_lists(datums)
+        datums = self.get_se_datums_and_symbols()
         labels, self.statements = self.get_labels()
         the_labels = labels
         return datums, labels
@@ -158,9 +152,8 @@ class make_ir_seq:
                 sdts += '#'
                 print >>fd, '#define %s %d' % (c_name,
                         pseudo_box(int(d)))
-            else: # it is a list
-                sdts += '('
-                self.emit_c_pair(fd, tuple(reversed(d)), c_name)
+            else:
+                raise RuntimeError('wtf %r' % d)
 
         print >>fd, 'static uint static_datum_entries[] = {'
         for datum_name in datum_names:
@@ -210,16 +203,6 @@ class make_ir_seq:
     def emit_magic(fd):
         fd.write("\x89LX1\x0d\n\x1a\n")
 
-    def emit_c_pair(self, fd, p, c_name):
-        if len(p):
-            next_c_name = gen_unique_c_name()
-            self.emit_c_pair(fd, p[1:], next_c_name)
-            print >>fd, 'static struct spair %s_s = { %d, %s };' % (c_name,
-                    p[0], next_c_name)
-            print >>fd, '#define %s &%s_s' % (c_name, c_name)
-        else:
-            print >>fd, '#define %s 0' % (c_name,)
-
     @staticmethod
     def emit_datums(fd, datums):
         fd.write(encode_int(len(datums)))
@@ -237,15 +220,8 @@ class make_ir_seq:
                 fd.write('#')
                 d = int(d) # hack to get floats to "work" for now
                 fd.write(encode_int(pseudo_box(d)))
-            else: # it is a list
-                fd.write('(')
-                if len(d):
-                    fd.write(' ')
-                    fd.write(encode_int(d[-1]))
-                    for x in reversed(d[:-1]):
-                        fd.write(' ')
-                        fd.write(encode_int(x))
-                fd.write(')')
+            else:
+                raise RuntimeError('wtf %r' % d)
 
     @staticmethod
     def emit_labels(fd, labels):
@@ -254,26 +230,12 @@ class make_ir_seq:
             fd.write(encode_int(i))
             #fd.write(fmt_int(i, 4, ' '))
 
-    def get_se_datums(self):
+    def get_se_datums_and_symbols(self):
         datums = frozenset()
         for s in self.statements:
             if symbolp(s): continue
-            datums |= s.se_datums()
+            datums |= s.se_datums_and_symbols()
         return tuple(datums)
-
-    def get_symbols(self):
-        symbols = frozenset()
-        for s in self.statements:
-            if symbolp(s): continue
-            symbols |= s.symbols()
-        return tuple(symbols)
-
-    def get_lists(self, datums):
-        for s in self.statements:
-            if symbolp(s): continue
-            ex = s.lists(datums)
-            datums += ex
-        return datums
 
     def get_labels(self):
         labels, statements = [], []
@@ -559,14 +521,8 @@ class OP(object):
         inst = self.encode(fd, labels, datums)
         fd.write(encode_int(inst))
 
-    def se_datums(self):
+    def se_datums_and_symbols(self):
         return frozenset()
-
-    def symbols(self):
-        return frozenset()
-
-    def lists(self, datums):
-        return ()
 
 def lookup_op(op):
     return all_ops_dict[op]
@@ -589,16 +545,6 @@ def lookup_dat(d, datums):
     i, ex = find_datum(d, datums)
     if ex: raise AssemblingError, ('datum not found: %r' % (d,))
     return i
-
-def extract_se_datums(x):
-    if self_evaluatingp(x): return frozenset((x,))
-    if symbolp(x) or x.nullp(): return frozenset()
-    return extract_se_datums(x.car()) | extract_se_datums(x.cdr())
-
-def extract_symbols(x):
-    if symbolp(x): return frozenset((x,))
-    if self_evaluatingp(x) or x.nullp(): return frozenset()
-    return extract_symbols(x.car()) | extract_symbols(x.cdr())
 
 def find_datum(x, datums):
     # base case: x is not a list
@@ -623,10 +569,6 @@ def find_datum(x, datums):
     # else, add list to datums, return new index
     return len(datums), ex + (flat,)
 
-def extract_lists(x, datums):
-    i, extra = find_datum(x, datums)
-    return extra
-
 class OP_NOP(OP):
     def __init__(self):
         OP.__init__(self, nop_s)
@@ -637,22 +579,16 @@ class OP_NOP(OP):
 class OP_DATUM(OP):
     def __init__(self, d):
         OP.__init__(self, datum_op_s)
+        if not referencable_from_code(d):
+            raise AssemblingError('d cannot be referenced from code: %r' % d)
         self.d = d
 
     def get_body(self, labels, datums):
         i = lookup_dat(self.d, datums)
         return pack((27, i))
 
-    def se_datums(self):
-        return extract_se_datums(self.d)
-
-    def symbols(self):
-        return extract_symbols(self.d)
-
-    def lists(self, datums):
-        x = self.d
-        if symbolp(x) or self_evaluatingp(x): return ()
-        return extract_lists(x, datums)
+    def se_datums_and_symbols(self):
+        return frozenset((self.d,))
 
     def __repr__(self):
         return '%s %s' % (self.op, self.d)
@@ -730,16 +666,8 @@ class OP_RD(OP):
         i = lookup_dat(self.d, datums)
         return pack((5, self.r), (22, i))
 
-    def se_datums(self):
-        return extract_se_datums(self.d)
-
-    def symbols(self):
-        return extract_symbols(self.d)
-
-    def lists(self, datums):
-        x = self.d
-        if symbolp(x) or self_evaluatingp(x): return ()
-        return extract_lists(x, datums)
+    def se_datums_and_symbols(self):
+        return frozenset((self.d,))
 
     def __repr__(self):
         return '%s %s %r' % (self.op, self.reg, self.d)
@@ -775,7 +703,7 @@ class OP_RRD(OP):
         i = lookup_dat(self.d, datums)
         return pack((5, self.r1), (5, self.r2), (17, i))
 
-    def symbols(self):
+    def se_datums_and_symbols(self):
         return frozenset((self.d,))
 
     def __repr__(self):
