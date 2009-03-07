@@ -99,6 +99,7 @@ def compile_do(exp, target, linkage, cenv, pop_all_symbol):
 
 env_r = S('env')
 global_r = S('global')
+nil_r = S('nil')
 not_found_s = S('not-found')
 percent_s = S('%')
 def compile_self_evaluating(exp, target, linkage, cenv, pop_all_symbol):
@@ -106,7 +107,11 @@ def compile_self_evaluating(exp, target, linkage, cenv, pop_all_symbol):
             make_ir_seq((), (target,), LOAD_IMM(target, exp)), pop_all_symbol)
 
 def compile_literal(exp, target, linkage, cenv, pop_all_symbol):
-  if self_evaluatingp(exp) or symbolp(exp) or exp is nil:
+  if exp is nil:
+    return end_with_linkage(linkage,
+            make_ir_seq((), (target,), MOV(target, nil_r)), pop_all_symbol)
+    return compile_self_evaluating(exp, target, linkage, cenv, pop_all_symbol)
+  if self_evaluatingp(exp) or symbolp(exp):
     return compile_self_evaluating(exp, target, linkage, cenv, pop_all_symbol)
   if pairp(exp):
     reg = tmp_r
@@ -448,8 +453,8 @@ def exp_operands(exp):
 
 def construct_arglist(operand_codes, pop_all_symbol):
     operand_codes = operand_codes.reverse()
-    if operand_codes.nullp(): return make_ir_seq((), (argl_r,),
-                                                LOAD_IMM(argl_r, nil))
+    if operand_codes.nullp():
+        return make_ir_seq((), (argl_r,), MOV(argl_r, nil_r))
     code_to_get_last_arg = append_ir_seqs(operand_codes.car(),
                                           make_ir_seq((val_r,), (argl_r,),
                                               LIST(argl_r, val_r)))

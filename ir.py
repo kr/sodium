@@ -31,11 +31,9 @@ def quote(s):
     return '"' + r + '"'
 
 def referencable_from_code(x):
-    import pair
     return (isinstance(x, S) or
             isinstance(x, Integer) or
             isinstance(x, String) or
-            isinstance(x, pair.nilcons) or
             isinstance(x, Decimal))
 
 def tr(s, old, new):
