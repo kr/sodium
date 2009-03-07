@@ -25,7 +25,7 @@ module-index.c: $(lxmodules)
 	./gen-mod-index --output=$@ $(lxmodules:.lx=)
 
 # This one is special.
-prelude.lxc.c: prelude.lx
+prelude.lxc.c: prelude.lx *.py
 	./lx1c --generate-c --output=$@ $<
 
 %.lxc.c: %.lx *.py
