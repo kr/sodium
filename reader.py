@@ -59,152 +59,150 @@ class Parser:
     @record_pos_info
     def __program(self):
         '''
-program : stmt* EOF
+        prot: line* EOF
+
         '''
-        stmts = self.match_loop(self.__stmt, T.EOF)
+
+        lines = self.match_loop(self.__line, T.EOF)
         self.match(T.EOF)
-        return stmts
-
-    @record_pos_info
-    def __stmt(self):
-        '''
-stmt : mole
-     | mole EOL
-        '''
-
-        exprs = self.__mole(T.EOL)
-        self.try_match(T.EOL)
-        return exprs
+        return lines
 
 
     @record_pos_info
-    def __mole(self, *follow):
+    def __line(self):
         '''
-mole : 
-     | '.' expr
-     | IMESS stuff
-     | expr stuff
-
-     | expr tail
-     | expr SMESS tail
-     | expr IMESS tail
-     | NAME '::' expr
+        line: expr EOL
         '''
+        expr = self.__expr(T.EOL)
+        self.match(T.EOL)
+        return expr
 
-        if self.peek in follow: return nil
+    @record_pos_info
+    def __expr(self, *follow):
+        '''
+        expr: body
+            : body "." expr
+            : body ":" expr
+            : body ":" EOL block
+        '''
+        singular, body = self.__body(T.DOT, T.DOTS, *follow)
+
         if self.peek == T.DOT:
           self.match(T.DOT)
-          return self.__expr()
-        if self.peek in MESSAGE_TOKENS:
-          first = lx.S(self.match(*MESSAGE_TOKENS))
-        else:
-          first = self.__expr()
-
-        strip = (self.peek in MESSAGE_TOKENS)
-        res = self.__molex(first, *follow)
-        if strip: res = res.car()
+          more = self.__expr(*follow)
+          if singular:
+            return cons(body, more)
+          else:
+            return body.append(more)
 
         if self.peek == T.DOTS:
-            x = res.append(self.__tail(*follow))
-            return x
+          self.match(T.DOTS)
+          if self.try_match(T.EOL):
+              more = self.__block()
+          else:
+              more = list(self.__expr(*follow))
+          if singular: body = list(body)
+          return body.append(more)
 
-        return res
-
-    @record_pos_info
-    def __message(self):
-      stype, lexeme, pos = self.xmatch(*MESSAGE_TOKENS)
-      if stype == T.ASSIGN: return lx.S(lexeme)
-      return lx.Mess(lexeme)
-
-    def gobble_messages_reverse(self, l):
-      if self.peek not in MESSAGE_TOKENS: return l
-      return self.gobble_messages_reverse(cons(self.__message(), l))
-
-    def make_head(self, l):
-      a = l.car()
-      d = l.cdr()
-      if d.nullp(): return a
-      return list(self.make_head(d), a)
+        return body
 
     @record_pos_info
-    def __molex(self, first, *follow):
-      '''
-molex : MESS* tail
-      '''
-
-      rhead = self.gobble_messages_reverse(list(first))
-      tail = cons(rhead.car(), self.__inner_tail(*follow + (T.DOTS,)))
-      if rhead.cdr().nullp():
-        return tail
-      head = self.make_head(rhead.cdr())
-      x = list(cons(head, tail))
-      return x
-
-    @record_pos_info
-    def __inner_tail(self, *follow):
+    def __body(self, *follow):
         '''
-inner_tail :
-           | expr inner_tail
+        body:
+            : atom mess* binexpr*
+            : mess mess* binexpr*
         '''
-        if self.peek in follow: return nil
-        return self.__molex(self.__expr(), *follow)
+        if self.peek in follow: return False, nil
 
-
-    @record_pos_info
-    def __tail(self, *follow):
-        '''
-tail :
-     | ':' mole
-     | ':' EOL INDENT stmt+ DEDENT EOL
-        '''
-
-        if self.peek != T.DOTS: return nil
-
-        self.match(T.DOTS)
-        if self.peek != T.EOL: return list(self.__mole(*follow))
-        self.match(T.EOL)
-        self.match(T.INDENT)
-        exprs = self.match_loop(self.__stmt, T.DEDENT)
-        self.match(T.DEDENT)
-        self.match(T.EOL)
-        return exprs
-
-    @record_pos_info
-    def __expr(self):
-        '''
-expr : atom
-     | '(' ')'
-     | '(' mole ')'
-     | '[' mole ']'
-     | "'" expr
-        '''
-
-        if self.peek == T.LPAR:
-            self.match(T.LPAR)
-            mole = self.__mole(T.RPAR)
-            self.match(T.RPAR)
-            return mole
-        elif self.peek == T.LSQU:
-            self.match(T.LSQU)
-            mole = self.__mole(T.RSQU)
-            self.match(T.RSQU)
-            return list(lx.S(':shorthand-fn:'), mole)
-        elif self.peek == T.QUOTE:
-            self.match(T.QUOTE)
-            expr = self.__expr()
-            return list(lx.S('quote'), expr)
+        if self.peek in (T.IMESS, T.SMESS, T.BINOP):
+          atom = lx.S(self.match(T.IMESS, T.SMESS, T.BINOP))
         else:
-            return self.__atom()
+          atom = self.__atom()
+        if self.peek in follow: return True, atom
+
+        first, mess = atom, None
+        while self.peek in (T.IMESS, T.SMESS, T.BINOP, T.ASSIGN):
+          type, mess, pos = self.xmatch(T.IMESS, T.SMESS, T.BINOP, T.ASSIGN)
+          if type == T.ASSIGN:
+            first = list(first, lx.S(mess))
+          else:
+            first = list(first, lx.Mess(mess))
+
+        if not mess: first = list(atom)
+
+        args = self.match_loop(self.__binexpr, *follow)
+        return False, first.append(args)
+
+    @record_pos_info
+    def __block(self):
+        '''
+        block: INDENT line* DEDENT
+        '''
+        self.match(T.INDENT)
+        lines = self.match_loop(self.__line, T.DEDENT)
+        self.match(T.DEDENT)
+        return lines
+
+    @record_pos_info
+    def __binexpr(self):
+        '''
+        binexpr: unexpr
+               : unexpr BINOP binexpr
+        '''
+        left = self.__unexpr()
+        if self.peek not in (T.BINOP, T.ASSIGN): return left
+
+        type, lexeme, pos = self.xmatch(T.BINOP, T.ASSIGN)
+        if type == T.ASSIGN:
+          message = lx.S(lexeme)
+        else:
+          message = lx.Mess(lexeme)
+        right = self.__binexpr()
+        return list(left, message, right)
+
+    @record_pos_info
+    def __unexpr(self):
+        '''
+        unexpr: atom UNOP*
+        '''
+        atom = self.__atom()
+
+        first = atom
+        while self.peek in (T.IMESS, T.SMESS):
+            first = list(first, lx.Mess(self.match(T.IMESS, T.SMESS)))
+
+        return first
 
     @record_pos_info
     def __atom(self):
         '''
-atom : NAME
-     | INT
-     | DEC
-     | STR
-     | HEREDOC
+        atom : NAME
+             : INT
+             : DEC
+             : STR
+             : HEREDOC
+             : "(" expr ")"
+             : "[" expr "]"
+             : "'" atom
         '''
+        if self.peek == T.LPAR:
+            self.match(T.LPAR)
+            expr = self.__expr(T.RPAR)
+            self.match(T.RPAR)
+            return expr
+
+        if self.peek == T.LSQU:
+            self.match(T.LSQU)
+            expr = self.__expr(T.RSQU)
+            self.match(T.RSQU)
+            return list(lx.S(':shorthand-fn:'), expr)
+
+        if self.peek == T.QUOTE:
+            self.match(T.QUOTE)
+            atom = self.__atom()
+            return list(lx.S('quote'), atom)
+
         type, lexeme, pos = self.xmatch(T.INT, T.DEC, T.NAME, T.STR, T.HEREDOC)
         if type == T.INT:
             return lx.Integer(lexeme)
@@ -250,10 +248,6 @@ tab = {
     "'":"'",
     '"':'"',
 }
-
-def make_invoke(op, first, lexeme, tail):
-    return list(lx.S(op), first, (lx.S('quote'), lx.S(lexeme[1:])),
-            (lx.S('list'),) + tail)
 
 def parse(tokens):
     return Parser(tokens).parse()

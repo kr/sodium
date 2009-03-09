@@ -15,7 +15,7 @@
 [+] generate C macros for sodium variable access
 [+] simple sh testing
 [+] better error reporting in the compiler
-[ ] new grammar
+[+] new grammar
 [ ] proper (unicode) string and bytes types
 [ ] proper file i/o
 [ ] move bytecode loading into sodium code

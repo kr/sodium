@@ -2,4 +2,4 @@ import (ad-hoc-tests/c -> c)
 import (ad-hoc-tests/d -> d) f
 
 pr (c.x)
-pr (f)
+pr (f.)

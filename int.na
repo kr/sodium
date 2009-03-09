@@ -83,7 +83,7 @@ def int: sobj:
 
   (** x) (error "not implemented")
 
-  (str):
+  (str.):
     def upper (self / 10)
     def lower (self % 10)
     def table "0123456789"
@@ -92,4 +92,4 @@ def int: sobj:
     else:
       (upper.str) / (table lower)
 
-. '()
+'()

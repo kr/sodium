@@ -30,11 +30,11 @@ def pair: sobj:
     return ok_sym;
   end
 
-  inline C (car) <<end
+  inline C (car.) <<end
     return car(rcv);
   end
 
-  inline C (cdr) <<end
+  inline C (cdr.) <<end
     return cdr(rcv);
   end
 

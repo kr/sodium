@@ -82,7 +82,7 @@ def bytes: sobj:
     return (datum) new_str;
   end
 
-  inline C (decode) <<end
+  inline C (decode.) <<end
     /* TODO check for valid UTF-8 */
     return make_str_init(datum_size(rcv), (char *) rcv);
   end
@@ -98,7 +98,7 @@ def bytes: sobj:
     return int2datum(bytes_contents(rcv)[i]);
   end
 
-  inline C (length) <<end
+  inline C (length.) <<end
     return int2datum(datum_size(rcv));
   end
 

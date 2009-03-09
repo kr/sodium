@@ -33,7 +33,7 @@ def loader ():
   (run name):
     def ent (*modules*.assq name)
     if ent: return ent.cdr
-    def new-module (make-placeholder)
+    def new-module (make-placeholder.)
     *modules* :: (cons (cons name new-module) *modules*)
     become new-module (load-module name) 1
     . new-module
@@ -50,7 +50,7 @@ def (make-module name):
   read-file (find-file name)
 
 def (find-file name):
-  name :: ("lib/"./ name.str./ ".lxc")
+  name :: ("lib/"./ (name.str ./ ".lxc"))
   name.encode
 
 def find-builtin: obj ():
@@ -65,10 +65,10 @@ def read-file: obj ():
     return read_module_file(name);
   end
 
-def (make-placeholder) (obj ())
+def (make-placeholder.) (obj ())
 
 def module: sobj:
-  inline C (run) <<end
+  inline C (run.) <<end
     start_body(rcv);
     return regs[R_VAL];
   end

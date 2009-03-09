@@ -1,17 +1,17 @@
 #!/home/kr/src/lx/lxi
 
 def x: sobj:
-  (foo):
+  (foo.):
     . 7
 
-  (bar):
+  (bar.):
     self.foo
 
-  (baz):
+  (baz.):
     7 + 3
     self.foo
 
-  (bay):
+  (bay.):
     def x 1
     self.foo
 

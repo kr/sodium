@@ -1,6 +1,6 @@
 #!/home/kr/src/lx/lxi
 
-def q (make-queue)
+def q (make-queue.)
 
 q 3
 q 4

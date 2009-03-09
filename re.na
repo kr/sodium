@@ -22,7 +22,7 @@ def re ():
 
   (make pat opts):
     def compile: obj ():
-      inline C (run) <<end
+      inline C (run.) <<end
         pcre *re;
         const char *error;
         int erroffset, opts;
@@ -34,17 +34,17 @@ def re ():
         return make_pbox(re, free);
       end
 
-    def compiled (compile)
+    def compiled (compile.)
 
     def r ():
       (run subj) (r.match subj (r.runopts))
       (find subj) (r.match subj (r.findopts))
 
-      inline C (runopts) <<end
+      inline C (runopts.) <<end
         return int2datum(PCRE_ANCHORED);
       end
 
-      inline C (findopts) <<end
+      inline C (findopts.) <<end
         return int2datum(0);
       end
 

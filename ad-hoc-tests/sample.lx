@@ -3,19 +3,19 @@
 # This is a sample LX file
 
 def a: obj ():
-  (m) 5
+  (m.) 5
 
 def b: obj ():
-  (n) a
+  (n.) a
 
 def x b:n
 
 def y x:m
 
 y.wait:
-  fn (x):
+  fn (x.):
     pr "should be next-to-last"
-    y.wait: fn (x): pr "should be last"
+    y.wait: fn (x.): pr "should be last"
 
 
 def x 7
@@ -41,19 +41,19 @@ pr x
 def (f x): pr x
 pr (8 - 3)
 pr (8 :- 3)
-fn (x) (* x x)
+fn (x.) (* x x)
 
 def o: obj ():
-  (run) "yess"
+  (run.) "yess"
 
-pr (o)
+pr (o.)
 
 pr ("pi is %f" % π)
 
-def d (make-dict)
+def d (make-dict.)
 
 d.put! "hi" 42
 
-pr d.get "hi"
+pr (d.get "hi")
 d.delete! "hi"
-pr d.get "hi"
+pr (d.get "hi")

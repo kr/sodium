@@ -68,7 +68,7 @@ def inspect ():
       if (is? x '()): return false
       if (is? m x.car): return true
       scan x.cdr
-    scan inspect.methods c
+    scan (inspect.methods c)
   inline C (same-type? x y) <<end
     if (datum_mtab(n_x) == datum_mtab(n_y)) return int2datum(1);
     return nil;
@@ -93,8 +93,8 @@ def inspect ():
 def (promise? x): inspect.has-method? x 'wait
 
 def (ensure try finally):
-  def success [do (finally) x]
-  def failure [do (finally) (error x y)]
+  def success [do (finally.) x]
+  def failure [do (finally.) (error x y)]
   try:run.wait+ success failure
 
 import array
@@ -131,7 +131,7 @@ def (assq x a):
   if (is? x a.car.car): return a.car
   assq x a.cdr
 
-def (make-dict):
+def (make-dict.):
   def items '()
   def dict: obj ():
     (set key value):
@@ -148,12 +148,12 @@ def (make-dict):
 
 import (file-io as open)
 
-def (make-queue):
+def (make-queue.):
   def front '()
   def rear '()
   def queue ():
-    (empty?): is? front '()
-    (front):
+    (empty?.): is? front '()
+    (front.):
       if (queue.empty?): error "front called on an empty queue"
       front.car
     (run item):
@@ -165,11 +165,11 @@ def (make-queue):
         rear.set-cdr! new
         rear :: new
       . queue
-    (remove!):
+    (remove!.):
       def item queue.front
       queue.delete!
       . item
-    (delete!):
+    (delete!.):
       if (queue.empty?): error "delete! called on an empty queue"
       front :: front.cdr
       . queue
@@ -181,7 +181,7 @@ def (make-queue):
         queue.consume! f
   . queue
 
-def (make-promise):
+def (make-promise.):
     def status 'pending # or resolved or broken
 
     def value '()
@@ -190,23 +190,23 @@ def (make-promise):
 
     # a queue of functions to run upon success
     # they must be safe to run directly -- they must do the right thing
-    def success-queue (make-queue)
+    def success-queue (make-queue.)
 
     # a queue of functions to run upon success
     # they must be safe to run directly -- they must do the right thing
-    def err-queue (make-queue)
+    def err-queue (make-queue.)
 
-    def (resolved?) (is? status 'resolved)
-    def (pending?) (is? status 'pending)
-    def (broken?) (is? status 'broken)
+    def (resolved?.) (is? status 'resolved)
+    def (pending?.) (is? status 'pending)
+    def (broken?.) (is? status 'broken)
 
     def (queue-for-success f):
-      if (pending?) (success-queue f)
-      if (resolved?) (f value)
+      if (pending?.) (success-queue f)
+      if (resolved?.) (f value)
 
     def (queue-for-err f):
-      if (pending?) (err-queue f)
-      if (broken?) (f err-name err-val)
+      if (pending?.) (err-queue f)
+      if (broken?.) (f err-name err-val)
 
     def (process state err):
       status :: state
@@ -232,7 +232,7 @@ def (make-promise):
       # 4. The original promise is broken, the error handler raises an error,
       #    and this promise is broken.
       (wait+ f h):
-        def pp (make-promise)
+        def pp (make-promise.)
         def p (pp.car)
         def s (pp.cdr)
 
@@ -252,13 +252,13 @@ def (make-promise):
 
     def sink ():
       (run val):
-        if (resolved?): error "already resolved"
+        if (resolved?.): error "already resolved"
         status :: 'resolved
         value :: val
         success-queue.consume! [x val]
         process 'resolved
       (break! name val):
-        if (broken?): error "already broken"
+        if (broken?.): error "already broken"
         status :: 'broken
         err-name :: name
         err-val :: val
@@ -268,13 +268,13 @@ def (make-promise):
     cons promise sink
 
 def (make-broken-promise name val):
-  def pp (make-promise)
+  def pp (make-promise.)
   (pp.cdr).break! name val
   . pp
 
 # expects a thunk, returns a (promise, task) pair
 def (make-task f):
-    def p (make-promise)
+    def p (make-promise.)
     def promise p.car
     def sink p.cdr
 
@@ -284,7 +284,7 @@ def (make-task f):
 
 # expects a thunk and a sink, returns a task
 def (make-task+ f sink): obj ():
-  (run): sink (f)
+  (run.): sink (f.)
   (break! x): sink.break! 'error x
 
 def (schedule-task task):
@@ -301,18 +301,18 @@ def (send rcv msg args):
         rcv.send msg args
         make-and-schedule-task [call rcv msg args]
 
-def *tasks* (make-queue)
+def *tasks* (make-queue.)
 
-def (process-tasks):
+def (process-tasks.):
   if (not *tasks*.empty?):
       def task (*tasks*.remove!)
-      task
+      task.
       # if there was an error
       # task.break!
-      process-tasks
+      process-tasks.
 
 # Load and execute the main program.
 module.run-file *args*.car
 
 # Process the work queue.
-process-tasks
+process-tasks.

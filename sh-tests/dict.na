@@ -1,5 +1,5 @@
 
-def x (make-dict)
+def x (make-dict.)
 
 #pr x
 

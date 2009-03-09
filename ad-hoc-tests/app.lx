@@ -5,7 +5,7 @@ compile "a.lx"
 
 def c (load-module ad-hoc-tests/c)
 
-c
+c.
 
 pr (load-module sample-module)
 

@@ -1,4 +1,4 @@
-def (f):
+def (f.):
   if 3:
     return 5.foo
   else:

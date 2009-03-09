@@ -5,19 +5,19 @@ def (run-all tester):
   ((make-runner tester).suite):print-on pr
 
 def (should f):
-  #shouldnt [not (f)]
-  shouldnt (fn () (not (f)))
+  #shouldnt [not (f.)]
+  shouldnt (fn () (not (f.)))
 
 def (shouldnt f):
-  #if (f) (error "Test Failed")
-  if (f) (info "Test Failed") (info ".")
+  #if (f.) (error "Test Failed")
+  if (f.) (info "Test Failed") (info ".")
 
 def (info msg):
   if *verbose* (pr msg)
 
 def (make-runner tester):
   def runner ():
-    (suite):
+    (suite.):
       runner .named-suite "suite"
 
     (named-suite name):
@@ -25,26 +25,26 @@ def (make-runner tester):
 
     (make-case selector):
       def case ():
-        (set-up):
+        (set-up.):
           if (inspect .has-method? tester 'set-up) (tester .set-up)
           #' for vim sake
 
-        (tear-down):
+        (tear-down.):
           if (inspect .has-method? tester 'tear-down) (tester .tear-down)
           #' for vim sake
 
-        (perform-test):
+        (perform-test.):
           call tester selector '()
           # Why is this necessary?!
           '()
 
-        (all-the-rest):
+        (all-the-rest.):
           ensure (fn () (case .perform-test)) (fn () (case .tear-down))
 
         (run-with collector):
           case .set-up
           def p (case .all-the-rest)
-          wait p (fn (x) (collector .pass-in case))
+          wait p (fn (x.) (collector .pass-in case))
 
           p .wait-for-error :
             fn (name val):
@@ -58,7 +58,7 @@ def (make-runner tester):
           #    self.set-up
           #    do
           #      self.perform-test
-          #      collector.pass-in(self) if collector
+          #      collector.pass-in(self.) if collector
           #    ensure
           #      self.tear-down
           #    end
@@ -71,42 +71,42 @@ def (make-runner tester):
           #  raise Stop unless RUT.keep-going
           #end
 
-        (count) 1
+        (count.) 1
 
-        (to-s) ('%s:%s' % self.class selector)
+        (to-s.) ('%s:%s' % self.class selector)
 
       . case
 
-    (cases):
+    (cases.):
       #(runner .selectors).map [runner .make-case x]
-      (runner .selectors).map (fn (x) (runner .make-case x))
+      (runner .selectors).map (fn (x.) (runner .make-case x))
   
-    (selectors):
+    (selectors.):
       #(inspect .methods tester) .filter [(x .str) .starts-with? "test-"]
-      (inspect .methods tester) .filter (fn (x) ((x .str) .starts-with? "test-"))
+      (inspect .methods tester) .filter (fn (x.) ((x .str) .starts-with? "test-"))
 
   . runner
 
 def (make-suite name tests):
   def suite ():
-    (name) name
+    (name.) name
 
-    (run):
+    (run.):
       def collector (make-collector suite)
       collector .start
       ensure (fn () (suite .run-with collector)) (fn () (collector .stop))
 
     (run-with collector):
-      def p (make-promise)
+      def p (make-promise.)
       info ("\n\nRunning suite %s" % name)
       #tests [x.run-with collector]
-      #tests .schedule (fn (t) (t .run-with collector))
-      def promises (tests .map (fn (t) (t .run-with collector)))
-      wait-all promises (fn (l) ((p .cdr) collector))
+      #tests .schedule (fn (t.) (t .run-with collector))
+      def promises (tests .map (fn (t.) (t .run-with collector)))
+      wait-all promises (fn (l.) ((p .cdr) collector))
       p .car
 
-    (count):
-      (tests .map (fn (x) (x .count))) .fold 0 (fn (sum x) (sum + x))
+    (count.):
+      (tests .map (fn (x.) (x .count))) .fold 0 (fn (sum x) (sum + x))
 
   . suite
 
@@ -114,16 +114,16 @@ def (make-collector suite):
   def start-time 0
   def stop-time 0
   def test-name (suite .name)
-  def failures (make-queue)
-  def errors (make-queue)
+  def failures (make-queue.)
+  def errors (make-queue.)
   def total-count (suite .count)
   def total-run 0
   def pass-count 0
 
   def collector ():
-    (start) (start-time :: (time .now))
+    (start.) (start-time :: (time .now))
 
-    (stop) (stop-time :: (time .now))
+    (stop.) (stop-time :: (time .now))
 
     (error-in ex case):
       errors (make-result .error ex case)
@@ -143,15 +143,15 @@ def (make-collector suite):
       pr "."
       #STDOUT .flush
 
-    (errors) errors
+    (errors.) errors
 
-    (failures) failures
+    (failures.) failures
 
-    (bad-results) (failures + errors)
+    (bad-results.) (failures + errors)
 
-    (duration) (stop-time - start-time)
+    (duration.) (stop-time - start-time)
 
-    (summary):
+    (summary.):
       def skipped-count (total-count - total-run)
       def skipped-msg (if (skipped-count > 0)
                           (" (%d skipped)" % skipped-count)
@@ -160,7 +160,7 @@ def (make-collector suite):
       fmt % (collector .duration) total-count pass-count (failures .size) (errors .size) skipped-msg
     end
 
-    (report):
+    (report.):
       puts "\n"
       puts (collector .summary)
       (collector .bad-results).each-with-index (fn (r i) (r .report (i + 1)))
@@ -180,26 +180,26 @@ class TestResult
     self.new(:Error, ex, test)
   end
 
-  def report(n)
-    return self.report-verbosely(n) if RUT.*verbose* or @kind === :Error
-    return self.report-succinctly(n)
+  def report(n.)
+    return self.report-verbosely(n.) if RUT.*verbose* or @kind === :Error
+    return self.report-succinctly(n.)
   end
 
-  def report-succinctly(n)
+  def report-succinctly(n.)
     puts "\n#{n}) #{@kind} in #{@test}:\n#{@ex.message}"
   end
 
-  def report-verbosely(n)
-    self.report-succinctly(n)
-    puts @ex.backtrace.map { |line| '  ' + self.fix-path(line) }
+  def report-verbosely(n.)
+    self.report-succinctly(n.)
+    puts @ex.backtrace.map { |line| '  ' + self.fix-path(line.) }
   end
 
-  def fix-path(line)
+  def fix-path(line.)
     path, rest = line.split(':', 2)
-    File.make-relative(path) + ':' + fix-rest(rest)
+    File.make-relative(path.) + ':' + fix-rest(rest.)
   end
 
-  def fix-rest(rest)
+  def fix-rest(rest.)
     return rest if !rest.index(':')
     lno, rest = rest.split(':', 2)
     lno + ': ' + rest

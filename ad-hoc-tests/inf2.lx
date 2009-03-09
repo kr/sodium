@@ -1,12 +1,12 @@
 def n 0
 
-def (report):
+def (report.):
     pr ("reached depth %d" % n)
 
-def (count):
+def (count.):
     n :: (n + 1)
     ? ((n % 100000) = 0) (pr n)
-    count
+    count.
 
 report :run
-count
+count.

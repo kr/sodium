@@ -3,11 +3,11 @@
 # Test eventual sends
 
 def a ():
-    (m) (pr "should be fourth") 5
-    (q) (pr "should be second")
+    (m.) (pr "should be fourth") 5
+    (q.) (pr "should be second")
 
 def b ():
-    (n) (pr "should be third") a
+    (n.) (pr "should be third") a
 
 a:q
 
@@ -16,8 +16,8 @@ def x (b:n)
 def y (x:m)
 
 y.wait:
-  fn (x):
-    y.wait (fn (x) (pr "should be last"))
+  fn (x.):
+    y.wait (fn (x.) (pr "should be last"))
     pr x
     pr "should be next-to-last"
 

@@ -14,13 +14,13 @@ fin_test_fn(void *i)
 
 end
 
-def (f):
+def (f.):
   def make-box: obj ():
-    inline C (run) <<end
+    inline C (run.) <<end
       return make_pbox((void *) 3, fin_test_fn);
     end
-  make-box
-  #def pbox (make-box)
+  make-box.
+  #def pbox (make-box.)
   #obj ()
 
 export f

@@ -27,8 +27,8 @@ pr x
 
 pr ""
 def o ():
-  (a): obj ():
-    (b) 3
+  (a.): obj ():
+    (b.) 3
 
 pr 5
 pr (o.a.b + 2)

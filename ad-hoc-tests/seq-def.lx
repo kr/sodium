@@ -4,7 +4,7 @@ do :
 
 pr x
 
-def (f):
+def (f.):
   ? 4 :
     do :
       def q 'blah
@@ -12,4 +12,4 @@ def (f):
     pr 'ooo
   pr 'aaa
 
-f
+f.

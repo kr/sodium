@@ -97,11 +97,11 @@ def str: sobj:
     return make_str_init(1, s);
   end
 
-  inline C (encode) <<end
+  inline C (encode.) <<end
     return make_bytes_init_len((char *) rcv, datum_size(rcv));
   end
 
-  inline C (length) <<end
+  inline C (length.) <<end
     return int2datum(datum_size(rcv));
   end
 

@@ -13,7 +13,7 @@ nil_init()
 end
 
 def nil: sobj:
-  (str) "()"
+  (str.) "()"
   (filter f) '()
   (run f) 'ok
   (schedule f) 'ok

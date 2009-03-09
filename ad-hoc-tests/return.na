@@ -1,8 +1,8 @@
-def (f):
+def (f.):
   pr "a"
   pr "b"
   return "c"
   pr "d"
   pr "e"
 
-pr (f)
+pr (f.)
