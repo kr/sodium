@@ -393,10 +393,13 @@ def GOTO_LABEL(target_label): return OP_L(goto_label_s, target_label)
 mov_s = S('MOV')
 closure_env_s = S('CLOSURE_ENV')
 list_s = S('LIST')
+make_selfobj_s = S('MAKE_SELFOBJ')
 def MOV(target_reg, src_reg): return OP_RR(mov_s, target_reg, src_reg)
 def CLOSURE_ENV(target_reg, proc_reg):
     return OP_RR(closure_env_s, target_reg, proc_reg)
 def LIST(target_reg, val_reg): return OP_RR(list_s, target_reg, val_reg)
+def MAKE_SELFOBJ(target_reg, label_reg):
+    return OP_RR(make_selfobj_s, target_reg, label_reg)
 
 
 # One register, one label instructions
@@ -487,6 +490,7 @@ all_ops = (
     lexical_lookup_s,
     lexical_setbang_s,
     extend_environment_s,
+    make_selfobj_s,
 )
 all_ops_dict = dict([(k,i) for i,k in enumerate(all_ops)])
 

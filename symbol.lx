@@ -134,7 +134,9 @@ pr_symbol(datum sym)
 int
 symbolp(datum x)
 {
-    return (!(((size_t)x)&1) && ((datum) x[-1]) == symbol_mtab);
+    return (!(((size_t)x)&1) &&
+            (datum_size(x) == 2) &&
+            ((datum) x[-1]) == symbol_mtab);
 }
 
 size_t

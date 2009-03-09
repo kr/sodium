@@ -13,13 +13,11 @@
 /* global functions */
 
 static void
-pr_array(datum d)
+prx_array_contents(datum d)
 {
     uint i, len;
-    if (d == nil) return;
-    prx(array_get(d, 0));
     len = array_len(d);
-    for (i = 1; i < len; i++) {
+    for (i = 0; i < len; i++) {
         write(1, " ", 1);
         prx(array_get(d, i));
     }
@@ -143,8 +141,8 @@ prx(datum d)
         pr_pair(d, 0);
         write(1, ")", 1);
     } else if (arrayp(d)) {
-        write(1, "(array ", 7);
-        pr_array(d);
+        write(1, "(array", 6);
+        prx_array_contents(d);
         write(1, ")", 1);
     } else if (broken_heartp(d)) {
         d = (datum) *d;

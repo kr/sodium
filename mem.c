@@ -232,7 +232,6 @@ gc(int c, ...)
                 prdesc("scanning", descr);
 #endif
                 np += len + 2;
-                assert(p < np);
                 while (p < np) relocate(p++);
         }
     }

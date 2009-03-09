@@ -25,7 +25,9 @@ datum2pair(datum d)
 int
 pairp(datum x)
 {
-    return (!(((size_t) x) & 1)) && (((datum) x[-1]) == pair_mtab);
+    return (!(((size_t) x) & 1)) &&
+        (datum_size(x) == 2) &&
+        (((datum) x[-1]) == pair_mtab);
 }
 
 end

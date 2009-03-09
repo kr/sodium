@@ -68,6 +68,7 @@ static char *instr_names[32] = {
     "OP_LEXICAL_LOOKUP",
     "OP_LEXICAL_SETBANG",
     "OP_EXTEND_ENVIRONMENT",
+    "OP_MAKE_SELFOBJ",
 };
 #endif
 
@@ -466,9 +467,9 @@ extend_environment(datum env, datum argl, datum formals)
 }
 
 static datum
-make_closure(size_t *mtab, datum env)
+make_closure(size_t size, size_t *mtab, datum env)
 {
-    return make_record(1, mtab, env, nil);
+    return make_record(size, mtab, env, nil);
 }
 
 static uint *
@@ -589,7 +590,12 @@ start(uint *start_addr)
                 ra = I_R(inst);
                 rb = I_RR(inst);
                 rc = I_RRR(inst);
-                regs[ra] = make_closure(regs[rc], regs[rb]);
+                regs[ra] = make_closure(1, regs[rc], regs[rb]);
+                break;
+            case OP_MAKE_SELFOBJ:
+                ra = I_R(inst);
+                rb = I_RR(inst);
+                regs[ra] = make_closure(0, regs[rb], nil);
                 break;
             case OP_CLOSURE_METHOD:
                 ra = I_R(inst);
