@@ -259,7 +259,7 @@ def compile_sobj(exp, target, linkage, cenv, pop_all_symbol):
             end_with_linkage(meth_linkage,
                 make_ir_seq((env_r,), (target, val_r),
                     LOAD_ADDR(val_r, obj_table),
-                    MAKE_CLOSURE(target, env_r, val_r)), pop_all_symbol),
+                    MAKE_CLOSURE(target, nil_r, val_r)), pop_all_symbol),
             tack_on_ir_seq(m_tabl_code, m_body_code)),
         after_obj)
 
