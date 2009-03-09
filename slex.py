@@ -59,9 +59,9 @@ class Lexer:
                 nlc = lexeme.count('\n')
                 self.line += nlc
                 if nlc == 0:
-                    self.col += len(lexeme) - lexeme.rfind('\n')
+                    self.col += len(lexeme)
                 else:
-                    self.col = 1
+                    self.col = len(lexeme) - lexeme.rfind('\n')
 
             def decorate(toks, p):
                 return [(n,l,p) for n,l in toks]
