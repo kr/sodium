@@ -20,6 +20,9 @@ all_writable_regs = (
 all_regs = all_readonly_regs + all_writable_regs
 all_regs_dict = dict([(str(k),i) for i,k in enumerate(all_regs)])
 
+def desc_datum(x):
+    return '%s: %s' % (type(x).__name__, x)
+
 def quote(s):
     r = ''
     for c in s:
@@ -141,17 +144,17 @@ class make_ir_seq:
 
             if symbolp(d):
                 sdts += '$'
-                print >>fd, '#define %s "%s"' % (c_name, str(d))
+                print >>fd, '#define %s "%s" /* %s */' % (c_name, str(d), desc_datum(d))
             elif isinstance(d, String):
                 sdts += '@'
-                print >>fd, '#define %s %s' % (c_name, quote(str(d)))
+                print >>fd, '#define %s %s /* %s */' % (c_name, quote(str(d)), desc_datum(d))
             elif isinstance(d, InlineMethEntry):
                 sdts += '>'
-                print >>fd, '#define %s %s' % (c_name, str(d))
+                print >>fd, '#define %s %s /* %s */' % (c_name, str(d), desc_datum(d))
             elif self_evaluatingp(d):
                 sdts += '#'
-                print >>fd, '#define %s %d' % (c_name,
-                        pseudo_box(int(d)))
+                print >>fd, '#define %s %d /* %s */' % (c_name,
+                        pseudo_box(int(d)), desc_datum(d))
             else:
                 raise RuntimeError('wtf %r' % d)
 
@@ -231,11 +234,11 @@ class make_ir_seq:
             #fd.write(fmt_int(i, 4, ' '))
 
     def get_se_datums_and_symbols(self):
-        datums = frozenset()
+        datums = ()
         for s in self.statements:
             if symbolp(s): continue
-            datums |= s.se_datums_and_symbols()
-        return tuple(datums)
+            datums += s.se_datums_and_symbols()
+        return sorted(tuple(set(datums)), key=desc_datum)
 
     def get_labels(self):
         labels, statements = [], []
@@ -522,7 +525,7 @@ class OP(object):
         fd.write(encode_int(inst))
 
     def se_datums_and_symbols(self):
-        return frozenset()
+        return ()
 
 def lookup_op(op):
     return all_ops_dict[op]
@@ -588,7 +591,7 @@ class OP_DATUM(OP):
         return pack((27, i))
 
     def se_datums_and_symbols(self):
-        return frozenset((self.d,))
+        return (self.d,)
 
     def __repr__(self):
         return '%s %s' % (self.op, self.d)
@@ -667,7 +670,7 @@ class OP_RD(OP):
         return pack((5, self.r), (22, i))
 
     def se_datums_and_symbols(self):
-        return frozenset((self.d,))
+        return (self.d,)
 
     def __repr__(self):
         return '%s %s %r' % (self.op, self.reg, self.d)
@@ -704,7 +707,7 @@ class OP_RRD(OP):
         return pack((5, self.r1), (5, self.r2), (17, i))
 
     def se_datums_and_symbols(self):
-        return frozenset((self.d,))
+        return (self.d,)
 
     def __repr__(self):
         return '%s %s %s %r' % (self.op, self.reg1, self.reg2, self.d)
