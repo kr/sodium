@@ -361,7 +361,7 @@ def NOP(): return OP_NOP()
 
 # The datum pseudo-instruction
 datum_op_s = S('DATUM')
-def DATUM(d): return OP_DATUM(d)
+def DATUM(d, tag=None): return OP_DATUM(d, tag=tag)
 
 # The addr pseudo-instruction
 addr_op_s = S('ADDR')
@@ -512,9 +512,10 @@ def pad(tlen, *chunks):
     return data << (tlen - len)
 
 class OP(object):
-    def __init__(self, op):
+    def __init__(self, op, tag=None):
         self.op = op
         self.opcode = lookup_op(op)
+        self.tag = tag
 
     def __repr__(self):
         return repr(self.op)
@@ -584,8 +585,8 @@ class OP_NOP(OP):
         return pack((0, 0))
 
 class OP_DATUM(OP):
-    def __init__(self, d):
-        OP.__init__(self, datum_op_s)
+    def __init__(self, d, tag=None):
+        OP.__init__(self, datum_op_s, tag=tag)
         if not referencable_from_code(d):
             raise AssemblingError('d cannot be referenced from code: %r' % d)
         self.d = d
@@ -598,7 +599,9 @@ class OP_DATUM(OP):
         return (self.d,)
 
     def __repr__(self):
-        return '%s %s' % (self.op, self.d)
+        tag = ''
+        if self.tag: tag = ' tag=%s' % self.tag
+        return '%s %s%s' % (self.op, self.d, tag)
 
 class OP_Z(OP):
     def __init__(self, op):

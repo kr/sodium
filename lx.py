@@ -24,7 +24,7 @@ sobj_s = S('sobj')
 do_s = S('do')
 inline_s = S('inline')
 assign_s = S('::')
-def compile(exp, target, linkage, cenv, pop_all_symbol):
+def compile(exp, target, linkage, cenv, pop_all_symbol, **kwargs):
     if self_evaluatingp(exp):
         return compile_self_evaluating(exp, target, linkage, cenv, pop_all_symbol)
     if tagged_list(exp, quote_s): return compile_quoted(exp, target, linkage, cenv, pop_all_symbol)
@@ -35,7 +35,7 @@ def compile(exp, target, linkage, cenv, pop_all_symbol):
     if tagged_list(exp, fn_s): return compile_obj(fn2obj(exp), target, linkage, cenv, pop_all_symbol)
     if tagged_list(exp, shfn_s): return compile_shfn(exp, target, linkage, cenv, pop_all_symbol)
     if tagged_list(exp, obj_s): return compile_obj(exp, target, linkage, cenv, pop_all_symbol)
-    if tagged_list(exp, sobj_s): return compile_sobj(exp, target, linkage, cenv, pop_all_symbol)
+    if tagged_list(exp, sobj_s): return compile_sobj(exp, target, linkage, cenv, pop_all_symbol, **kwargs)
     if tagged_list(exp, do_s): return compile_do(exp, target, linkage, cenv, pop_all_symbol)
     if tagged_list(exp, inline_s): return compile_inline(exp)
     if tagged_list(exp, export_s): return compile(export2obj(exp), target, linkage, cenv, pop_all_symbol)
@@ -147,7 +147,8 @@ next_s = S('next')
 ok_s = S('ok')
 def compile_assignment(exp, target, linkage, cenv, pop_all_symbol):
     var = exp.cadr()
-    get_value_code = compile(exp.caddr(), val_r, next_s, cenv, pop_all_symbol)
+    get_value_code = compile(exp.caddr(), val_r, next_s, cenv, pop_all_symbol,
+            tag=var)
     addr = find_variable(var, cenv)
     if var is self_s:
         raise 'cannot assign to pseudo-variable %s' % (var,)
@@ -234,12 +235,12 @@ def compile_obj(exp, target, linkage, cenv, pop_all_symbol):
         after_obj)
 
 self_s = S('self')
-def compile_sobj(exp, target, linkage, cenv, pop_all_symbol):
+def compile_sobj(exp, target, linkage, cenv, pop_all_symbol, tag=None):
     obj_table = make_label('obj-table')
     after_obj = make_label('after-obj')
     m_tabl_code = make_ir_seq((), (),
         obj_table,
-        DATUM(sobj_methods(exp).len()))
+        DATUM(sobj_methods(exp).len(), tag=tag))
     m_body_code = empty_instruction_seq()
     for meth in sobj_methods(exp):
         name = S(meth_name(meth))
