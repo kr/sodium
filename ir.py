@@ -186,7 +186,7 @@ class make_ir_seq:
         print >>fd, 'static uint instrs[] = {'
         for c, s in enumerate(real_instrs):
             if symbolp(s): continue
-            i = s.encode(fd, labels, datums)
+            i = s.encode(labels, datums)
             for l,k in the_labels:
                 if c == k: print >>fd, '    /* %s */' % (l,)
             print >>fd, '    0x%x, /* %r */' % (i, s)
@@ -531,13 +531,13 @@ class OP(object):
     def __repr__(self):
         return repr(self.op)
 
-    def encode(self, fd, labels, datums):
+    def encode(self, labels, datums):
         body = self.get_body(labels, datums)
         inst = pad(32, (5, lookup_op(self.op)), body)
         return inst
 
     def emit(self, fd, labels, datums):
-        inst = self.encode(fd, labels, datums)
+        inst = self.encode(labels, datums)
         fd.write(encode_int(inst))
 
     def se_datums_and_symbols(self):
