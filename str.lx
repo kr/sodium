@@ -23,7 +23,7 @@ str_init()
 int
 strp(datum x)
 {
-    return (x != nil && !(((size_t)x)&1) && ((datum) x[-1]) == str_mtab);
+    return !(((size_t)x)&1) && ((datum) x[-1]) == str_mtab;
 }
 
 datum
