@@ -526,7 +526,6 @@ def pad(tlen, *chunks):
 class OP(object):
     def __init__(self, op, tag=None):
         self.op = op
-        self.opcode = lookup_op(op)
         self.tag = tag
 
     def __repr__(self):
@@ -534,7 +533,7 @@ class OP(object):
 
     def encode(self, fd, labels, datums):
         body = self.get_body(labels, datums)
-        inst = pad(32, (5, self.opcode), body)
+        inst = pad(32, (5, lookup_op(self.op)), body)
         return inst
 
     def emit(self, fd, labels, datums):
