@@ -186,7 +186,7 @@ class make_ir_seq:
         print >>fd, 'static uint instrs[] = {'
         for c, s in enumerate(real_instrs):
             if symbolp(s): continue
-            i = s.encode(labels, datums)
+            i = s.encode(c, labels, datums)
             for l,k in the_labels:
                 if c == k: print >>fd, '    /* %s */' % (l,)
             print >>fd, '    0x%x, /* %r */' % (i, s)
@@ -275,9 +275,9 @@ class make_ir_seq:
 
     def emit_instructions(self, fd, labels, datums, real_instrs):
         fd.write(encode_int(len(real_instrs)))
-        for s in real_instrs:
+        for i, s in enumerate(real_instrs):
             if symbolp(s): continue
-            s.emit(fd, labels, datums)
+            s.emit(fd, i, labels, datums)
 
 def make_ir_seq_with_c_defs(needs, modifies, statements, c_defs):
     ir = make_ir_seq(needs, modifies, *statements)
@@ -380,6 +380,10 @@ addr_op_s = S('ADDR')
 def ADDR(l):
     if isinstance(l, InlineMethEntry): return OP_DATUM(l)
     return OP_L(addr_op_s, l)
+
+# The backptr pseudo-instruction
+backptr_op_s = S('BACKPTR')
+def BACKPTR(): return OP_BACKPTR()
 
 # No-payload instructions
 
@@ -531,13 +535,13 @@ class OP(object):
     def __repr__(self):
         return repr(self.op)
 
-    def encode(self, labels, datums):
+    def encode(self, index, labels, datums):
         body = self.get_body(labels, datums)
         inst = pad(32, (5, lookup_op(self.op)), body)
         return inst
 
-    def emit(self, fd, labels, datums):
-        inst = self.encode(labels, datums)
+    def emit(self, fd, index, labels, datums):
+        inst = self.encode(index, labels, datums)
         fd.write(encode_int(inst))
 
     def se_datums_and_symbols(self):
@@ -613,6 +617,16 @@ class OP_DATUM(OP):
         tag = ''
         if self.tag: tag = ' tag=%s' % self.tag
         return '%s %s%s' % (self.op, self.d, tag)
+
+class OP_BACKPTR(OP):
+    def __init__(self):
+        OP.__init__(self, backptr_op_s)
+
+    def encode(self, index, labels, datums):
+        return pad(32, (4, 2), (28, index + 1))
+
+    def __repr__(self):
+        return '<Backpointer>'
 
 class OP_Z(OP):
     def __init__(self, op):
