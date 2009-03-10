@@ -135,11 +135,12 @@ class make_ir_seq:
         print >>fd, '#include "lxc.h"'
         print >>fd
         print >>fd, 'extern struct lxc_module lxc_module_%s;' % (cname,)
+        print >>fd, 'static uint instr_array[];'
+        print >>fd, '#define instrs (instr_array + 2)'
 
         mtab_offset = None
         if mtab: mtab_offset = self.find_mtab_offset(S(mtab), real_instrs)
         if mtab_offset:
-            print >>fd, 'static uint instrs[];'
             print >>fd, '#define mtab (instrs + %s)' % mtab_offset
 
         # inline code
@@ -183,7 +184,9 @@ class make_ir_seq:
         print >>fd, '};'
 
         # instrs
-        print >>fd, 'static uint instrs[] = {'
+        print >>fd, 'static uint instr_array[] = {'
+        print >>fd, '    0x%x, /* %r */' % (0, 'desc')
+        print >>fd, '    0x%x, /* %r */' % (0, 'mtab')
         for c, s in enumerate(real_instrs):
             if symbolp(s): continue
             i = s.encode(c, labels, datums)
