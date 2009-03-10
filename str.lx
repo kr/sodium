@@ -10,12 +10,9 @@ inline C <<end
 
 static datum percent_star_sym;
 
-static datum str_mtab;
-
 void
 str_init()
 {
-    str_mtab = (datum) lxc_module_str.instrs + lxc_module_str.label_offsets[4];
     percent_star_sym = intern("%*");
     load_lxc_module(&lxc_module_str);
 }
@@ -23,13 +20,13 @@ str_init()
 int
 strp(datum x)
 {
-    return !(((size_t)x)&1) && ((datum) x[-1]) == str_mtab;
+    return !(((size_t)x)&1) && ((datum) x[-1]) == mtab;
 }
 
 datum
 make_str_init(size_t size, const char *bytes)
 {
-    datum s = make_opaque(size, str_mtab);
+    datum s = make_opaque(size, mtab);
     memcpy(s, bytes, size);
     return (datum) s;
 }
@@ -37,7 +34,7 @@ make_str_init(size_t size, const char *bytes)
 datum
 make_str_init_permanent(size_t size, const char *bytes)
 {
-    datum s = make_opaque_permanent(size, str_mtab);
+    datum s = make_opaque_permanent(size, mtab);
     memcpy(s, bytes, size);
     return (datum) s;
 }
@@ -81,7 +78,7 @@ def str: sobj:
     copy_str_contents(s1, rcv, az);
     copy_str_contents(s2, n_x, bz);
 
-    s = make_opaque(az + bz, str_mtab);
+    s = make_opaque(az + bz, mtab);
     memcpy(s, s1, az);
     memcpy(((char *) s) + az, s2, bz);
 

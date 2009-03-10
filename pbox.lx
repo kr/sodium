@@ -2,8 +2,6 @@ inline C <<end
 
 typedef void(*fn_free)(void *);
 
-static datum pbox_mtab = 0;
-
 void
 pbox_free(datum x)
 {
@@ -16,9 +14,7 @@ make_pbox(void *p, void (*fn)(void *))
 {
     datum pbox;
 
-    if (!pbox_mtab) return nil;
-
-    pbox = make_opaque(sizeof(void *) * 2, pbox_mtab);
+    pbox = make_opaque(sizeof(void *) * 2, mtab);
     pbox[0] = (size_t) p;
     pbox[1] = (size_t) fn;
     if (fn) install_fz(&pbox, &pbox_free);
@@ -27,17 +23,9 @@ make_pbox(void *p, void (*fn)(void *))
 
 end
 
-def pbox ():
+def pbox: sobj:
   inline C str <<end
     return make_str_init(6, "<pbox>");
   end
-
-def initialize: obj ():
-  inline C (run) <<end
-    pbox_mtab = (datum) n_pbox[-1];
-    return ok_sym;
-  end
-
-initialize
 
 . pbox

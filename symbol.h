@@ -5,8 +5,6 @@
 
 #include "gen.h"
 
-void symbol_init();
-
 extern datum symbols;
 
 datum intern(const char *name);

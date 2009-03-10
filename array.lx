@@ -2,16 +2,7 @@
 inline C <<end
 #include "array.h"
 
-static datum array_mtab;
-
 #define CLIP_LEN(l) ((l) & 0x0fffffff)
-
-void
-array_init()
-{
-    array_mtab = (datum) lxc_module_array.instrs +
-                         lxc_module_array.label_offsets[4];
-}
 
 datum
 make_array(uint len)
@@ -20,7 +11,7 @@ make_array(uint len)
 
     if (len < 1) return nil;
     if (len != CLIP_LEN(len)) die("make_array -- too big");
-    p = make_record(len, array_mtab, nil, nil);
+    p = make_record(len, mtab, nil, nil);
     for (;--len;) p[len] = (size_t) nil;
     return p;
 }
@@ -50,12 +41,12 @@ array_len(datum arr)
 int
 arrayp(datum x)
 {
-    return !(((size_t) x) & 1) && (((datum) x[-1]) == array_mtab);
+    return !(((size_t) x) & 1) && (((datum) x[-1]) == mtab);
 }
 
 end
 
-def array-instance: sobj:
+def array: sobj:
   inline C (get i) <<end
     int i;
 
@@ -102,10 +93,10 @@ def array-instance: sobj:
   (assq name):
     ? (is? (self.car.car) name) (self.car) (self.cdr.assq name)
 
-def array: sobj:
+def array-factory: sobj:
   inline C (make size) <<end
     if (!intp(n_size)) die1("array.make -- not an int", n_size);
     return make_array(datum2int(n_size));
   end
 
-return array
+return array-factory

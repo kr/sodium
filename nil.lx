@@ -4,9 +4,8 @@ struct nil_struct nil_s;
 void
 nil_init()
 {
-    datum t, mtab;
+    datum t;
 
-    mtab = (datum) lxc_module_nil.instrs + lxc_module_nil.label_offsets[4];
     t = make_opaque(0, mtab);
     nil[-2] = t[-2];
     nil[-1] = t[-1];

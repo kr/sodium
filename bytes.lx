@@ -8,19 +8,10 @@ inline C <<end
 
 static datum percent_star_sym;
 
-static datum bytes_mtab;
-
-void
-bytes_init()
-{
-    bytes_mtab = (datum) lxc_module_bytes.instrs +
-                         lxc_module_bytes.label_offsets[4];
-}
-
 datum
 make_bytes(uint size)
 {
-    return make_opaque(size, bytes_mtab);
+    return make_opaque(size, mtab);
 }
 
 datum
@@ -64,12 +55,12 @@ bytes_contents(datum bytes)
 int
 bytesp(datum x)
 {
-    return (!(((size_t) x) & 1)) && (((datum) x[-1]) == bytes_mtab);
+    return (!(((size_t) x) & 1)) && (((datum) x[-1]) == mtab);
 }
 
 end
 
-def surrogate: sobj:
+def bytes: sobj:
   inline C (/ x) <<end
     /* concatenate */
     char *new_str;

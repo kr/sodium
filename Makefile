@@ -29,7 +29,7 @@ prelude.lxc.c: prelude.lx *.py
 	./lx1c --generate-c --output=$@ $<
 
 %.lxc.c: %.lx *.py
-	./lx1c --module --generate-c --output=$@ $<
+	./lx1c --module --generate-c --output=$@ --mtab=$* $<
 
 check: vm
 	./check.sh sh-tests/*.na

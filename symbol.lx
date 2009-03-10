@@ -19,15 +19,6 @@ struct symbol {
 static size_t fill = 0;
 datum symbols = nil;
 
-static datum symbol_mtab;
-
-void
-symbol_init()
-{
-    symbol_mtab = (datum) lxc_module_symbol.instrs +
-                          lxc_module_symbol.label_offsets[4];
-}
-
 /* Yikes, this is expensive. There has got to be a better way. */
 static uint
 next_prime(uint n)
@@ -91,7 +82,7 @@ store(symbol ent)
 static datum
 make_symbol(const char *name)
 {
-    return make_record_permanent(2, symbol_mtab, nil,
+    return make_record_permanent(2, mtab, nil,
             make_str_init_permanent(strlen(name), name));
 }
 
@@ -136,7 +127,7 @@ symbolp(datum x)
 {
     return (!(((size_t)x)&1) &&
             (datum_size(x) == 2) &&
-            ((datum) x[-1]) == symbol_mtab);
+            ((datum) x[-1]) == mtab);
 }
 
 size_t
@@ -148,7 +139,7 @@ symbol_copy0(char *dest, size_t n, datum sym)
 
 end
 
-def symbol ():
+def symbol: sobj:
   inline C str <<end
     return ((symbol) rcv)->name;
   end

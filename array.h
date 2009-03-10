@@ -3,8 +3,6 @@
 #ifndef array_h
 #define array_h
 
-void array_init();
-
 datum make_array(uint len);
 
 int arrayp(datum x);

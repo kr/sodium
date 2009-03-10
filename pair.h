@@ -7,8 +7,6 @@ typedef struct pair {
     datum car, cdr;
 } *pair;
 
-void pair_init();
-
 datum cons(datum x, datum y);
 
 inline pair datum2pair(datum d);

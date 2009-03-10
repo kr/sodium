@@ -5,6 +5,4 @@
 
 extern datum int_mtab;
 
-void int_init();
-
 #endif /*int_h*/

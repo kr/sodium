@@ -9,6 +9,8 @@ inline C <<end
 
 int ovector[OVECCOUNT];
 
+datum mtab = 0;
+
 end
 
 def re ():

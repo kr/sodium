@@ -118,7 +118,13 @@ class make_ir_seq:
         the_labels = labels
         return datums, labels, real_instrs
 
-    def gen_c(self, name, fd):
+    def find_mtab_offset(self, name, insts):
+        for i, inst in enumerate(insts):
+            tag = getattr(inst, 'tag', None)
+            if tag is name: return i
+        return None
+
+    def gen_c(self, name, fd, mtab=None):
         datums, labels, real_instrs = self.extract()
         cname = tr(name, '/-.', '___')
 
@@ -129,6 +135,12 @@ class make_ir_seq:
         print >>fd, '#include "lxc.h"'
         print >>fd
         print >>fd, 'extern struct lxc_module lxc_module_%s;' % (cname,)
+
+        mtab_offset = None
+        if mtab: mtab_offset = self.find_mtab_offset(S(mtab), real_instrs)
+        if mtab_offset:
+            print >>fd, 'static uint instrs[];'
+            print >>fd, '#define mtab (instrs + %s)' % mtab_offset
 
         # inline code
         for c_def in self.c_defs:
