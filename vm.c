@@ -702,9 +702,12 @@ load_module_file(const char *name)
     load_labels(f, label_count, label_offsets);
 
     instr_count = read_int(f);
-    insts = malloc(instr_count * sizeof(uint));
+    insts = malloc((instr_count + 2) * sizeof(uint));
     if (!insts) die("cannot allocate instr offsets");
     if (instr_sets >= MAX_INSTR_SETS) die("too many instruction sets");
+    insts += 2; /* skip over the descriptor and mtab */
+    insts[-2] = ((instr_count << 5) | 0xf);
+    insts[-1] = 0; /* FIXME use a real mtab here (probably bytes's) */
     instr_bases[instr_sets] = insts;
     instr_ends[instr_sets] = insts + instr_count;
     instr_sets++;
