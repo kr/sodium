@@ -292,7 +292,8 @@ size_t
 datum_size(datum d)
 {
     if (((size_t) d) & 1) return 4;
-    return datum_desc_len(*(d - 2));
+    while (!(1 & *--d));
+    return datum_desc_len(*d);
 }
 
 datum
