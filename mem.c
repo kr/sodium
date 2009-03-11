@@ -54,7 +54,7 @@ datum_desc_len(size_t desc)
 
 #define DATUM_FORMAT_RECORD 1
 #define DATUM_FORMAT_BROKEN_HEART 3
-#define DATUM_FORMAT_unused5 5
+#define DATUM_FORMAT_BACKPTR 5
 #define DATUM_FORMAT_unused7 7
 #define DATUM_FORMAT_unused9 9
 #define DATUM_FORMAT_unused11 11
@@ -65,7 +65,7 @@ datum_desc_len(size_t desc)
 static const char *datum_types[] = {
     "DATUM_FORMAT_RECORD",
     "DATUM_FORMAT_BROKEN_HEART",
-    "<unused 5>",
+    "DATUM_FORMAT_BACKPTR",
     "<unused 7>",
     "<unused 9>",
     "<unused 11>",
@@ -102,14 +102,11 @@ relocate(datum refloc)
     --p; /* make p point at the mtab or descriptor */
 
     for (;;) {
-
         len = datum_desc_len(*p);
         switch (datum_desc_format(*p)) {
-            /*
             case DATUM_FORMAT_BACKPTR:
                 p -= len;
                 continue;
-            */
 
             case DATUM_FORMAT_OPAQUE:
                 len = (len + 3) / 4;
