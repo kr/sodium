@@ -32,7 +32,7 @@ die1(const char *m, datum d)
     write(2, "\n", 1);
     write(2, m, n);
     write(2, ": ", 1);
-    pr(d);
+    prfmt(2, "%o\n", d);
     DUMP_CORE;
     return nil;
 }

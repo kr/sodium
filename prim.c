@@ -12,6 +12,8 @@
 
 /* global functions */
 
+void prxf(int fd, datum d);
+
 static void
 prx_array_contents(datum d)
 {
@@ -92,11 +94,7 @@ prfmt(int fd, char *fmt, ...)
                 break;
             case 'o':
                 dval = va_arg(ap, datum);
-                if (fd == 1) {
-                    prx(dval);
-                } else {
-                    write(fd, "object", 6);
-                }
+                prxf(fd, dval);
                 break;
             default:
                 write(fd, p, 1);
@@ -119,38 +117,44 @@ pr_bytes(datum d)
 }
 
 void
-prx(datum d)
+prxf(int fd, datum d)
 {
     if (d == nil) {
-        write(1, "()", 2);
+        write(fd, "()", 2);
     } else if (intp(d)) {
         int i = datum2int(d);
-        prfmt(1, "%d", i);
+        prfmt(fd, "%d", i);
     } else if (addrp(d)) {
-        prfmt(1, "<addr %p>", d);
+        prfmt(fd, "<addr %p>", d);
     } else if (symbolp(d)) {
         pr_symbol(d);
     } else if (strp(d)) {
-        write(1, d, datum_size(d));
+        write(fd, d, datum_size(d));
     } else if (bytesp(d)) {
-        write(1, "(bytes ", 7);
+        write(fd, "(bytes ", 7);
         pr_bytes(d);
-        write(1, ")", 1);
+        write(fd, ")", 1);
     } else if (pairp(d)) {
-        write(1, "(", 1);
+        write(fd, "(", 1);
         pr_pair(d, 0);
-        write(1, ")", 1);
+        write(fd, ")", 1);
     } else if (arrayp(d)) {
-        write(1, "(array", 6);
+        write(fd, "(array", 6);
         prx_array_contents(d);
-        write(1, ")", 1);
+        write(fd, ")", 1);
     } else if (broken_heartp(d)) {
         d = (datum) *d;
-        prfmt(1, "<broken-heart %p>", d);
-        prx(d);
+        prfmt(fd, "<broken-heart %p>", d);
+        prxf(fd, d);
     } else {
-        prfmt(1, "<unknown-object %p>", d);
+        prfmt(fd, "<unknown-object %p>", d);
     }
+}
+
+void
+prx(datum d)
+{
+    prxf(1, d);
 }
 
 void
