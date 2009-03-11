@@ -22,7 +22,7 @@ typedef struct method_table {
 } *method_table;
 
 /* Note: *x must be the only pointer to x */
-void install_fz(datum *, na_fn_free);
+void install_fz(datum *x, na_fn_free);
 
 size_t datum_size(datum d);
 datum datum_mtab(datum d);
@@ -33,10 +33,6 @@ datum make_record(size_t len, datum mtab, datum a, datum b);
 
 datum make_opaque_permanent(size_t size, datum mtab);
 datum make_record_permanent(size_t len, datum mtab, datum a, datum b);
-
-#define HEAP_SIZE (2 * 1024 * 1024)
-
-extern size_t *busy_chunks, *old_chunks;
 
 void init_mem(void);
 

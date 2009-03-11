@@ -9,6 +9,8 @@
 #include "symbol.h"
 #include "config.h"
 
+#define HEAP_SIZE (2 * 1024 * 1024)
+
 /*bool*/
 #define in_busy_chunk_range(x) (((x) >= busy_chunks) && \
                                ((x) < &busy_chunks[HEAP_SIZE]))
@@ -37,19 +39,19 @@ init_mem(void)
 static inline size_t
 make_desc(char format, size_t len)
 {
-    return ((len << 4) | (format & 0xf));
+    return (len << 4) | (format & 0xf);
 }
 
 static inline char
 datum_desc_format(size_t desc)
 {
-    return (desc & 0xf);
+    return desc & 0xf;
 }
 
 static inline size_t
 datum_desc_len(size_t desc)
 {
-    return (desc >> 4);
+    return desc >> 4;
 }
 
 #define DATUM_FORMAT_RECORD 1
