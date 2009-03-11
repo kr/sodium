@@ -261,19 +261,19 @@ class make_ir_seq:
         return sorted(tuple(set(datums)), key=desc_datum)
 
     def get_labels(self):
-        labels, statements = [], []
+        labels, real_instrs = [], []
         i = 0
         for s in self.statements:
             if symbolp(s):
                 labels.append((s, i))
             else:
-                statements.append(s)
+                real_instrs.append(s)
                 i += 1 # only count real statements
                 if s.op in (load_addr_s, bf_s, bprim_s, goto_label_s):
-                    statements.append(ADDR(s.l))
+                    real_instrs.append(ADDR(s.l))
                     i += 1
-        statements.append(QUIT())
-        return labels, statements
+        real_instrs.append(QUIT())
+        return labels, real_instrs
 
     def list_instructions(self):
         for i, s in enumerate(self.statements):
