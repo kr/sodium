@@ -268,7 +268,7 @@ gc(int c, ...)
 }
 
 static datum
-dalloc(size_t *base, size_t *free,
+dalloc(size_t **base, size_t *free,
        unsigned char type, uint len, datum mtab, datum x, datum y)
 {
     datum p;
@@ -280,7 +280,7 @@ dalloc(size_t *base, size_t *free,
 
     if ((*free + delta) >= HEAP_SIZE) gc(2, &x, &y);
     if ((*free + delta) >= HEAP_SIZE) die("dalloc -- OOM after gc");
-    p = base + *free;
+    p = *base + *free;
     *p = make_desc(type, len);
     p[1] = (size_t) mtab;
     if (delta > 2) p[2] = (size_t) x;
@@ -322,7 +322,7 @@ install_fz(datum *x, na_fn_free fn)
     datum fz;
 
     regs[R_GC0] = *x;
-    fz = dalloc(busy_chunks, &free_index,
+    fz = dalloc(&busy_chunks, &free_index,
                 DATUM_FORMAT_FZ, 3, nil, (datum) fn, fz_list);
     fz[2] = ((size_t) (*x = regs[R_GC0]));
     regs[R_GC0] = nil;
@@ -332,28 +332,28 @@ install_fz(datum *x, na_fn_free fn)
 datum
 make_opaque(size_t size, datum mtab)
 {
-    return dalloc(busy_chunks, &free_index,
+    return dalloc(&busy_chunks, &free_index,
                   DATUM_FORMAT_OPAQUE, size, mtab, nil, nil);
 }
 
 datum
 make_record(size_t len, datum mtab, datum a, datum b)
 {
-    return dalloc(busy_chunks, &free_index,
+    return dalloc(&busy_chunks, &free_index,
                   DATUM_FORMAT_RECORD, len, mtab, a, b);
 }
 
 datum
 make_opaque_permanent(size_t size, datum mtab)
 {
-    return dalloc(perm_busy_chunks, &perm_free_index,
+    return dalloc(&perm_busy_chunks, &perm_free_index,
                   DATUM_FORMAT_OPAQUE, size, mtab, nil, nil);
 }
 
 datum
 make_record_permanent(size_t len, datum mtab, datum a, datum b)
 {
-    return dalloc(perm_busy_chunks, &perm_free_index,
+    return dalloc(&perm_busy_chunks, &perm_free_index,
                   DATUM_FORMAT_RECORD, len, mtab, a, b);
 }
 
