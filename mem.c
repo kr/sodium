@@ -8,9 +8,6 @@
 #include "int.h"
 #include "symbol.h"
 #include "config.h"
-#if GC_DEBUG
-#include <stdio.h>
-#endif
 
 /*bool*/
 #define in_busy_chunk_range(x) (((x) >= busy_chunks) && \
@@ -81,10 +78,10 @@ prdesc(const char *msg, size_t desc)
 {
     if (desc &1) {
         int type = datum_desc_format(desc);
-        fprintf(stderr, "%s %s (%d) len %u\n",
+        prfmt(1, "%s %s (%d) len %u\n",
                 msg, datum_types[type >> 1], type, datum_desc_len(desc));
     } else {
-        fprintf(stderr, "%s <not a chunk>\n", msg);
+        prfmt(1, "%s <not a chunk 0x%x>\n", msg, desc);
     }
 }
 #endif
@@ -102,15 +99,11 @@ relocate(datum refloc)
 
     if (!in_chunk_range(p)) return;
 
-    --p;
+    --p; /* make p point at the mtab or descriptor */
 
     for (;;) {
-        len = datum_desc_len(*p);
-#if GC_DEBUG
-        prdesc("Relocating", *p);
-        fprintf(stderr, "at %p\n", p);
-#endif
 
+        len = datum_desc_len(*p);
         switch (datum_desc_format(*p)) {
             /*
             case DATUM_FORMAT_BACKPTR:
@@ -124,6 +117,10 @@ relocate(datum refloc)
                 /* fall through */
             case DATUM_FORMAT_RECORD:
             case DATUM_FORMAT_FZ:
+#if GC_DEBUG
+                prdesc("Relocating", *p);
+                prfmt(1, "at %p\n", p);
+#endif
                 i = (datum *) p;
                 j = (datum *) free_chunks + free_index;
 
@@ -140,7 +137,7 @@ relocate(datum refloc)
                 ((datum *) p)[1] = 2 + (datum) &free_chunks[free_index];
                 free_index = ((datum) j) - free_chunks;
 #if GC_DEBUG
-                fprintf(stderr, "Relocated\n");
+                prfmt(1, "Relocated\n");
 #endif
 
                 *p = DATUM_FORMAT_BROKEN_HEART;
@@ -172,7 +169,7 @@ gc(int c, ...)
     gc_in_progress = 1;
 
 #if GC_DEBUG
-    fprintf(stderr, "Start GC\n");
+    prfmt(1, "Start GC\n");
 #endif
 
     free_chunks = malloc(sizeof(datum) * HEAP_SIZE);
@@ -180,7 +177,7 @@ gc(int c, ...)
     free_index = 0;
 
 #if GC_DEBUG
-    fprintf(stderr, "free_chunks is %p\n", free_chunks);
+    prfmt(1, "free_chunks is %p\n", free_chunks);
 #endif
 
     if (become_a && become_b) {
@@ -260,7 +257,7 @@ gc(int c, ...)
     old_chunks = 0;
 
 #if GC_DEBUG
-    fprintf(stderr, "Finish GC\n");
+    prfmt(1, "Finish GC\n");
 #endif
 
     gc_in_progress = 0;
@@ -287,7 +284,7 @@ dalloc(size_t **base, size_t *free,
     if (delta > 3) p[3] = (size_t) y;
     *free += delta;
 #if GC_DEBUG
-    prdesc("Allocated", *p);
+    //prdesc("Allocated", *p);
 #endif
     return p + 2;
 }
