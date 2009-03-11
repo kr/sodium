@@ -90,6 +90,18 @@ def make_desc(format, len):
     if not (format & 1): raise 'bad format'
     return pad(32, (28, len), (4, format))
 
+def encode_datum(datum):
+    if not isinstance(datum, String): return ()
+    head = (
+            BACKPTR(),
+            ENCODED(make_desc(7, len(datum)), comment='descriptor'),
+            ENCODED(0, comment='mtab'),
+           )
+    padded = datum + '\0' * (4 - len(datum))
+    groups = [''.join(xs) for xs in zip(*[iter(padded)]*4)]
+    body = ((pad(32, *[(8, ord(c)) for c in g]), repr(g)) for g in groups)
+    return head + tuple((ENCODED(x, comment=c) for x,c in body))
+
 the_labels = None
 class make_ir_seq:
     def __init__(self, needs, modifies, *statements):
@@ -118,7 +130,7 @@ class make_ir_seq:
     def extract(self):
         global the_labels
         datums = self.get_se_datums_and_symbols()
-        labels, real_instrs = self.get_labels()
+        labels, real_instrs = self.get_labels(datums)
         the_labels = labels
         return datums, labels, real_instrs
 
@@ -260,7 +272,7 @@ class make_ir_seq:
             datums += s.se_datums_and_symbols()
         return sorted(tuple(set(datums)), key=desc_datum)
 
-    def get_labels(self):
+    def get_labels(self, datums):
         labels, real_instrs = [], []
         i = 0
         for s in self.statements:
@@ -273,6 +285,8 @@ class make_ir_seq:
                     real_instrs.append(ADDR(s.l))
                     i += 1
         real_instrs.append(QUIT())
+        for x in datums:
+            real_instrs.extend(encode_datum(x))
         return labels, real_instrs
 
     def list_instructions(self):
@@ -392,6 +406,10 @@ def ADDR(l):
 # The backptr pseudo-instruction
 backptr_op_s = S('BACKPTR')
 def BACKPTR(): return OP_BACKPTR()
+
+# The encoded pseudo-instruction
+encoded_op_s = S('ENCODED')
+def ENCODED(*args, **kwargs): return OP_ENCODED(*args, **kwargs)
 
 # No-payload instructions
 
@@ -619,6 +637,7 @@ class OP_DATUM(OP):
         return pack((27, i))
 
     def se_datums_and_symbols(self):
+        if symbolp(self.d): return self.d, String(self.d.s)
         return (self.d,)
 
     def __repr__(self):
@@ -635,6 +654,20 @@ class OP_BACKPTR(OP):
 
     def __repr__(self):
         return '<Backpointer>'
+
+class OP_ENCODED(OP):
+    def __init__(self, x, comment=None):
+        OP.__init__(self, encoded_op_s)
+        self.encoded = x
+        self.comment = comment
+
+    def encode(self, index, labels, datums):
+        return self.encoded
+
+    def __repr__(self):
+        comment = ''
+        if self.comment: comment = ' ' + self.comment
+        return '<Encoded 0x%x>%s' % (self.encoded, comment)
 
 class OP_Z(OP):
     def __init__(self, op):
@@ -710,6 +743,7 @@ class OP_RD(OP):
         return pack((5, self.r), (22, i))
 
     def se_datums_and_symbols(self):
+        if symbolp(self.d): return self.d, String(self.d.s)
         return (self.d,)
 
     def __repr__(self):
@@ -747,6 +781,7 @@ class OP_RRD(OP):
         return pack((5, self.r1), (5, self.r2), (17, i))
 
     def se_datums_and_symbols(self):
+        if symbolp(self.d): return self.d, String(self.d.s)
         return (self.d,)
 
     def __repr__(self):
