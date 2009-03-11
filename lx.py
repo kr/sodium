@@ -209,6 +209,7 @@ def compile_obj(exp, target, linkage, cenv, pop_all_symbol):
     obj_table = make_label('obj-table')
     after_obj = make_label('after-obj')
     m_tabl_code = make_ir_seq((), (),
+        BACKPTR(),
         obj_table,
         DATUM(exp_methods(exp).len()))
     m_body_code = empty_instruction_seq()
@@ -239,6 +240,7 @@ def compile_sobj(exp, target, linkage, cenv, pop_all_symbol, tag=None):
     obj_table = make_label('obj-table')
     after_obj = make_label('after-obj')
     m_tabl_code = make_ir_seq((), (),
+        BACKPTR(),
         obj_table,
         DATUM(sobj_methods(exp).len(), tag=tag))
     m_body_code = empty_instruction_seq()
