@@ -509,8 +509,8 @@ start(uint *start_addr)
     for (pc = start_addr;; ++pc) {
         register uint inst = *pc;
 #if VM_DEBUG > 0
-        prfmt(1, "executing %s (0x%x at %p)\n",
-                instr_names[I_OP(inst)], I_OP(inst), pc);
+        prfmt(1, "pco=%d executing %s (0x%x at %p)\n",
+                pc - start_addr, instr_names[I_OP(inst)], I_OP(inst), pc);
 #endif
         switch (I_OP(inst)) {
             case OP_NOP: break;
