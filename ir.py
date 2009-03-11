@@ -626,7 +626,7 @@ class OP_BACKPTR(OP):
         OP.__init__(self, backptr_op_s)
 
     def encode(self, index, labels, datums):
-        return pad(32, (4, 2), (28, index + 1))
+        return pad(32, (28, index + 1), (3, 2), (1, 1))
 
     def __repr__(self):
         return '<Backpointer>'
