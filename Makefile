@@ -39,6 +39,7 @@ clean:
 
 distclean: clean
 	rm -f *.d *.pyc *.lxc ad-hoc-tests/*.lxc lib/*.lxc tests/*.lxc
+	rm -f *.nac ad-hoc-tests/*.nac lib/*.nac tests/*.nac
 
 reallyclean: distclean
 	rm -f *.lxc.c module-index.c
