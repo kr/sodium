@@ -1,46 +1,54 @@
 
 inline C <<end
 #include "bytes.h"
+
+const datum module_mtab = mtab;
 end
 
 def *modules* '()
 
-def (find-module-file name):
-  name :: ("lib/"./ name.str./ ".lxc")
-  name.encode
-
-def (compile-module name):
-  module.load-file (find-module-file name)
-
-def load-builtin-module ():
-  inline C (run name) <<end
-    return load_builtin_module(n_name);
-  end
-
-def (load-module name):
-  def x (load-builtin-module name)
-  if x: return x
-  compile-module name
-
-def (make-blank-module) (obj ())
-
-def module ():
+def loader ():
   (run name):
     def ent (*modules*.assq name)
     if ent: return ent.cdr
-    def new-module (make-blank-module)
+    def new-module (make-placeholder)
     *modules* :: (cons (cons name new-module) *modules*)
     become new-module (load-module name) 1
     . new-module
 
-  inline C (load-file name) <<end
-    uint *addr;
-    char name[datum_size(n_name) + 1];
-    copy_bytes_contents0(name, n_name, datum_size(n_name) + 1);
-    addr = load_module_file(name);
+  (run-file path):
+    (read-file path).run
 
-    start_body(addr);
-    return regs[R_VAL]; /* return value from module */
+def (load-module name):
+  (make-module name).run
+
+def (make-module name):
+  def x (find-builtin name)
+  if x: return x
+  read-file (find-file name)
+
+def (find-file name):
+  name :: ("lib/"./ name.str./ ".lxc")
+  name.encode
+
+def find-builtin: obj ():
+  inline C (run name) <<end
+    return find_builtin_module(n_name);
   end
 
-. module
+def read-file: obj ():
+  inline C (run path) <<end
+    char name[datum_size(n_path) + 1];
+    copy_bytes_contents0(name, n_path, datum_size(n_path) + 1);
+    return read_module_file(name);
+  end
+
+def (make-placeholder) (obj ())
+
+def module: sobj:
+  inline C (run) <<end
+    start_body(rcv);
+    return regs[R_VAL];
+  end
+
+. loader

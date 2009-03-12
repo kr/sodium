@@ -17,6 +17,8 @@
 #include "pair.h"
 #include "array.h"
 #include "bytes.h"
+#include "module.h"
+#include "prelude.h"
 #include "str.h"
 #include "nil.h"
 #include "int.h"
@@ -139,6 +141,8 @@ void
 nalink(uint *insts, uint inst_count,
         size_t *str_offsets, size_t *ime_offsets, size_t *sym_offsets)
 {
+    insts[-1] = (size_t) module_mtab;
+
     for (; *str_offsets; str_offsets++) {
         insts[*str_offsets - 1] = (size_t) str_mtab;
     }
@@ -431,8 +435,8 @@ halt:
     stack = cdr(stack);
 }
 
-uint *
-load_module_file(const char *name)
+datum
+read_module_file(const char *name)
 {
     uint *insts;
     size_t instr_count = 0, str_offset_count, ime_offsets = 0, sym_offset_count;
@@ -464,7 +468,6 @@ load_module_file(const char *name)
     if (!insts) die("cannot allocate instr offsets");
     insts += 2; /* skip over the descriptor and mtab */
     insts[-2] = ((instr_count << 5) | 0xf);
-    insts[-1] = 0; /* FIXME use a real mtab here (probably bytes's) */
 
     load_instrs(f, instr_count, insts);
 
@@ -491,20 +494,6 @@ load_module_file(const char *name)
     }
 
     return insts;
-}
-
-static uint *
-find_builtin_module(const char *mname)
-{
-    int i;
-
-    for (i = 0; i < lxc_modules_count; i++) {
-        if (strcmp(lxc_modules[i]->name, mname) == 0) {
-            return lxc_modules[i]->instrs;
-        }
-    }
-
-    return 0;
 }
 
 void
@@ -538,16 +527,29 @@ report_error(datum args)
 }
 
 datum
+find_builtin_module(datum name)
+{
+    int i;
+
+    if (symbolp(name)) name = (datum) name[1]; /* symbol->str */
+
+    for (i = 0; i < lxc_modules_count; i++) {
+        const char *mname = lxc_modules[i]->name;
+        if (str_cmp_charstar(name, strlen(mname), mname) == 0) {
+            return lxc_modules[i]->instrs;
+        }
+    }
+
+    return nil;
+}
+
+datum
 load_builtin_module(datum name)
 {
-    size_t n;
-    char buf[100];
-    uint *insts;
+    datum insts;
 
-    n = symbol_copy0(buf, 100, name);
-    if (n == 100) die1("module name too long (> 100 chars)", name);
-    insts = find_builtin_module(buf);
-    if (!insts) return nil;
+    insts = find_builtin_module(name);
+    if (insts == nil) return nil;
     start_body(insts);
     return regs[R_VAL]; /* return value from module */
 }
@@ -580,7 +582,7 @@ main(int argc, char **argv)
     define(genv, args, intern("*args*"));
 
     /* load and execute the standard prelude */
-    start_body(find_builtin_module("prelude"));
+    start_body(lxc_module_prelude.instrs);
 
     return 0;
 }
