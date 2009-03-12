@@ -86,6 +86,10 @@ def make_datum_c_name(n):
 def suitable_register_list(x):
     return isinstance(x, tuple) or isinstance(x, frozenset)
 
+DATUM_FORMAT_RECORD = 1
+DATUM_FORMAT_BACKPTR = 5
+DATUM_FORMAT_OPAQUE = 15
+
 def make_desc(format, len):
     if not (format & 1): raise 'bad format'
     return pad(32, (28, len), (4, format))
@@ -93,7 +97,7 @@ def make_desc(format, len):
 def encode_str(s):
     head = (
             BACKPTR(),
-            ENCODED(make_desc(7, len(s)), comment='descriptor'),
+            ENCODED(make_desc(DATUM_FORMAT_OPAQUE, len(s)), comment='descriptor'),
             ENCODED(0, comment='str mtab'),
            )
     padded = s + '\0' * (4 - len(s) % 4)
@@ -104,7 +108,7 @@ def encode_str(s):
 def encode_ime(ime):
     return ((
             BACKPTR(),
-            ENCODED(make_desc(7, 4), comment='descriptor'),
+            ENCODED(make_desc(DATUM_FORMAT_OPAQUE, 4), comment='descriptor'),
             ENCODED(0, comment='ime mtab'),
             PACKED('((uint) %s)' % (ime.name,)),
            ), 3)
@@ -212,7 +216,7 @@ class make_ir_seq:
         print >>fd, '};'
 
         # instrs
-        instrs_desc = make_desc(15, len(real_instrs) * 4)
+        instrs_desc = make_desc(DATUM_FORMAT_OPAQUE, len(real_instrs) * 4)
         print >>fd, 'static uint instr_array[] = {'
         print >>fd, '    0x%x, /* %r */' % (instrs_desc, 'desc')
         print >>fd, '    0x%x, /* %r */' % (0, 'mtab')
@@ -699,7 +703,7 @@ class OP_BACKPTR(OP):
         OP.__init__(self, backptr_op_s)
 
     def encode(self, index, labels, datums):
-        return make_desc(5, index + 1)
+        return make_desc(DATUM_FORMAT_BACKPTR, index + 1)
 
     def __repr__(self):
         return '<Backpointer>'
