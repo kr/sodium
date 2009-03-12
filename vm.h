@@ -25,7 +25,7 @@
 #define OP_MAKE_CLOSURE 0x11
 #define OP_CLOSURE_METHOD 0x12
 #define OP_SETBANG 0x13
-#define OP_MAKE_ARRAY 0x14
+#define OP_unused 0x14
 #define OP_DEFINE 0x15
 #define OP_LOOKUP 0x16
 #define OP_LEXICAL_LOOKUP 0x17

@@ -65,7 +65,7 @@ static char *instr_names[32] = {
     "OP_MAKE_CLOSURE",
     "OP_CLOSURE_METHOD",
     "OP_SETBANG",
-    "OP_MAKE_ARRAY",
+    "<unused>",
     "OP_DEFINE",
     "OP_LOOKUP",
     "OP_LEXICAL_LOOKUP",
@@ -309,7 +309,6 @@ nalink(uint *insts, uint inst_count, uint *lab_offsets,
                 *pc = (inst & 0xfffe0000) | di;
                 break;
             case OP_LOAD_IMM:
-            case OP_MAKE_ARRAY:
                 di = I_RD(inst);
                 di += static_datums_base;
                 if (di > 0x3fffff) die("too many datums");
@@ -541,11 +540,6 @@ start(uint *start_addr)
                 ra = I_R(inst);
                 di = I_RD(inst);
                 regs[ra] = static_datums[di];
-                break;
-            case OP_MAKE_ARRAY:
-                ra = I_R(inst);
-                di = I_RD(inst);
-                die("OP_MAKE_ARRAY -- implement me");
                 break;
             case OP_CONS:
                 ra = I_R(inst);

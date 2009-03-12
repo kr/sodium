@@ -500,9 +500,7 @@ def BPRIM(reg, label): return OP_RL(bprim_s, reg, label)
 # One register, one value instructions
 
 load_imm_s = S('LOAD_IMM')
-make_array_s = S('MAKE_ARRAY')
 def LOAD_IMM(target_reg, val): return OP_RD(load_imm_s, target_reg, val)
-def MAKE_ARRAY(target_reg, len): return OP_RD(make_array_s, target_reg, len)
 
 # Three register instructions
 
@@ -570,7 +568,7 @@ all_ops = (
     make_closure_s,
     closure_method_s,
     set__s,
-    make_array_s,
+    None,
     define_s,
     lookup_s,
     lexical_lookup_s,
