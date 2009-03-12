@@ -531,7 +531,7 @@ start(uint *start_addr)
                 break;
             case OP_GOTO_LABEL:
                 tmp = (uint *) *++pc;
-                pc = tmp - 1;
+                pc += datum2int(tmp) - 1;
                 break;
             case OP_MOV:
                 ra = I_R(inst);
@@ -550,17 +550,18 @@ start(uint *start_addr)
                 break;
             case OP_LOAD_ADDR:
                 ra = I_R(inst);
-                regs[ra] = (uint *) *++pc;
+                tmp = (uint *) *++pc;
+                regs[ra] = pc + datum2int(tmp);
                 break;
             case OP_BF:
                 ra = I_R(inst);
                 tmp = (uint *) *++pc;
-                if (!truep(regs[ra])) pc = tmp - 1;
+                if (!truep(regs[ra])) pc += datum2int(tmp) - 1;
                 break;
             case OP_BPRIM:
                 ra = I_R(inst);
                 tmp = (uint *) *++pc;
-                if (!addrp(regs[ra])) pc = tmp - 1;
+                if (!addrp(regs[ra])) pc += datum2int(tmp) - 1;
                 break;
             case OP_LOAD_IMM:
                 ra = I_R(inst);

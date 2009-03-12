@@ -281,10 +281,7 @@ class make_ir_seq:
             else:
                 real_instrs.append(s)
                 i += 1 # only count real statements
-                if s.op in (load_addr_s, bf_s, bprim_s, goto_label_s):
-                    real_instrs.append(ADDR(s.l))
-                    i += 1
-                if s.op in ():
+                if s.op in (load_addr_s, bf_s, bprim_s, goto_label_s,):
                     real_instrs.append(OP_OFFSET(s.l))
                     i += 1
         real_instrs.append(QUIT())
