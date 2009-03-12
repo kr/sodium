@@ -56,10 +56,9 @@ copy_str_contents0(char *dest, datum str, size_t n)
 }
 
 int
-str_cmp_charstar(datum str, const char *s)
+str_cmp_charstar(datum str, size_t len, const char *s)
 {
     int r;
-    size_t len = strlen(s);
 
     r = strncmp((char *) str, s, datum_size(str));
     if (r) return r;

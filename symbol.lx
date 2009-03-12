@@ -80,39 +80,51 @@ store(symbol ent)
 }
 
 static datum
-make_symbol(const char *name)
+make_symbol(size_t len, const char *name)
 {
     return make_record_permanent(2, mtab, nil,
-            make_str_init_permanent(strlen(name), name));
+            make_str_init_permanent(len, name));
 }
 
 static datum
-lookup_sym(const char *name)
+lookup_sym(size_t len, const char *name)
 {
     int i;
     datum sh;
 
     if (!datum_size(symbols)) return nil;
 
-    i = hash(strlen(name), name) % datum_size(symbols);
+    i = hash(len, name) % datum_size(symbols);
 
     for (sh = (datum) symbols[i]; sh != nil; sh = ((symbol) sh)->next) {
-        if (str_cmp_charstar(((symbol) sh)->name, name) == 0) {
+        if (str_cmp_charstar(((symbol) sh)->name, len, name) == 0) {
             return sh;
         }
     }
     return nil;
 }
 
-datum
-intern(const char *name)
+static datum
+intern_len(size_t len, const char *name)
 {
     datum sym;
 
-    sym = lookup_sym(name);
+    sym = lookup_sym(len, name);
     if (sym != nil) return sym;
 
-    return store((symbol) make_symbol(name));
+    return store((symbol) make_symbol(len, name));
+}
+
+datum
+intern(const char *name)
+{
+    return intern_len(strlen(name), name);
+}
+
+datum
+intern_str(datum name)
+{
+    return intern_len(datum_size(name), (char *) name);
 }
 
 void
