@@ -290,7 +290,7 @@ check_magic(int f)
 
 void
 nalink(uint *insts, uint inst_count, uint *lab_offsets,
-        size_t *str_offsets, size_t *ime_offsets)
+        size_t *str_offsets, size_t *ime_offsets, size_t *sym_offsets)
 {
     register uint *pc;
     uint di, li;
@@ -299,7 +299,6 @@ nalink(uint *insts, uint inst_count, uint *lab_offsets,
         register uint inst = *pc;
         switch (I_OP(inst)) {
             case OP_QUIT: goto done;
-            case OP_CLOSURE_METHOD:
             case OP_SETBANG:
             case OP_DEFINE:
             case OP_LOOKUP:
@@ -333,6 +332,12 @@ done:
 
     for (; *ime_offsets; ime_offsets++) {
         insts[*ime_offsets - 1] = (size_t) ime_mtab;
+    }
+
+    for (; *sym_offsets; sym_offsets++) {
+        size_t loc = *sym_offsets;
+        loc += datum2int(insts[loc]); /* insts[loc] is pc-relative */
+        insts[*sym_offsets] = (size_t) intern_str(insts + loc);
     }
 }
 
@@ -570,10 +575,7 @@ start(uint *start_addr)
             case OP_CLOSURE_METHOD:
                 ra = I_R(inst);
                 rb = I_RR(inst);
-                di = I_RRD(inst);
-                ++pc;
-                d = static_datums[di];
-                regs[ra] = (datum) closure_method(regs[rb], d);
+                regs[ra] = (datum) closure_method(regs[rb], (datum) *++pc);
                 break;
             case OP_SETBANG:
                 ra = I_R(inst);
@@ -634,7 +636,7 @@ load_module_file(const char *name)
 {
     uint *insts, *label_offsets;
     uint label_count = 0;
-    size_t instr_count = 0, str_offset_count, ime_offsets = 0;
+    size_t instr_count = 0, str_offset_count, ime_offsets = 0, sym_offset_count;
     int f;
 
     f = open(name, O_RDONLY);
@@ -692,7 +694,18 @@ load_module_file(const char *name)
             str_offsets[i] = read_int(f);
         }
         str_offsets[str_offset_count] = 0;
-        nalink(insts, instr_count, label_offsets, str_offsets, &ime_offsets);
+
+        sym_offset_count = read_int(f);
+        {
+            size_t sym_offsets[sym_offset_count + 1];
+            for (i = 0; i < sym_offset_count; i++) {
+                sym_offsets[i] = read_int(f);
+            }
+            sym_offsets[sym_offset_count] = 0;
+
+            nalink(insts, instr_count, label_offsets, str_offsets,
+                    &ime_offsets, sym_offsets);
+        }
 
     }
 
@@ -717,7 +730,7 @@ load_lxc_module(lxc_module mod)
     instr_sets++;
 
     nalink(mod->instrs, mod->instrs_count, mod->label_offsets,
-            mod->str_offsets, mod->ime_offsets);
+            mod->str_offsets, mod->ime_offsets, mod->sym_offsets);
 
     return mod->instrs;
 }
