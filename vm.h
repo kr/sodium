@@ -25,13 +25,18 @@
 #define OP_MAKE_CLOSURE 0x11
 #define OP_CLOSURE_METHOD 0x12
 #define OP_SETBANG 0x13
-#define OP_unused 0x14
+#define OP_LOAD_OFF 0x14
 #define OP_DEFINE 0x15
 #define OP_LOOKUP 0x16
 #define OP_LEXICAL_LOOKUP 0x17
 #define OP_LEXICAL_SETBANG 0x18
 #define OP_EXTEND_ENVIRONMENT 0x19
 #define OP_MAKE_SELFOBJ 0x1a
+#define OP_unused1 0x1b
+#define OP_unused2 0x1c
+#define OP_unused3 0x1d
+#define OP_unused4 0x1e
+#define OP_NOP2 0x1f
 
 #define REG_COUNT 13
 /*#define REG_COUNT 32*/

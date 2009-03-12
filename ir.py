@@ -342,9 +342,23 @@ class make_ir_seq:
                     real_instrs.append(OP_LABEL_OFFSET(s.l))
                     i += 1
                 if s.op in (closure_method_s, set__s, define_s, lookup_s):
-                    real_instrs.append(OP_DATUM_OFFSET(String(s.d.s)))
+                    d = s.d
+                    if symbolp(d): d = String(d.s)
+                    real_instrs.append(OP_DATUM_OFFSET(d))
                     symbol_offsets.append(i)
                     i += 1
+                if s.op in (load_imm_s,):
+                    if isinstance(s.d, Decimal):
+                        real_instrs.append(DATUM(Integer(int(s.d))))
+                    elif isinstance(s.d, Integer):
+                        real_instrs.append(DATUM(s.d))
+                    elif symbolp(s.d):
+                        real_instrs.append(OP_DATUM_OFFSET(String(s.d.s)))
+                        symbol_offsets.append(i)
+                    else:
+                        raise "unsupported data type: %s %r" % (type(s.d), s.d)
+                    i += 1
+
         real_instrs.append(QUIT())
         i += 1
         for x in datums:
@@ -463,7 +477,11 @@ def NOP(): return OP_NOP()
 datum_op_s = S('DATUM')
 def DATUM(d, tag=None):
     if isinstance(d, Integer):
-      return ENCODED(pad(32, (5, 0), (26, d), (1, 1)), tag=tag)
+      op = 0
+      if d < 0:
+          op = 0x1f
+          d = (1 << 26) + d
+      return ENCODED(pad(32, (5, op), (26, d), (1, 1)), tag=tag)
     return OP_DATUM(d, tag=tag)
 
 # The addr pseudo-instruction
@@ -524,8 +542,11 @@ def BPRIM(reg, label): return OP_RL(bprim_s, reg, label)
 
 # One register, one value instructions
 
+load_off_s = S('LOAD_OFF')
 load_imm_s = S('LOAD_IMM')
-def LOAD_IMM(target_reg, val): return OP_RD(load_imm_s, target_reg, val)
+def LOAD_IMM(target_reg, val):
+    if isinstance(val, String): return OP_RO(load_off_s, target_reg, val)
+    return OP_RD(load_imm_s, target_reg, val)
 
 # Three register instructions
 
@@ -593,7 +614,7 @@ all_ops = (
     make_closure_s,
     closure_method_s,
     set__s,
-    None,
+    load_off_s,
     define_s,
     lookup_s,
     lexical_lookup_s,
@@ -728,6 +749,7 @@ class OP_BACKPTR(OP):
 class OP_ENCODED(OP):
     def __init__(self, x, comment=None, tag=None):
         OP.__init__(self, encoded_op_s, tag=tag)
+        if x < 0: raise 'woah'
         self.encoded = x
         self.comment = comment
 
@@ -861,6 +883,31 @@ class OP_RD(OP):
     def get_body(self, index, labels, datums):
         i = lookup_dat(self.d, datums)
         return pack((5, self.r), (22, i))
+
+    def se_datums_and_symbols(self):
+        if symbolp(self.d): return self.d, String(self.d.s)
+        return (self.d,)
+
+    def __repr__(self):
+        return '%s %s %r' % (self.op, self.reg, self.d)
+
+class OP_RO(OP):
+    def __init__(self, op, r, d):
+        OP.__init__(self, op)
+        self.reg = r
+        self.r = lookup_reg(r)
+        if not isinstance(d, String):
+            raise AssemblingError('d cannot be referenced by an offset: %r' % d)
+        self.d = d
+
+    def get_body(self, index, labels, datums):
+        def find():
+          for d in datums:
+            if d == self.d:
+              return d.off
+          raise KeyError, self.d
+        addr = find()
+        return pack((5, self.r), (22, addr - index))
 
     def se_datums_and_symbols(self):
         if symbolp(self.d): return self.d, String(self.d.s)

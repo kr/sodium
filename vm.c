@@ -43,7 +43,6 @@ datum run_sym, ok_sym;
 static const size_t ime_mtab_body = 1;
 static const size_t *ime_mtab = &ime_mtab_body;
 
-#if VM_DEBUG > 0
 static char *instr_names[32] = {
     "OP_NOP",
     "OP_DATUM",
@@ -65,15 +64,19 @@ static char *instr_names[32] = {
     "OP_MAKE_CLOSURE",
     "OP_CLOSURE_METHOD",
     "OP_SETBANG",
-    "<unused>",
+    "OP_LOAD_OFF",
     "OP_DEFINE",
     "OP_LOOKUP",
     "OP_LEXICAL_LOOKUP",
     "OP_LEXICAL_SETBANG",
     "OP_EXTEND_ENVIRONMENT",
     "OP_MAKE_SELFOBJ",
+    "<unused1>",
+    "<unused2>",
+    "<unused3>",
+    "<unused4>",
+    "OP_NOP2",
 };
-#endif
 
 #define USAGE "Usage: vm <file.lxc>\n"
 void
@@ -299,12 +302,6 @@ nalink(uint *insts, uint inst_count, uint *lab_offsets,
         register uint inst = *pc;
         switch (I_OP(inst)) {
             case OP_QUIT: goto done;
-            case OP_LOAD_IMM:
-                di = I_RD(inst);
-                di += static_datums_base;
-                if (di > 0x3fffff) die("too many datums");
-                *pc = (inst & 0xffc00000) | di;
-                break;
             case OP_DATUM:
                 di = I_D(inst);
                 assert((di + static_datums_base) < static_datums_cap);
@@ -484,6 +481,7 @@ start(uint *start_addr)
 #endif
         switch (I_OP(inst)) {
             case OP_NOP: break;
+            case OP_NOP2: break;
             case OP_QUIT: goto halt;
             case OP_GOTO_REG:
                 ra = I_R(inst);
@@ -535,8 +533,12 @@ start(uint *start_addr)
                 break;
             case OP_LOAD_IMM:
                 ra = I_R(inst);
+                regs[ra] = (datum) *++pc;
+                break;
+            case OP_LOAD_OFF:
+                ra = I_R(inst);
                 di = I_RD(inst);
-                regs[ra] = static_datums[di];
+                regs[ra] = pc + di;
                 break;
             case OP_CONS:
                 ra = I_R(inst);
@@ -603,7 +605,8 @@ start(uint *start_addr)
                 regs[ra] = extend_environment(regs[rb], regs[rc], regs[rd]);
                 break;
             default:
-                prfmt(1, "unknown op 0x%x at %p\n", I_OP(inst), pc);
+                prfmt(2, "unknown op 0x%x %s at %p\n",
+                        I_OP(inst), instr_names[I_OP(inst)], pc);
                 die("unknown op");
         }
     }
