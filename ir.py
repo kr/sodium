@@ -99,20 +99,20 @@ def encode_str(s):
     padded = s + '\0' * (4 - len(s) % 4)
     groups = [''.join(xs) for xs in zip(*[iter(padded)]*4)]
     body = ((pad(32, *[(8, ord(c)) for c in g]), repr(g)) for g in groups)
-    return head + tuple((ENCODED(x, comment=c) for x,c in body))
+    return (head + tuple((ENCODED(x, comment=c) for x,c in body)), 3)
 
 def encode_ime(ime):
-    return (
+    return ((
             BACKPTR(),
             ENCODED(make_desc(7, 4), comment='descriptor'),
             ENCODED(0, comment='ime mtab'),
             PACKED('((uint) %s)' % (ime.name,)),
-           )
+           ), 3)
 
 def encode_datum(datum):
     if isinstance(datum, String): return encode_str(datum)
     if isinstance(datum, InlineMethEntry): return encode_ime(datum)
-    return ()
+    return ((), 0)
 
 the_labels = None
 class make_ir_seq:
@@ -298,7 +298,10 @@ class make_ir_seq:
                     i += 1
         real_instrs.append(QUIT())
         for x in datums:
-            real_instrs.extend(encode_datum(x))
+            more, off = encode_datum(x)
+            x.off = i + off
+            real_instrs.extend(more)
+            i += len(more)
         return labels, real_instrs
 
     def list_instructions(self):
