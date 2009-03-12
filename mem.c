@@ -205,9 +205,6 @@ gc(int c, ...)
     for (i = 0; i < REG_COUNT; ++i) {
         relocate((datum) &regs[i]);
     }
-    for (i = 0; i < static_datums_fill; ++i) {
-        relocate((datum) &static_datums[i]);
-    }
 
     scan_index = 0;
 

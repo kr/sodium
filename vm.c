@@ -25,18 +25,11 @@
 
 #define MAGIC_LEN 8
 
-datum *static_datums = (datum *)0;
-size_t static_datums_cap = 0, static_datums_fill = 0, static_datums_base;
-
 uint quit_inst[1] = {0x30000000};
 
 datum genv, regs[REG_COUNT];
 
 datum stack = nil;
-
-#define MAX_INSTR_SETS 50
-uint *instr_bases[MAX_INSTR_SETS], *instr_ends[MAX_INSTR_SETS];
-int instr_sets = 0;
 
 datum run_sym, ok_sym;
 
@@ -100,13 +93,6 @@ bailx(const char *m)
     exit(3);
 }
 
-static void
-insert_datum(datum d)
-{
-    if (static_datums_fill >= static_datums_cap) die("too many static datums");
-    static_datums[static_datums_fill++] = d;
-}
-
 static uint
 read_int(int f)
 {
@@ -119,70 +105,6 @@ read_int(int f)
     return ntohl(n);
 }
 
-static datum
-load_int(int f)
-{
-    uint n;
-    n = read_int(f);
-    return (datum) n; /* n is pseudo-boxed already */
-}
-
-static datum
-init_int(uint value)
-{
-    if ((value & 1) != 1) {
-        prfmt(1, "bad static int value 0x%x\n", value);
-        die("bad static int value\n");
-    }
-    return (datum) value;
-}
-
-static datum
-init_pointer(uint value)
-{
-    datum d;
-    d = make_opaque_permanent(4, (datum) ime_mtab);
-    *d = value;
-    return d;
-}
-
-static char *
-read_bytes(int f, size_t n)
-{
-    ssize_t r;
-    size_t i;
-    char *s;
-    s = (char *)malloc((n + 1) * sizeof(char));
-    s[n] = '\0';
-    for (i = 0; i < n; i += r) {
-        r = read(f, s + i, n - i);
-        if (-1 == r) bail("read() failed");
-        if (!r) die("could not read");
-    }
-    return s;
-}
-
-static datum
-load_str(int f)
-{
-    size_t size;
-    char *s;
-    size = read_int(f);
-    s = read_bytes(f, size);
-    return make_str_init(size, s);
-}
-
-static datum
-init_str(uint value)
-{
-    size_t size;
-    char *s = (char *) value;
-
-    size = strlen(s);
-
-    return make_str_init(size, s);
-}
-
 char
 readc(int f)
 {
@@ -192,84 +114,6 @@ readc(int f)
     if (r < 0) bail("read() failed");
     if (r < 1) bailx("unexpected end of file");
     return c;
-}
-
-static datum
-load_symbol(int f)
-{
-    int l = 1;
-    char c, *s = NULL;
-    datum sym;
-    c = readc(f);
-    do {
-        s = realloc(s, l++ * sizeof(char));
-        s[l - 2] = c;
-        c = readc(f);
-    } while (c != '\0');
-    s = realloc(s, l++ * sizeof(char));
-    s[l - 2] = '\0';
-    sym = intern(s);
-    free(s);
-    return sym;
-}
-
-static datum
-init_symbol(uint value)
-{
-    const char *s = (const char *) value;
-    return intern(s);
-}
-
-static void
-load_datums(int f, uint n)
-{
-    datum d = nil;
-    char type;
-    for (; n; n--) {
-        type = readc(f);
-        switch (type) {
-            case '#': d = load_int(f); break;
-            case '@': d = load_str(f); break;
-            case '$': d = load_symbol(f); break;
-            default:
-                write(2, "unknown datum signifier '", 25);
-                write(2, &type, 1);
-                write(2, "'\n", 2);
-                die("unknown datum signifier");
-        }
-        insert_datum(d);
-    }
-}
-
-static void
-init_datums(static_datums_info static_datums, uint n)
-{
-    uint i;
-    datum d = nil;
-
-    for (i = 0; i < n; i++) {
-        switch (static_datums->types[i]) {
-            case '>': d = init_pointer(static_datums->entries[i]); break;
-            case '#': d = init_int(static_datums->entries[i]); break;
-            case '@': d = init_str(static_datums->entries[i]); break;
-            case '$': d = init_symbol(static_datums->entries[i]); break;
-            default:
-                write(2, "unknown datum signifier '", 25);
-                write(2, &static_datums->types[i], 1);
-                write(2, "'\n", 2);
-                die("unknown datum signifier");
-        }
-        insert_datum(d);
-    }
-}
-
-static void
-load_labels(int f, uint n, uint *lab_offsets)
-{
-    uint i;
-    for (i = 0; i < n; i++) {
-        lab_offsets[i] = read_int(f);
-    }
 }
 
 static void
@@ -292,7 +136,7 @@ check_magic(int f)
 }
 
 void
-nalink(uint *insts, uint inst_count, uint *lab_offsets,
+nalink(uint *insts, uint inst_count,
         size_t *str_offsets, size_t *ime_offsets, size_t *sym_offsets)
 {
     for (; *str_offsets; str_offsets++) {
@@ -590,8 +434,7 @@ halt:
 uint *
 load_module_file(const char *name)
 {
-    uint *insts, *label_offsets;
-    uint label_count = 0;
+    uint *insts;
     size_t instr_count = 0, str_offset_count, ime_offsets = 0, sym_offset_count;
     int f;
 
@@ -616,30 +459,12 @@ load_module_file(const char *name)
 
     check_magic(f);
 
-    static_datums_cap += read_int(f);
-    static_datums_base = static_datums_fill;
-
-    static_datums = realloc(static_datums, static_datums_cap * sizeof(datum));
-    if (!static_datums) die("cannot allocate static_datums");
-
-    load_datums(f, static_datums_cap - static_datums_base);
-
-    label_count = read_int(f);
-    label_offsets = malloc(label_count * sizeof(uint));
-    if (!label_offsets) die("cannot allocate label offsets");
-
-    load_labels(f, label_count, label_offsets);
-
     instr_count = read_int(f);
     insts = malloc((instr_count + 2) * sizeof(uint));
     if (!insts) die("cannot allocate instr offsets");
-    if (instr_sets >= MAX_INSTR_SETS) die("too many instruction sets");
     insts += 2; /* skip over the descriptor and mtab */
     insts[-2] = ((instr_count << 5) | 0xf);
     insts[-1] = 0; /* FIXME use a real mtab here (probably bytes's) */
-    instr_bases[instr_sets] = insts;
-    instr_ends[instr_sets] = insts + instr_count;
-    instr_sets++;
 
     load_instrs(f, instr_count, insts);
 
@@ -659,13 +484,11 @@ load_module_file(const char *name)
             }
             sym_offsets[sym_offset_count] = 0;
 
-            nalink(insts, instr_count, label_offsets, str_offsets,
+            nalink(insts, instr_count, str_offsets,
                     &ime_offsets, sym_offsets);
         }
 
     }
-
-    free(label_offsets);
 
     return insts;
 }
@@ -673,19 +496,7 @@ load_module_file(const char *name)
 uint *
 load_lxc_module(lxc_module mod)
 {
-    static_datums_cap += mod->static_datums_count;
-    static_datums_base = static_datums_fill;
-
-    static_datums = realloc(static_datums, static_datums_cap * sizeof(datum));
-    if (!static_datums) die("cannot allocate static_datums");
-    init_datums(&mod->static_datums, static_datums_cap - static_datums_base);
-
-    if (instr_sets >= MAX_INSTR_SETS) die("too many instruction sets");
-    instr_bases[instr_sets] = mod->instrs;
-    instr_ends[instr_sets] = mod->instrs + mod->instrs_count;
-    instr_sets++;
-
-    nalink(mod->instrs, mod->instrs_count, mod->label_offsets,
+    nalink(mod->instrs, mod->instrs_count,
             mod->str_offsets, mod->ime_offsets, mod->sym_offsets);
 
     return mod->instrs;

@@ -104,9 +104,6 @@ extern datum genv;
 
 extern datum run_sym, ok_sym;
 
-extern datum *static_datums;
-extern size_t static_datums_fill;
-
 void bail(const char *m);
 
 #endif /*vm_h*/

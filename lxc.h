@@ -5,28 +5,12 @@
 
 #include <stdlib.h>
 
-typedef struct spair *spair;
-
-struct spair {
-    int car; /* index into static datums table */
-    spair cdr; /* pointer to next static pair in reversed list */
-};
-
-typedef struct static_datums_info {
-    char *types;
-    uint *entries;
-} *static_datums_info;
-
 typedef struct lxc_module {
     const char *name;
-
-    struct static_datums_info static_datums;
-    uint static_datums_count;
 
     uint *instrs;
     uint instrs_count;
 
-    uint *label_offsets;
     uint *str_offsets;
     uint *ime_offsets;
     uint *sym_offsets;

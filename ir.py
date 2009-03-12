@@ -179,42 +179,6 @@ class make_ir_seq:
         for c_def in self.c_defs:
             print >>fd, c_def
 
-        # datums
-        print >>fd
-        sdts = ''
-        datum_names = []
-        for i, d in enumerate(datums):
-            c_name = make_datum_c_name(i)
-            datum_names.append(c_name)
-
-            if symbolp(d):
-                sdts += '$'
-                print >>fd, '#define %s "%s" /* %s */' % (c_name, str(d), desc_datum(d))
-            elif isinstance(d, String):
-                sdts += '@'
-                print >>fd, '#define %s %s /* %s */' % (c_name, quote(str(d)), desc_datum(d))
-            elif isinstance(d, InlineMethEntry):
-                sdts += '>'
-                print >>fd, '#define %s %s /* %s */' % (c_name, str(d), desc_datum(d))
-            elif self_evaluatingp(d):
-                sdts += '#'
-                print >>fd, '#define %s %d /* %s */' % (c_name,
-                        pseudo_box(int(d)), desc_datum(d))
-            else:
-                raise RuntimeError('wtf %r' % d)
-
-        print >>fd, 'static uint static_datum_entries[] = {'
-        for datum_name in datum_names:
-            print >>fd, '    (uint) %s,' % (datum_name,)
-        print >>fd, '};'
-
-        # labels
-        print >>fd, 'static uint label_offsets[] = {'
-        for s, i in labels:
-            print >>fd, '    %d,' % (i,)
-            #fd.write(fmt_int(i, 4, ' '))
-        print >>fd, '};'
-
         # instrs
         instrs_desc = make_desc(DATUM_FORMAT_OPAQUE, len(real_instrs) * 4)
         print >>fd, 'static uint instr_array[] = {'
@@ -254,14 +218,8 @@ class make_ir_seq:
         print >>fd
         print >>fd, 'struct lxc_module lxc_module_%s = {' % (cname,)
         print >>fd, '    "%s",' % (name,)
-        print >>fd, '    {'
-        print >>fd, '        "%s",' % (sdts,)
-        print >>fd, '        static_datum_entries,'
-        print >>fd, '    },'
-        print >>fd, '    %d,' % (len(datums),)
         print >>fd, '    instrs,'
         print >>fd, '    %d,' % (len(real_instrs),)
-        print >>fd, '    label_offsets,'
         print >>fd, '    str_offsets,'
         print >>fd, '    ime_offsets,'
         print >>fd, '    sym_offsets,'
@@ -271,8 +229,6 @@ class make_ir_seq:
         datums, labels, real_instrs, symbol_offsets = self.extract()
 
         self.emit_magic(fd)
-        self.emit_datums(fd, datums)
-        self.emit_labels(fd, labels)
         self.emit_instructions(fd, labels, datums, real_instrs)
         self.emit_str_offsets(fd, datums)
         self.emit_intarray(fd, symbol_offsets)
@@ -281,33 +237,6 @@ class make_ir_seq:
     @staticmethod
     def emit_magic(fd):
         fd.write("\x89LX1\x0d\n\x1a\n")
-
-    @staticmethod
-    def emit_datums(fd, datums):
-        fd.write(encode_int(len(datums)))
-        #for i, d in enumerate(datums):
-        for d in datums:
-            if symbolp(d):
-                fd.write('$')
-                fd.write(str(d))
-                fd.write('\0')
-            elif isinstance(d, String):
-                fd.write('@')
-                fd.write(encode_int(len(d)))
-                fd.write(d)
-            elif self_evaluatingp(d):
-                fd.write('#')
-                d = int(d) # hack to get floats to "work" for now
-                fd.write(encode_int(pseudo_box(d)))
-            else:
-                raise RuntimeError('wtf %r' % d)
-
-    @staticmethod
-    def emit_labels(fd, labels):
-        fd.write(encode_int(len(labels)))
-        for s, i in labels:
-            fd.write(encode_int(i))
-            #fd.write(fmt_int(i, 4, ' '))
 
     @staticmethod
     def emit_str_offsets(fd, datums):
