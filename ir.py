@@ -341,7 +341,7 @@ class make_ir_seq:
                 if s.op in (load_addr_s, bf_s, bprim_s, goto_label_s,):
                     real_instrs.append(OP_LABEL_OFFSET(s.l))
                     i += 1
-                if s.op in (closure_method_s,):
+                if s.op in (closure_method_s, set__s, define_s, lookup_s):
                     real_instrs.append(OP_DATUM_OFFSET(String(s.d.s)))
                     symbol_offsets.append(i)
                     i += 1

@@ -299,14 +299,6 @@ nalink(uint *insts, uint inst_count, uint *lab_offsets,
         register uint inst = *pc;
         switch (I_OP(inst)) {
             case OP_QUIT: goto done;
-            case OP_SETBANG:
-            case OP_DEFINE:
-            case OP_LOOKUP:
-                di = I_RRD(inst);
-                di += static_datums_base;
-                if (di > 0x1ffff) die("too many datums");
-                *pc = (inst & 0xfffe0000) | di;
-                break;
             case OP_LOAD_IMM:
                 di = I_RD(inst);
                 di += static_datums_base;
@@ -477,7 +469,6 @@ start(uint *start_addr)
 {
     register uint *pc, *tmp;
     uint ra, rb, rc, rd, di, level, index;
-    datum d;
 
     /* save continue register */
     stack = cons(regs[R_CONTINUE], stack);
@@ -580,26 +571,17 @@ start(uint *start_addr)
             case OP_SETBANG:
                 ra = I_R(inst);
                 rb = I_RR(inst);
-                di = I_RRD(inst);
-                d = static_datums[di];
-                /*d = (datum) *++pc;*/
-                setbang(regs[ra], regs[rb], d);
+                setbang(regs[ra], regs[rb], (datum) *++pc);
                 break;
             case OP_DEFINE:
                 ra = I_R(inst);
                 rb = I_RR(inst);
-                di = I_RRD(inst);
-                d = static_datums[di];
-                //d = (datum) *++pc;
-                define(regs[ra], regs[rb], d);
+                define(regs[ra], regs[rb], (datum) *++pc);
                 break;
             case OP_LOOKUP:
                 ra = I_R(inst);
                 rb = I_RR(inst);
-                di = I_RRD(inst);
-                d = static_datums[di];
-                //d = (datum) *++pc;
-                regs[ra] = lookup(regs[rb], d);
+                regs[ra] = lookup(regs[rb], (datum) *++pc);
                 break;
             case OP_LEXICAL_LOOKUP:
                 ra = I_R(inst);
