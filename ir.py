@@ -337,6 +337,9 @@ class make_ir_seq:
                 labels.append((s, i))
             else:
                 real_instrs.append(s)
+                if isinstance(s, OP_DATUM_OFFSET):
+                    if symbolp(s.d):
+                        symbol_offsets.append(i)
                 i += 1 # only count real statements
                 if s.op in (load_addr_s, bf_s, bprim_s, goto_label_s,):
                     real_instrs.append(OP_LABEL_OFFSET(s.l))
@@ -482,7 +485,8 @@ def DATUM(d, tag=None):
           op = 0x1f
           d = (1 << 26) + d
       return ENCODED(pad(32, (5, op), (26, d), (1, 1)), tag=tag)
-    return OP_DATUM(d, tag=tag)
+    if not symbolp(d): raise 'oops'
+    return OP_DATUM_OFFSET(d, tag=tag)
 
 # The addr pseudo-instruction
 addr_op_s = S('ADDR')
@@ -826,18 +830,24 @@ class OP_LABEL_OFFSET(OP):
         return 'OFFSET %s' % (lab_repr(self.l),)
 
 class OP_DATUM_OFFSET(OP):
-    def __init__(self, datum):
-        OP.__init__(self, nop_s)
+    def __init__(self, datum, tag=None):
+        OP.__init__(self, nop_s, tag=tag)
         self.d = datum
 
     def get_body(self, index, labels, datums):
-        def find():
+        def find(x):
           for d in datums:
-            if d == self.d:
+            if d == x:
               return d.off
           raise KeyError, self.d
-        addr = find()
+        d = self.d
+        if symbolp(d): d = String(d.s)
+        addr = find(d)
         return pack((26, addr - index), (1, 1))
+
+    def se_datums_and_symbols(self):
+        if symbolp(self.d): return self.d, String(self.d.s)
+        return (self.d,)
 
     def __repr__(self):
         return 'OFFSET for %s' % (self.d,)
