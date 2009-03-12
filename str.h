@@ -3,6 +3,8 @@
 #ifndef str_h
 #define str_h
 
+extern const datum str_mtab;
+
 typedef struct str {
     size_t size;
     char data[];
