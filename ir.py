@@ -263,7 +263,6 @@ class make_ir_seq:
         self.emit_labels(fd, labels)
         self.emit_instructions(fd, labels, datums, real_instrs)
         self.emit_str_offsets(fd, datums)
-        self.emit_ime_offsets(fd, datums)
         #self.list_instructions() # for debugging
 
     @staticmethod
@@ -299,17 +298,10 @@ class make_ir_seq:
 
     @staticmethod
     def emit_str_offsets(fd, datums):
-        fd.write(encode_int(len(datums)))
-        for d in datums:
-            if isinstance(d, String):
-                fd.write(encode_int(d.off))
-
-    @staticmethod
-    def emit_ime_offsets(fd, datums):
-        fd.write(encode_int(len(datums)))
-        for d in datums:
-            if isinstance(d, InlineMethEntry):
-                fd.write(encode_int(d.off))
+        str_offsets = [x for x in datums if isinstance(x, String)]
+        fd.write(encode_int(len(str_offsets)))
+        for d in str_offsets:
+            fd.write(encode_int(d.off))
 
     def get_se_datums_and_symbols(self):
         datums = ()

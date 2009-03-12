@@ -40,6 +40,9 @@ int instr_sets = 0;
 
 datum run_sym, ok_sym;
 
+static const size_t ime_mtab_body = 1;
+static const size_t *ime_mtab = &ime_mtab_body;
+
 #if VM_DEBUG > 0
 static char *instr_names[32] = {
     "OP_NOP",
@@ -283,7 +286,8 @@ check_magic(int f)
 }
 
 void
-nalink(uint *insts, uint inst_count, uint *lab_offsets)
+nalink(uint *insts, uint inst_count, uint *lab_offsets,
+        size_t *str_offsets, size_t *ime_offsets)
 {
     register uint *pc;
     uint di, li;
@@ -318,6 +322,14 @@ nalink(uint *insts, uint inst_count, uint *lab_offsets)
                 *pc = (uint) &insts[lab_offsets[li]];
                 break;
         }
+    }
+
+    for (; *str_offsets; str_offsets++) {
+        insts[*str_offsets - 1] = (size_t) str_mtab;
+    }
+
+    for (; *ime_offsets; ime_offsets++) {
+        insts[*ime_offsets - 1] = (size_t) ime_mtab;
     }
 }
 
@@ -628,7 +640,7 @@ load_module_file(const char *name)
 {
     uint *insts, *label_offsets;
     uint label_count = 0;
-    size_t instr_count = 0;
+    size_t instr_count = 0, str_offset_count, ime_offsets = 0;
     int f;
 
     f = open(name, O_RDONLY);
@@ -679,7 +691,17 @@ load_module_file(const char *name)
 
     load_instrs(f, instr_count, insts);
 
-    nalink(insts, instr_count, label_offsets);
+    str_offset_count = read_int(f);
+    {
+        size_t i, str_offsets[str_offset_count + 1];
+        for (i = 0; i < str_offset_count; i++) {
+            str_offsets[i] = read_int(f);
+        }
+        str_offsets[str_offset_count] = 0;
+        nalink(insts, instr_count, label_offsets, str_offsets, &ime_offsets);
+
+    }
+
     free(label_offsets);
 
     return insts;
@@ -700,7 +722,8 @@ load_lxc_module(lxc_module mod)
     instr_ends[instr_sets] = mod->instrs + mod->instrs_count;
     instr_sets++;
 
-    nalink(mod->instrs, mod->instrs_count, mod->label_offsets);
+    nalink(mod->instrs, mod->instrs_count, mod->label_offsets,
+            mod->str_offsets, mod->ime_offsets);
 
     return mod->instrs;
 }
