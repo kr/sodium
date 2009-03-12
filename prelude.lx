@@ -10,6 +10,7 @@ def module (): inline C (run name) "return load_builtin_module(n_name);"
 
 # This must be done before using any methods on these types of objects.
 module 'int
+module 'str
 module 'bytes
 module 'pair
 module 'nil

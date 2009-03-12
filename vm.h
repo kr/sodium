@@ -78,7 +78,6 @@ void define(datum env, datum val, datum name);
 
 datum lookup(datum env, datum name);
 datum load_builtin_module(datum name);
-uint *load_lxc_module(lxc_module mod);
 
 void start_body(uint *start_addr);
 uint *load_module_file(const char *name);

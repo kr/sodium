@@ -16,7 +16,6 @@ void
 str_init()
 {
     percent_star_sym = intern("%*");
-    load_lxc_module(&lxc_module_str);
 }
 
 int

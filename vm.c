@@ -493,23 +493,14 @@ load_module_file(const char *name)
     return insts;
 }
 
-uint *
-load_lxc_module(lxc_module mod)
-{
-    nalink(mod->instrs, mod->instrs_count,
-            mod->str_offsets, mod->ime_offsets, mod->sym_offsets);
-
-    return mod->instrs;
-}
-
 static uint *
-find_and_link_builtin_module(const char *mname)
+find_builtin_module(const char *mname)
 {
     int i;
 
     for (i = 0; i < lxc_modules_count; i++) {
         if (strcmp(lxc_modules[i]->name, mname) == 0) {
-            return load_lxc_module(lxc_modules[i]);
+            return lxc_modules[i]->instrs;
         }
     }
 
@@ -555,7 +546,7 @@ load_builtin_module(datum name)
 
     n = symbol_copy0(buf, 100, name);
     if (n == 100) die1("module name too long (> 100 chars)", name);
-    insts = find_and_link_builtin_module(buf);
+    insts = find_builtin_module(buf);
     if (!insts) return nil;
     start_body(insts);
     return regs[R_VAL]; /* return value from module */
@@ -564,6 +555,7 @@ load_builtin_module(datum name)
 int
 main(int argc, char **argv)
 {
+    size_t i;
     datum args;
 
     if (argc != 2) usage();
@@ -571,6 +563,12 @@ main(int argc, char **argv)
     init_mem();
     nil_init();
     str_init();
+
+    for (i = 0; i < lxc_modules_count; i++) {
+        lxc_module mod = lxc_modules[i];
+        nalink(mod->instrs, mod->instrs_count,
+                mod->str_offsets, mod->ime_offsets, mod->sym_offsets);
+    }
 
     genv = cons(nil, nil);
 
@@ -582,7 +580,7 @@ main(int argc, char **argv)
     define(genv, args, intern("*args*"));
 
     /* load and execute the standard prelude */
-    start_body(find_and_link_builtin_module("prelude"));
+    start_body(find_builtin_module("prelude"));
 
     return 0;
 }
