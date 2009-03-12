@@ -298,7 +298,7 @@ nalink(uint *insts, uint inst_count, uint *lab_offsets,
     for (pc = &insts[0]; pc < &insts[inst_count]; ++pc) {
         register uint inst = *pc;
         switch (I_OP(inst)) {
-            case OP_QUIT: return;
+            case OP_QUIT: goto done;
             case OP_CLOSURE_METHOD:
             case OP_SETBANG:
             case OP_DEFINE:
@@ -325,6 +325,7 @@ nalink(uint *insts, uint inst_count, uint *lab_offsets,
                 break;
         }
     }
+done:
 
     for (; *str_offsets; str_offsets++) {
         insts[*str_offsets - 1] = (size_t) str_mtab;
