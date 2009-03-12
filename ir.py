@@ -97,7 +97,7 @@ def encode_str(s):
             ENCODED(0, comment='str mtab'),
            )
     padded = s + '\0' * (4 - len(s) % 4)
-    groups = [''.join(xs) for xs in zip(*[iter(padded)]*4)]
+    groups = [''.join(reversed(xs)) for xs in zip(*[iter(padded)]*4)]
     body = ((pad(32, *[(8, ord(c)) for c in g]), repr(g)) for g in groups)
     return (head + tuple((ENCODED(x, comment=c) for x,c in body)), 3)
 
