@@ -320,14 +320,18 @@ class make_ir_seq:
                 real_instrs.append(s)
                 i += 1 # only count real statements
                 if s.op in (load_addr_s, bf_s, bprim_s, goto_label_s,):
-                    real_instrs.append(OP_OFFSET(s.l))
+                    real_instrs.append(OP_LABEL_OFFSET(s.l))
+                    i += 1
+                if s.op in (closure_method_s,):
+                    real_instrs.append(OP_DATUM_OFFSET(String(s.d.s)))
                     i += 1
         real_instrs.append(QUIT())
         for x in datums:
             more, off = encode_datum(x)
-            x.off = i + off
-            real_instrs.extend(more)
-            i += len(more)
+            if more:
+              x.off = i + off
+              real_instrs.extend(more)
+              i += len(more)
         return labels, real_instrs
 
     def list_instructions(self):
@@ -760,7 +764,7 @@ class OP_L(OP):
     def __repr__(self):
         return '%s %s' % (self.op, lab_repr(self.l))
 
-class OP_OFFSET(OP):
+class OP_LABEL_OFFSET(OP):
     def __init__(self, label):
         OP.__init__(self, nop_s)
         self.l = label
@@ -777,6 +781,23 @@ class OP_OFFSET(OP):
 
     def __repr__(self):
         return 'OFFSET %s' % (lab_repr(self.l),)
+
+class OP_DATUM_OFFSET(OP):
+    def __init__(self, datum):
+        OP.__init__(self, nop_s)
+        self.d = datum
+
+    def get_body(self, index, labels, datums):
+        def find():
+          for d in datums:
+            if d == self.d:
+              return d.off
+          raise KeyError, self.d
+        addr = find()
+        return pack((26, addr - index), (1, 1))
+
+    def __repr__(self):
+        return 'OFFSET for %s' % (self.d,)
 
 class OP_RR(OP):
     def __init__(self, op, r1, r2):

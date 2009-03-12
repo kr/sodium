@@ -570,6 +570,7 @@ start(uint *start_addr)
                 ra = I_R(inst);
                 rb = I_RR(inst);
                 di = I_RRD(inst);
+                ++pc;
                 d = static_datums[di];
                 regs[ra] = (datum) closure_method(regs[rb], d);
                 break;
