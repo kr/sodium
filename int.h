@@ -1,4 +1,4 @@
-/* pair.h - pair type header */
+/* int.h - int type header */
 
 #ifndef int_h
 #define int_h
