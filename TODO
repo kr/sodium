@@ -6,7 +6,7 @@
 [+] flesh out int methods
 [+] fix lexing of quoted strings
 [+] broken promises
-[ ] C function pointers are not datums -- treat them accordingly
+[+] C function pointers are not datums -- treat them accordingly
 [+] fix finalization
 [+] fix return linkage for the "call" function
 [+] use become() in C prepare methods

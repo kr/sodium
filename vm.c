@@ -137,7 +137,10 @@ init_int(uint value)
 static datum
 init_pointer(uint value)
 {
-    return (datum) value;
+    datum d;
+    d = make_opaque_permanent(4, (datum) ime_mtab);
+    *d = value;
+    return d;
 }
 
 static char *
@@ -334,14 +337,9 @@ nalink(uint *insts, uint inst_count, uint *lab_offsets,
 }
 
 int
-addrp(datum d)
+imep(datum x)
 {
-    uint *x = (uint *) d;
-    int i;
-    for (i = 0; i < instr_sets; i++) {
-        if (x >= instr_bases[i] && x < instr_ends[i]) return 1;
-    }
-    return 0;
+    return !(1 & (size_t) x) && x[-1] == (size_t) ime_mtab;
 }
 
 void
@@ -537,7 +535,7 @@ start(uint *start_addr)
             case OP_BPRIM:
                 ra = I_R(inst);
                 tmp = (uint *) *++pc;
-                if (!addrp(regs[ra])) pc += datum2int(tmp) - 1;
+                if (imep(regs[ra])) pc += datum2int(tmp) - 1;
                 break;
             case OP_LOAD_IMM:
                 ra = I_R(inst);
@@ -561,7 +559,7 @@ start(uint *start_addr)
                 rc = I_RRR(inst);
                 rd = I_RRRR(inst);
                 /*regs[ra] = apply_prim_meth((prim_meth) regs[rb], regs[rc], regs[rd]);*/
-                regs[ra] = ((prim_meth) regs[rb])(regs[rc], regs[rd]);
+                regs[ra] = ((prim_meth) *regs[rb])(regs[rc], regs[rd]);
                 break;
             case OP_MAKE_CLOSURE:
                 ra = I_R(inst);
@@ -756,11 +754,11 @@ call(datum o, datum m, datum a)
     regs[R_PROC] = o;
     regs[R_ARGL] = a;
     regs[R_VM0] = closure_method(regs[R_PROC], m);
-    if (addrp(regs[R_VM0])) {
+    if (!imep(regs[R_VM0])) {
         start(regs[R_VM0]);
         return regs[R_VAL];
     } else {
-        return ((prim_meth) regs[R_VM0])(regs[R_PROC], regs[R_ARGL]);
+        return ((prim_meth) *regs[R_VM0])(regs[R_PROC], regs[R_ARGL]);
     }
 }
 

@@ -124,8 +124,8 @@ prxf(int fd, datum d)
     } else if (intp(d)) {
         int i = datum2int(d);
         prfmt(fd, "%d", i);
-    } else if (addrp(d)) {
-        prfmt(fd, "<addr %p>", d);
+    } else if (imep(d)) {
+        prfmt(fd, "<C func %p>", d[0]);
     } else if (symbolp(d)) {
         pr_symbol(d);
     } else if (strp(d)) {

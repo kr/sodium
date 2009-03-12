@@ -63,7 +63,7 @@
 
 void check_env(datum e);
 
-int addrp(datum d);
+int imep(datum x);
 
 void dict_insert(datum dict, uint *addr, datum name);
 
