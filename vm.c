@@ -137,20 +137,6 @@ init_pointer(uint value)
     return (datum) value;
 }
 
-static datum
-load_bigint(int f)
-{
-    die("this is a long integer... teach me how to handle those");
-    return nil;
-}
-
-static datum
-init_bigint(uint value)
-{
-    die("this is a long integer... teach me how to handle those");
-    return nil;
-}
-
 static char *
 read_bytes(int f, size_t n)
 {
@@ -225,37 +211,6 @@ init_symbol(uint value)
     return intern(s);
 }
 
-static datum
-load_list(int f)
-{
-    int i = 0;
-    datum l = nil;
-    char c = readc(f);
-    while (c != ')') {
-        int n = read_int(f);
-        datum x = static_datums[n + static_datums_base];
-        l = cons(x, l);
-        c = readc(f);
-        i++;
-    }
-    return l;
-}
-
-static datum
-init_list(uint value)
-{
-    spair p = (spair) value;
-    datum l = nil;
-    datum x;
-
-    while (p) {
-        x = static_datums[static_datums_base + p->car];
-        l = cons(x, l);
-        p = (spair) p->cdr;
-    }
-    return l;
-}
-
 static void
 load_datums(int f, uint n)
 {
@@ -265,10 +220,8 @@ load_datums(int f, uint n)
         type = readc(f);
         switch (type) {
             case '#': d = load_int(f); break;
-            case '!': d = load_bigint(f); break;
             case '@': d = load_str(f); break;
             case '$': d = load_symbol(f); break;
-            case '(': d = load_list(f); break;
             default:
                 write(2, "unknown datum signifier '", 25);
                 write(2, &type, 1);
@@ -289,10 +242,8 @@ init_datums(static_datums_info static_datums, uint n)
         switch (static_datums->types[i]) {
             case '>': d = init_pointer(static_datums->entries[i]); break;
             case '#': d = init_int(static_datums->entries[i]); break;
-            case '!': d = init_bigint(static_datums->entries[i]); break;
             case '@': d = init_str(static_datums->entries[i]); break;
             case '$': d = init_symbol(static_datums->entries[i]); break;
-            case '(': d = init_list(static_datums->entries[i]); break;
             default:
                 write(2, "unknown datum signifier '", 25);
                 write(2, &static_datums->types[i], 1);
