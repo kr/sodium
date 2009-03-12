@@ -8,7 +8,7 @@ inline C <<end
 
 #define bigint(x) (prfmt(1, "%u\n", (x)), die1("no bigints yet", nil))
 
-datum int_mtab = mtab;
+const datum int_mtab = mtab;
 
 end
 

@@ -3,6 +3,6 @@
 #ifndef int_h
 #define int_h
 
-extern datum int_mtab;
+extern const datum int_mtab;
 
 #endif /*int_h*/
