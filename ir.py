@@ -477,7 +477,6 @@ nop_s = S('NOP')
 def NOP(): return OP_NOP()
 
 # The datum pseudo-instruction
-datum_op_s = S('DATUM')
 def DATUM(d, tag=None):
     if isinstance(d, Integer):
       op = 0
@@ -489,10 +488,9 @@ def DATUM(d, tag=None):
     return OP_DATUM_OFFSET(d, tag=tag)
 
 # The addr pseudo-instruction
-addr_op_s = S('ADDR')
 def ADDR(l):
-    if isinstance(l, InlineMethEntry): return OP_DATUM(l)
-    return OP_L(addr_op_s, l)
+    if isinstance(l, InlineMethEntry): return OP_DATUM_OFFSET(l)
+    return OP_LABEL_OFFSET(l)
 
 # The backptr pseudo-instruction
 backptr_op_s = S('BACKPTR')
@@ -599,8 +597,8 @@ def APPLY_PRIM_METH(target_reg, proc_reg, mess_reg, argl_reg):
 
 all_ops = (
     nop_s,
-    datum_op_s,
-    addr_op_s,
+    'unused 1',
+    'unused 2',
     goto_reg_s,
     push_s,
     pop_s,
@@ -719,26 +717,6 @@ class OP_NOP(OP):
 
     def get_body(self, index, labels, datums):
         return pack((0, 0))
-
-class OP_DATUM(OP):
-    def __init__(self, d, tag=None):
-        OP.__init__(self, datum_op_s, tag=tag)
-        if not referencable_from_code(d):
-            raise AssemblingError('d cannot be referenced from code: %r' % d)
-        self.d = d
-
-    def get_body(self, index, labels, datums):
-        i = lookup_dat(self.d, datums)
-        return pack((27, i))
-
-    def se_datums_and_symbols(self):
-        if symbolp(self.d): return self.d, String(self.d.s)
-        return (self.d,)
-
-    def __repr__(self):
-        tag = ''
-        if self.tag: tag = ' tag=%s' % self.tag
-        return '%s %s%s' % (self.op, self.d, tag)
 
 class OP_BACKPTR(OP):
     def __init__(self):

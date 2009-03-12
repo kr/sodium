@@ -45,8 +45,8 @@ static const size_t *ime_mtab = &ime_mtab_body;
 
 static char *instr_names[32] = {
     "OP_NOP",
-    "OP_DATUM",
-    "OP_ADDR",
+    "<unused1>",
+    "<unused2>",
     "OP_GOTO_REG",
     "OP_PUSH",
     "OP_POP",
@@ -71,10 +71,10 @@ static char *instr_names[32] = {
     "OP_LEXICAL_SETBANG",
     "OP_EXTEND_ENVIRONMENT",
     "OP_MAKE_SELFOBJ",
-    "<unused1>",
-    "<unused2>",
     "<unused3>",
     "<unused4>",
+    "<unused5>",
+    "<unused6>",
     "OP_NOP2",
 };
 
@@ -295,26 +295,6 @@ void
 nalink(uint *insts, uint inst_count, uint *lab_offsets,
         size_t *str_offsets, size_t *ime_offsets, size_t *sym_offsets)
 {
-    register uint *pc;
-    uint di, li;
-
-    for (pc = &insts[0]; pc < &insts[inst_count]; ++pc) {
-        register uint inst = *pc;
-        switch (I_OP(inst)) {
-            case OP_QUIT: goto done;
-            case OP_DATUM:
-                di = I_D(inst);
-                assert((di + static_datums_base) < static_datums_cap);
-                *pc = (uint) static_datums[di + static_datums_base];
-                break;
-            case OP_ADDR:
-                li = I_L(inst);
-                *pc = (uint) &insts[lab_offsets[li]];
-                break;
-        }
-    }
-done:
-
     for (; *str_offsets; str_offsets++) {
         insts[*str_offsets - 1] = (size_t) str_mtab;
     }
@@ -439,17 +419,8 @@ closure_method(datum d, datum name)
     n = datum2int(table->size);
     for (i = 0; i < n; ++i) {
         if (table->items[i].name == name) {
-            if (intp(table->items[i].addr)) {
-                if (table->items[i].addr < (datum) 0x08048000) {
-                    die("hi5");
-                } else {
-                    return table->items[i].addr;
-                    prfmt(2, "addr %p\n", table->items[i].addr);
-                    die1("bye5", table->items[i].addr);
-                }
-            } else {
-                return table->items[i].addr;
-            }
+            datum pos = (datum) &table->items[i].addr;
+            return pos + datum2int(*pos);
         }
     }
     return die1("closure_method -- no such method", name);

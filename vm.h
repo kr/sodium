@@ -6,8 +6,8 @@
 #include "mem.h"
 
 #define OP_NOP 0x00
-#define OP_DATUM 0x01
-#define OP_ADDR 0x02
+#define OP_unused1 0x01
+#define OP_unused2 0x02
 #define OP_GOTO_REG 0x03
 #define OP_PUSH 0x04
 #define OP_POP 0x05
@@ -32,10 +32,10 @@
 #define OP_LEXICAL_SETBANG 0x18
 #define OP_EXTEND_ENVIRONMENT 0x19
 #define OP_MAKE_SELFOBJ 0x1a
-#define OP_unused1 0x1b
-#define OP_unused2 0x1c
-#define OP_unused3 0x1d
-#define OP_unused4 0x1e
+#define OP_unused3 0x1b
+#define OP_unused4 0x1c
+#define OP_unused5 0x1d
+#define OP_unused6 0x1e
 #define OP_NOP2 0x1f
 
 #define REG_COUNT 13
