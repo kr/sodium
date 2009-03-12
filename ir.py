@@ -284,6 +284,9 @@ class make_ir_seq:
                 if s.op in (load_addr_s, bf_s, bprim_s, goto_label_s):
                     real_instrs.append(ADDR(s.l))
                     i += 1
+                if s.op in ():
+                    real_instrs.append(OP_OFFSET(s.l))
+                    i += 1
         real_instrs.append(QUIT())
         for x in datums:
             real_instrs.extend(encode_datum(x))
@@ -562,7 +565,7 @@ class OP(object):
         return repr(self.op)
 
     def encode(self, index, labels, datums):
-        body = self.get_body(labels, datums)
+        body = self.get_body(index, labels, datums)
         inst = pad(32, (5, lookup_op(self.op)), body)
         return inst
 
@@ -622,7 +625,7 @@ class OP_NOP(OP):
     def __init__(self):
         OP.__init__(self, nop_s)
 
-    def get_body(self, labels, datums):
+    def get_body(self, index, labels, datums):
         return pack((0, 0))
 
 class OP_DATUM(OP):
@@ -632,7 +635,7 @@ class OP_DATUM(OP):
             raise AssemblingError('d cannot be referenced from code: %r' % d)
         self.d = d
 
-    def get_body(self, labels, datums):
+    def get_body(self, index, labels, datums):
         i = lookup_dat(self.d, datums)
         return pack((27, i))
 
@@ -673,7 +676,7 @@ class OP_Z(OP):
     def __init__(self, op):
         OP.__init__(self, op)
 
-    def get_body(self, labels, datums):
+    def get_body(self, index, labels, datums):
         return pack((0, 0))
 
 class OP_R(OP):
@@ -682,7 +685,7 @@ class OP_R(OP):
         self.reg = r
         self.r = lookup_reg(r)
 
-    def get_body(self, labels, datums):
+    def get_body(self, index, labels, datums):
         return pack((5, self.r))
 
     def __repr__(self):
@@ -693,12 +696,30 @@ class OP_L(OP):
         OP.__init__(self, op)
         self.l = l
 
-    def get_body(self, labels, datums):
+    def get_body(self, index, labels, datums):
         i = lookup_lab(self.l, labels)
         return pack((27, i))
 
     def __repr__(self):
         return '%s %s' % (self.op, lab_repr(self.l))
+
+class OP_OFFSET(OP):
+    def __init__(self, label):
+        OP.__init__(self, nop_s)
+        self.l = label
+
+    def get_body(self, index, labels, datums):
+        for s, i in labels:
+          if s is self.l:
+            addr = i
+            break
+        else:
+          raise KeyError, self.l
+        if (addr - index >= 0x08048000): raise 'bleh'
+        return pack((26, addr - index), (1, 1))
+
+    def __repr__(self):
+        return 'OFFSET %s' % (lab_repr(self.l),)
 
 class OP_RR(OP):
     def __init__(self, op, r1, r2):
@@ -708,7 +729,7 @@ class OP_RR(OP):
         self.r1 = lookup_reg(r1)
         self.r2 = lookup_reg(r2)
 
-    def get_body(self, labels, datums):
+    def get_body(self, index, labels, datums):
         return pack((5, self.r1), (5, self.r2))
 
     def __repr__(self):
@@ -722,7 +743,7 @@ class OP_RL(OP):
         self.l = l
         if l is S('quit'): raise 'aaa'
 
-    def get_body(self, labels, datums):
+    def get_body(self, index, labels, datums):
         i = lookup_lab(self.l, labels)
         return pack((5, self.r), (22, i))
 
@@ -738,7 +759,7 @@ class OP_RD(OP):
             raise AssemblingError('d cannot be referenced from code: %r' % d)
         self.d = d
 
-    def get_body(self, labels, datums):
+    def get_body(self, index, labels, datums):
         i = lookup_dat(self.d, datums)
         return pack((5, self.r), (22, i))
 
@@ -759,7 +780,7 @@ class OP_RRR(OP):
         self.r2 = lookup_reg(r2)
         self.r3 = lookup_reg(r3)
 
-    def get_body(self, labels, datums):
+    def get_body(self, index, labels, datums):
         return pack((5, self.r1), (5, self.r2), (5, self.r3))
 
     def __repr__(self):
@@ -776,7 +797,7 @@ class OP_RRD(OP):
             raise AssemblingError, 'd must be a symbol: %r' % d
         self.d = d
 
-    def get_body(self, labels, datums):
+    def get_body(self, index, labels, datums):
         i = lookup_dat(self.d, datums)
         return pack((5, self.r1), (5, self.r2), (17, i))
 
@@ -795,7 +816,7 @@ class OP_RII(OP):
         self.levs = levs
         self.offs = offs
 
-    def get_body(self, labels, datums):
+    def get_body(self, index, labels, datums):
         return pack((5, self.r), (10, self.levs), (12, self.offs))
 
     def __repr__(self):
@@ -809,5 +830,5 @@ class OP_RRRR(OP):
         self.r3 = lookup_reg(r3)
         self.r4 = lookup_reg(r4)
 
-    def get_body(self, labels, datums):
+    def get_body(self, index, labels, datums):
         return pack((5, self.r1), (5, self.r2), (5, self.r3), (5, self.r4))
