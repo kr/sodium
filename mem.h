@@ -34,6 +34,8 @@ datum make_record(size_t len, datum mtab, datum a, datum b);
 datum make_opaque_permanent(size_t size, datum mtab);
 datum make_record_permanent(size_t len, datum mtab, datum a, datum b);
 
+int opaquep(datum x);
+
 void init_mem(void);
 
 /*bool*/

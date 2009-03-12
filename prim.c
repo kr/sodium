@@ -146,6 +146,10 @@ prxf(int fd, datum d)
         d = (datum) *d;
         prfmt(fd, "<broken-heart %p>", d);
         prxf(fd, d);
+    } else if (opaquep(d)) {
+        prfmt(fd, "<opaque:");
+        pr_bytes(d);
+        write(fd, ">", 1);
     } else {
         prfmt(fd, "<unknown-object %p>", d);
     }

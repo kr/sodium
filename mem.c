@@ -296,6 +296,14 @@ datum_size(datum d)
     return datum_desc_len(*d);
 }
 
+int
+opaquep(datum d)
+{
+    if (((size_t) d) & 1) return 1;
+    while (!(1 & *--d));
+    return datum_desc_format(*d) == DATUM_FORMAT_OPAQUE;
+}
+
 datum
 datum_mtab(datum d)
 {
