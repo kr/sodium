@@ -340,6 +340,7 @@ nalink(uint *insts, uint inst_count, uint *lab_offsets)
     for (pc = &insts[0]; pc < &insts[inst_count]; ++pc) {
         register uint inst = *pc;
         switch (I_OP(inst)) {
+            case OP_QUIT: return;
             case OP_CLOSURE_METHOD:
             case OP_SETBANG:
             case OP_DEFINE:
@@ -482,7 +483,19 @@ closure_method(datum d, datum name)
 
     n = datum2int(table->size);
     for (i = 0; i < n; ++i) {
-        if (table->items[i].name == name) return table->items[i].addr;
+        if (table->items[i].name == name) {
+            if (intp(table->items[i].addr)) {
+                if (table->items[i].addr < (datum) 0x08048000) {
+                    die("hi5");
+                } else {
+                    return table->items[i].addr;
+                    prfmt(2, "addr %p\n", table->items[i].addr);
+                    die1("bye5", table->items[i].addr);
+                }
+            } else {
+                return table->items[i].addr;
+            }
+        }
     }
     return die1("closure_method -- no such method", name);
 }

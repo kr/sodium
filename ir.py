@@ -90,17 +90,29 @@ def make_desc(format, len):
     if not (format & 1): raise 'bad format'
     return pad(32, (28, len), (4, format))
 
-def encode_datum(datum):
-    if not isinstance(datum, String): return ()
+def encode_str(s):
     head = (
             BACKPTR(),
-            ENCODED(make_desc(7, len(datum)), comment='descriptor'),
-            ENCODED(0, comment='mtab'),
+            ENCODED(make_desc(7, len(s)), comment='descriptor'),
+            ENCODED(0, comment='str mtab'),
            )
-    padded = datum + '\0' * (4 - len(datum))
+    padded = s + '\0' * (4 - len(s))
     groups = [''.join(xs) for xs in zip(*[iter(padded)]*4)]
     body = ((pad(32, *[(8, ord(c)) for c in g]), repr(g)) for g in groups)
     return head + tuple((ENCODED(x, comment=c) for x,c in body))
+
+def encode_ime(ime):
+    return (
+            BACKPTR(),
+            ENCODED(make_desc(7, 4), comment='descriptor'),
+            ENCODED(0, comment='ime mtab'),
+            PACKED('((uint) %s)' % (ime.name,)),
+           )
+
+def encode_datum(datum):
+    if isinstance(datum, String): return encode_str(datum)
+    if isinstance(datum, InlineMethEntry): return encode_ime(datum)
+    return ()
 
 the_labels = None
 class make_ir_seq:
@@ -206,10 +218,10 @@ class make_ir_seq:
         print >>fd, '    0x%x, /* %r */' % (0, 'mtab')
         for c, s in enumerate(real_instrs):
             if symbolp(s): continue
-            i = s.encode(c, labels, datums)
             for l,k in the_labels:
                 if c == k: print >>fd, '    /* %s */' % (l,)
-            print >>fd, '    0x%x, /* %r */' % (i, s)
+            packed = s.pack(c, labels, datums)
+            print >>fd, '    %s, /* %r */' % (packed, s)
         print >>fd, '};'
 
         print >>fd
@@ -561,6 +573,9 @@ class OP(object):
     def __repr__(self):
         return repr(self.op)
 
+    def pack(self, index, labels, datums):
+        return '0x%x' % self.encode(index, labels, datums)
+
     def encode(self, index, labels, datums):
         body = self.get_body(index, labels, datums)
         inst = pad(32, (5, lookup_op(self.op)), body)
@@ -668,6 +683,21 @@ class OP_ENCODED(OP):
         comment = ''
         if self.comment: comment = ' ' + self.comment
         return '<Encoded 0x%x>%s' % (self.encoded, comment)
+
+packed_op_s = S('PACKED')
+class PACKED(OP):
+    def __init__(self, x, comment=None):
+        OP.__init__(self, packed_op_s)
+        self.packed = x
+        self.comment = comment
+
+    def pack(self, index, labels, datums):
+        return self.packed
+
+    def __repr__(self):
+        comment = ''
+        if self.comment: comment = ' ' + self.comment
+        return '<Packed %s>%s' % (self.packed, comment)
 
 class OP_Z(OP):
     def __init__(self, op):
