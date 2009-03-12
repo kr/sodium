@@ -407,7 +407,10 @@ def NOP(): return OP_NOP()
 
 # The datum pseudo-instruction
 datum_op_s = S('DATUM')
-def DATUM(d, tag=None): return OP_DATUM(d, tag=tag)
+def DATUM(d, tag=None):
+    if isinstance(d, Integer):
+      return ENCODED(pad(32, (5, 0), (26, d), (1, 1)), tag=tag)
+    return OP_DATUM(d, tag=tag)
 
 # The addr pseudo-instruction
 addr_op_s = S('ADDR')
@@ -671,8 +674,8 @@ class OP_BACKPTR(OP):
         return '<Backpointer>'
 
 class OP_ENCODED(OP):
-    def __init__(self, x, comment=None):
-        OP.__init__(self, encoded_op_s)
+    def __init__(self, x, comment=None, tag=None):
+        OP.__init__(self, encoded_op_s, tag=tag)
         self.encoded = x
         self.comment = comment
 
