@@ -27,6 +27,8 @@ typedef struct lxc_module {
     uint instrs_count;
 
     uint *label_offsets;
+    uint *str_offsets;
+    uint *ime_offsets;
 } *lxc_module;
 
 #endif /*LXC_H*/

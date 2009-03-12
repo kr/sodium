@@ -224,6 +224,22 @@ class make_ir_seq:
             print >>fd, '    %s, /* %r */' % (packed, s)
         print >>fd, '};'
 
+        # str offsets
+        print >>fd, 'static uint str_offsets[] = {'
+        for d in datums:
+            if isinstance(d, String):
+                print >>fd, '    %d,' % (d.off,)
+        print >>fd, '    0,' # indicate the end of the list
+        print >>fd, '};'
+
+        # ime offsets
+        print >>fd, 'static uint ime_offsets[] = {'
+        for d in datums:
+            if isinstance(d, InlineMethEntry):
+                print >>fd, '    %d,' % (d.off,)
+        print >>fd, '    0,' # indicate the end of the list
+        print >>fd, '};'
+
         print >>fd
         print >>fd, 'struct lxc_module lxc_module_%s = {' % (cname,)
         print >>fd, '    "%s",' % (name,)
@@ -235,6 +251,8 @@ class make_ir_seq:
         print >>fd, '    instrs,'
         print >>fd, '    %d,' % (len(real_instrs),)
         print >>fd, '    label_offsets,'
+        print >>fd, '    str_offsets,'
+        print >>fd, '    ime_offsets,'
         print >>fd, '};'
 
     def assemble(self, fd):
@@ -244,6 +262,8 @@ class make_ir_seq:
         self.emit_datums(fd, datums)
         self.emit_labels(fd, labels)
         self.emit_instructions(fd, labels, datums, real_instrs)
+        self.emit_str_offsets(fd, datums)
+        self.emit_ime_offsets(fd, datums)
         #self.list_instructions() # for debugging
 
     @staticmethod
@@ -276,6 +296,20 @@ class make_ir_seq:
         for s, i in labels:
             fd.write(encode_int(i))
             #fd.write(fmt_int(i, 4, ' '))
+
+    @staticmethod
+    def emit_str_offsets(fd, datums):
+        fd.write(encode_int(len(datums)))
+        for d in datums:
+            if isinstance(d, String):
+                fd.write(encode_int(d.off))
+
+    @staticmethod
+    def emit_ime_offsets(fd, datums):
+        fd.write(encode_int(len(datums)))
+        for d in datums:
+            if isinstance(d, InlineMethEntry):
+                fd.write(encode_int(d.off))
 
     def get_se_datums_and_symbols(self):
         datums = ()
