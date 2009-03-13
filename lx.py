@@ -168,7 +168,7 @@ def compile_assignment(exp, target, linkage, cenv, pop_all_symbol):
             tag=var)
     addr = find_variable(var, cenv)
     if var is self_s:
-        raise 'cannot assign to pseudo-variable %s' % (var,)
+        raise CompileError('cannot assign to pseudo-variable %s' % var)
     if addr is not_found_s:
         return end_with_linkage(linkage,
                 preserving((), get_value_code,
@@ -184,7 +184,8 @@ def compile_assignment(exp, target, linkage, cenv, pop_all_symbol):
 def compile_definition(exp, target, linkage, cenv, pop_all_symbol):
     var = definition_variable(exp)
     get_value_code = compile(definition_value(exp), val_r, next_s, cenv, pop_all_symbol)
-    if cenv is not nil: raise 'error, cannot have define here', exp
+    if cenv is not nil:
+        raise CompileError('internal error, cannot have define here')
     return end_with_linkage(linkage,
             preserving((env_r,), get_value_code,
                 make_ir_seq((env_r, val_r), (target,),
@@ -215,7 +216,7 @@ def compile_qmark(exp, target, linkage, cenv, pop_all_symbol):
                 after_if), pop_all_symbol)
 
 def compile_sequence(seq, target, linkage, cenv, pop_all_symbol):
-    if seq.nullp(): raise "value of null sequence is undefined"
+    if seq.nullp(): raise CompileError('value of null sequence is undefined')
     seq = expand_sequence(seq, cenv)
     if seq.cdr().nullp(): return compile(seq.car(), target, linkage, cenv, pop_all_symbol)
     first_code = compile(seq.car(), target, next_s, cenv, pop_all_symbol)
@@ -531,7 +532,7 @@ def compile_meth_invoc(target, linkage, cenv, message, pop_all_symbol):
                     GOTO_REG(addr_r))
     else:
         if linkage is return_s:
-            raise RuntimeError, ('return linkage, target not val -- COMPILE %s' % target)
+            raise CompileError('return linkage, target not val -- COMPILE %s' % target)
         else:
             proc_return = make_label('proc_return')
             return make_ir_seq((addr_r,), all_writable_regs,
@@ -704,10 +705,10 @@ def expand_if(seq):
   return cons(help(seq.car(), alternative), tail)
 
 def report_else_error(seq):
-  raise 'else with no preceding if'
+  raise CompileError('else with no preceding if')
 
 def report_elif_error(seq):
-  raise 'elif with no preceding if'
+  raise CompileError('elif with no preceding if')
 
 in_s = S('in')
 map_s = S('map')
@@ -716,7 +717,8 @@ def expand_for(exp):
   in_word = exp.caddr()
   seq_exp = exp.cadddr()
   body_seq = exp.cddddr()
-  if in_word is not in_s: raise 'syntax error'
+  if in_word is not in_s:
+    raise CompileError('should be "for <expr> in <expr>"')
   f = cons(fn_s, cons(plist(param), body_seq))
   return plist(map_s, f, seq_exp)
 
@@ -775,7 +777,7 @@ def set_merge(l1, l2):
   if l1a is l2a: return cons(l1a, set_merge(l1.cdr(), l2.cdr()))
   if l1a < l2a: return cons(l1a, set_merge(l1.cdr(), l2))
   if l1a > l2a: return cons(l2a, set_merge(l1, l2.cdr()))
-  raise "can't happen"
+  raise CompileError("can't happen")
 
 def scan_out_xyz(exp):
     if self_evaluatingp(exp): return nil
@@ -792,7 +794,7 @@ def scan_out_xyz(exp):
     if tagged_list(exp, do_s): return scan_out_xyz_do(exp)
     if tagged_list(exp, inline_s): return nil
     if pairp(exp): return scan_out_xyz_application(exp)
-    raise Exception, 'Unknown expression type in scan_out_xyz %s' % exp
+    raise CompileError('Unknown expression type in scan_out_xyz %s' % exp)
 
 def scan_out_xyz_obj(exp):
     return foldl(set_merge, nil, exp_methods(exp).map(scan_out_xyz_method))
