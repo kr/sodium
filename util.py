@@ -22,5 +22,7 @@ def report_compile_error(ex, file=None, line=None, char=None):
   print >>sys.stderr, '%s: Compile Error: %s' % (location, ex)
   if hasattr(ex, 'context'):
     for exp in ex.context:
-      print >>sys.stderr, '...at', exp
+      exp = str(exp)
+      if len(exp) > 70: exp = exp[:70] + '...'
+      print >>sys.stderr, '  at', exp
   exit(3)
