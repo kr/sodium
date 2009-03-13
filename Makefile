@@ -30,12 +30,12 @@ endif
 
 vm: $(sources:.c=.o)
 
-index.c: $(namodules)
+index.c: $(namodules) gen-mod-index
 	./gen-mod-index --output=$@ $(namodules:.na=)
 
 %.na: ;
 
-%.na.c: %.na *.py
+%.na.c: %.na *.py lx1c
 	./lx1c $(NAFLAGS) --generate-c $<
 
 # This one is special.
