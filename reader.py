@@ -7,9 +7,12 @@ from util import traced
 # In BNF comments, lower case names are nonterminals and
 # ALL CAPS names are terminals.
 
+current_pos_info = {}
+
 MESSAGE_TOKENS = (T.IMESS, T.SMESS, T.ASSIGN)
 class Parser:
     def __init__(self, tokens):
+        current_pos_info.clear()
         self.tokens = tokens
         self.next()
 
@@ -154,14 +157,16 @@ expr : atom
         '''
 
         if self.peek == T.LPAR:
-            self.match(T.LPAR)
+            type, lexeme, pos = self.xmatch(T.LPAR)
             mole = self.__mole(T.RPAR)
             self.match(T.RPAR)
+            current_pos_info[mole] = pos
             return mole
         elif self.peek == T.LSQU:
-            self.match(T.LSQU)
+            type, lexeme, pos = self.xmatch(T.LSQU)
             mole = self.__mole(T.RSQU)
             self.match(T.RSQU)
+            current_pos_info[mole] = pos
             return list(lx.S(':shorthand-fn:'), mole)
         elif self.peek == T.QUOTE:
             self.match(T.QUOTE)
