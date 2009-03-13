@@ -16,6 +16,8 @@ namodules := \
 cmodules := vm.c mem.c gen.c prim.c
 sources := $(cmodules) index.c $(namodules:.na=.na.c)
 
+NAC := ./lx1c
+
 export CFLAGS := -g -pg -Wall -Werror
 #export CFLAGS := -O2 -Wall -Werror
 
@@ -36,7 +38,7 @@ index.c: $(namodules) gen-mod-index
 %.na: ;
 
 %.na.c: %.na *.py lx1c
-	./lx1c $(NAFLAGS) --generate-c $<
+	$(NAC) $(NAFLAGS) --generate-c $<
 
 # This one is special.
 prelude.na.c: export NAFLAGS += --bare
