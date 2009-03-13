@@ -3,19 +3,36 @@
 inline C <<end
 #include "bytes.h"
 #include "prim.h"
+#include "module.h"
 end
 
-# First let us load just builtin modules.
-def module (): inline C (run name) "return load_builtin_module(n_name);"
+def false '()
 
-# This must be done before using any methods on these types of objects.
-module 'int
-module 'str
-module 'bytes
-module 'pair
-module 'nil
-module 'symbol
-module 'pbox
+def cons ():
+  inline C (run x y) <<end
+    return cons(n_x, n_y);
+  end
+
+def become ():
+  inline C (run x y keep_y) <<end
+    datum x, y;
+    x = n_x;
+    y = n_y;
+    become(&x, &y, datum2int(n_keep_y));
+    return nil;
+  end
+
+def is? ():
+  inline C (run x y) <<end
+    if (n_x == n_y) return int2datum(1);
+    return nil;
+  end
+
+# Define a trampoline for loading modules.
+def module (): inline C (run name) "return lxc_module_module.instrs;"
+
+# Now load the real module module so we can load any module.
+module :: module.run.run
 
 def pr ():
   inline C (run x) <<end
@@ -31,19 +48,9 @@ def prx ():
 
 def π 3.14159
 
-def false '()
 def true 1
 
 def (not x) (? x false true)
-
-def become ():
-  inline C (run x y keep_y) <<end
-    datum x, y;
-    x = n_x;
-    y = n_y;
-    become(&x, &y, datum2int(n_keep_y));
-    return nil;
-  end
 
 def call ():
   inline C (run d msg argl) <<end
@@ -89,20 +96,6 @@ def (ensure try finally):
   def success [do (finally) x]
   def failure [do (finally) (error x y)]
   try:run.wait+ success failure
-
-def is? ():
-  inline C (run x y) <<end
-    if (n_x == n_y) return int2datum(1);
-    return nil;
-  end
-
-def cons ():
-  inline C (run x y) <<end
-    return cons(n_x, n_y);
-  end
-
-# Now load the real module module so we can load any module.
-module :: (module 'module)
 
 import array
 
