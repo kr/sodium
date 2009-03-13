@@ -77,7 +77,6 @@ void setbang(datum env, datum val, datum name);
 void define(datum env, datum val, datum name);
 
 datum lookup(datum env, datum name);
-datum load_builtin_module(datum name);
 datum find_builtin_module(datum name);
 
 void start_body(uint *start_addr);

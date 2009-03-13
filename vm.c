@@ -543,17 +543,6 @@ find_builtin_module(datum name)
     return nil;
 }
 
-datum
-load_builtin_module(datum name)
-{
-    datum insts;
-
-    insts = find_builtin_module(name);
-    if (insts == nil) return nil;
-    start_body(insts);
-    return regs[R_VAL]; /* return value from module */
-}
-
 int
 main(int argc, char **argv)
 {
