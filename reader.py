@@ -4,13 +4,21 @@ import lexer as T
 from pair import cons, list, nil
 from util import traced, report_compile_error
 
+current_pos_info = {}
+def record_pos_info(f):
+    def d(self, *a, **k):
+        p = self.p
+        r = f(self, *a, **k)
+        if isinstance(p, (cons, tuple, list)):
+          current_pos_info[r] = p
+        return r
+    return d
+
 class ReadError(RuntimeError):
     pass
 
 # In BNF comments, lower case names are nonterminals and
 # ALL CAPS names are terminals.
-
-current_pos_info = {}
 
 MESSAGE_TOKENS = (T.IMESS, T.SMESS, T.ASSIGN)
 class Parser:
@@ -56,19 +64,19 @@ program : stmt* EOF
         self.match(T.EOF)
         return stmts
 
+    @record_pos_info
     def __stmt(self):
         '''
 stmt : mole
      | mole EOL
         '''
 
-        pos = self.p
         exprs = self.__mole(T.EOL)
         self.try_match(T.EOL)
-        current_pos_info[exprs] = pos
         return exprs
 
 
+    @record_pos_info
     def __mole(self, *follow):
         '''
 mole : 
@@ -82,7 +90,6 @@ mole :
      | NAME '::' expr
         '''
 
-        pos = self.p
         if self.peek in follow: return nil
         if self.peek == T.DOT:
           self.match(T.DOT)
@@ -98,10 +105,8 @@ mole :
 
         if self.peek == T.DOTS:
             x = res.append(self.__tail(*follow))
-            current_pos_info[x] = pos
             return x
 
-        current_pos_info[res] = pos
         return res
 
     def __message(self):
@@ -158,6 +163,7 @@ tail :
         self.match(T.DEDENT)
         return exprs
 
+    @record_pos_info
     def __expr(self):
         '''
 expr : atom
@@ -169,17 +175,13 @@ expr : atom
 
         if self.peek == T.LPAR:
             self.match(T.LPAR)
-            pos = self.p
             mole = self.__mole(T.RPAR)
             self.match(T.RPAR)
-            current_pos_info[mole] = pos
             return mole
         elif self.peek == T.LSQU:
             self.match(T.LSQU)
-            pos = self.p
             mole = self.__mole(T.RSQU)
             self.match(T.RSQU)
-            current_pos_info[mole] = pos
             return list(lx.S(':shorthand-fn:'), mole)
         elif self.peek == T.QUOTE:
             self.match(T.QUOTE)
@@ -208,14 +210,11 @@ atom : NAME
         if type == T.HEREDOC:
             return lx.ForeignString(lexeme).setpos(pos)
 
+    @record_pos_info
     def match_loop(self, parse, *sentinels):
         if self.peek in sentinels: return nil
-        pos = self.p
         first = parse()
-        rest = self.match_loop(parse, *sentinels)
-        x = cons(first, rest)
-        current_pos_info[x] = pos
-        return x
+        return cons(first, self.match_loop(parse, *sentinels))
 
 def unescape(s):
     i = 0
