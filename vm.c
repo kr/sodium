@@ -565,6 +565,7 @@ main(int argc, char **argv)
     init_mem();
     nil_init();
     str_init();
+    bytes_init();
 
     for (i = 0; i < lxc_modules_count; i++) {
         lxc_module mod = lxc_modules[i];

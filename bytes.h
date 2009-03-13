@@ -3,6 +3,8 @@
 #ifndef bytes_h
 #define bytes_h
 
+void bytes_init();
+
 datum make_bytes(uint len);
 datum make_bytes_init(const char *s);
 datum make_bytes_init_len(const char *s, int len);

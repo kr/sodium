@@ -8,6 +8,12 @@ inline C <<end
 
 static datum percent_star_sym;
 
+void
+bytes_init()
+{
+    percent_star_sym = intern("%*");
+}
+
 datum
 make_bytes(uint size)
 {
@@ -177,17 +183,9 @@ def bytes: sobj:
     return call(regs[R_VM0], percent_star_sym, args);
   end
 
-def intern-syms ():
-  inline C run <<end
-    percent_star_sym = intern("%*");
-    return ok_sym;
-  end
-
 def (to-str x):
   ? (inspect.same-type? x str):
     . x
     to-str (x.str)
-
-intern-syms
 
 . '()
