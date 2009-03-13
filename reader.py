@@ -56,8 +56,10 @@ stmt : mole
      | mole EOL
         '''
 
+        pos = self.p
         exprs = self.__mole(T.EOL)
         self.try_match(T.EOL)
+        current_pos_info[exprs] = pos
         return exprs
 
 
@@ -157,13 +159,15 @@ expr : atom
         '''
 
         if self.peek == T.LPAR:
-            type, lexeme, pos = self.xmatch(T.LPAR)
+            self.match(T.LPAR)
+            pos = self.p
             mole = self.__mole(T.RPAR)
             self.match(T.RPAR)
             current_pos_info[mole] = pos
             return mole
         elif self.peek == T.LSQU:
-            type, lexeme, pos = self.xmatch(T.LSQU)
+            self.match(T.LSQU)
+            pos = self.p
             mole = self.__mole(T.RSQU)
             self.match(T.RSQU)
             current_pos_info[mole] = pos
