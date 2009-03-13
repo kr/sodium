@@ -1,4 +1,5 @@
 
+import sys
 from string import maketrans
 
 from typ import *
@@ -7,6 +8,11 @@ from pair import list as plist
 from env import *
 from ir import *
 from util import traced
+
+import reader
+
+class CompileError(RuntimeError):
+    pass
 
 quote_s = S('quote')
 set__s = S('set!')
@@ -25,6 +31,7 @@ do_s = S('do')
 inline_s = S('inline')
 assign_s = S('::')
 def compile(exp, target, linkage, cenv, pop_all_symbol, **kwargs):
+  try:
     if self_evaluatingp(exp):
         return compile_self_evaluating(exp, target, linkage, cenv, pop_all_symbol)
     if tagged_list(exp, quote_s): return compile_quoted(exp, target, linkage, cenv, pop_all_symbol)
@@ -44,7 +51,17 @@ def compile(exp, target, linkage, cenv, pop_all_symbol, **kwargs):
     if simple_macrop(exp): return compile(expand_simple_macros(exp),
             target, linkage, cenv, pop_all_symbol)
     if pairp(exp): return compile_application(exp, target, linkage, cenv, pop_all_symbol)
-    raise Exception, 'Unknown expression type %s' % exp
+    raise CompileError('Unknown expression type %s' % exp)
+  except CompileError, ex:
+    ex.context = (exp,) + getattr(ex, 'context', ())
+    if exp in reader.current_pos_info:
+      print >>sys.stderr, '%s:%d:%d:' % reader.current_pos_info[exp],
+      print >>sys.stderr, 'Compile Error:', ex
+      if hasattr(ex, 'context'):
+        for exp in ex.context:
+          print >>sys.stderr, '...at', exp
+      exit(3)
+    raise ex
 
 val_r = S('val')
 def compile_return(exp, target, linkage, cenv, pop_all_symbol):
@@ -126,7 +143,7 @@ def compile_literal(exp, target, linkage, cenv, pop_all_symbol):
                     make_ir_seq((reg, target), (target,),
                         CONS(target, reg, target)),
                     pop_all_symbol)), pop_all_symbol)
-  raise RuntimeError("Can't compile literal: %r" % exp)
+  raise CompileError("Can't compile literal: %r" % exp)
 
 def compile_quoted(exp, target, linkage, cenv, pop_all_symbol):
     return compile_literal(exp.cadr(), target, linkage, cenv, pop_all_symbol)
@@ -135,7 +152,7 @@ def compile_variable(exp, target, linkage, cenv, pop_all_symbol):
     addr = find_variable(exp, cenv)
     if addr is not_found_s:
         if exp is percent_s:
-            raise 'lookup of %'
+            raise CompileError('lookup of %')
         return end_with_linkage(linkage,
             make_ir_seq((), (target,),
                 LOOKUP(target, global_r, exp)), pop_all_symbol)
@@ -201,9 +218,11 @@ def compile_sequence(seq, target, linkage, cenv, pop_all_symbol):
     if seq.nullp(): raise "value of null sequence is undefined"
     seq = expand_sequence(seq, cenv)
     if seq.cdr().nullp(): return compile(seq.car(), target, linkage, cenv, pop_all_symbol)
+    first_code = compile(seq.car(), target, next_s, cenv, pop_all_symbol)
+    rest_code = compile_sequence(seq.cdr(), target, linkage, cenv, pop_all_symbol)
     return preserving((env_r, continue_r, proc_r),
-        compile(seq.car(), target, next_s, cenv, pop_all_symbol),
-        compile_sequence(seq.cdr(), target, linkage, cenv, pop_all_symbol), pop_all_symbol)
+        first_code,
+        rest_code, pop_all_symbol)
 
 def compile_obj(exp, target, linkage, cenv, pop_all_symbol):
     obj_table = make_label('obj-table')

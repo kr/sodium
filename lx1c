@@ -53,10 +53,16 @@ else:
     # (do ...)
     exp = cons(lx.do_s, exps)
 
-code = lx.compile(exp, lx.S('val'), lx.S('next'), nil, lx.S('pop-all-top'))
-outfd = open(outfile, 'w')
-if gen_c:
-    if not outfile.endswith('.c'): raise 'bad output file name', outfile
-    code.gen_c(basename(infile), outfd)
-else:
-    code.assemble(outfd)
+try:
+  code = lx.compile(exp, lx.S('val'), lx.S('next'), nil, lx.S('pop-all-top'))
+  outfd = open(outfile, 'w')
+  if gen_c:
+      if not outfile.endswith('.c'): raise 'bad output file name', outfile
+      code.gen_c(basename(infile), outfd)
+  else:
+      code.assemble(outfd)
+except lx.CompileError, ex:
+  print >>sys.stderr, '%s: Compile Error: %s' % (infile, ex)
+  for exp in ex.context:
+    print >>sys.stderr, '...at', exp
+  exit(3)
