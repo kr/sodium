@@ -88,6 +88,7 @@ def suitable_register_list(x):
 
 DATUM_FORMAT_RECORD = 1
 DATUM_FORMAT_BACKPTR = 5
+DATUM_FORMAT_EMB_OPAQUE = 7
 DATUM_FORMAT_OPAQUE = 15
 
 def make_desc(format, len):
@@ -97,7 +98,7 @@ def make_desc(format, len):
 def encode_str(s):
     head = (
             BACKPTR(),
-            ENCODED(make_desc(DATUM_FORMAT_OPAQUE, len(s)), comment='descriptor'),
+            ENCODED(make_desc(DATUM_FORMAT_EMB_OPAQUE, len(s)), comment='descriptor'),
             ENCODED(0, comment='str mtab'),
            )
     padded = s + '\0' * (4 - len(s) % 4)
@@ -108,7 +109,7 @@ def encode_str(s):
 def encode_ime(ime):
     return ((
             BACKPTR(),
-            ENCODED(make_desc(DATUM_FORMAT_OPAQUE, 4), comment='descriptor'),
+            ENCODED(make_desc(DATUM_FORMAT_EMB_OPAQUE, 4), comment='descriptor'),
             ENCODED(0, comment='ime mtab'),
             PACKED('((uint) %s)' % (ime.name,)),
            ), 3)
