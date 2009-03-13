@@ -57,7 +57,7 @@ datum_desc_len(size_t desc)
 #define DATUM_FORMAT_RECORD 1
 #define DATUM_FORMAT_BROKEN_HEART 3
 #define DATUM_FORMAT_BACKPTR 5
-#define DATUM_FORMAT_unused7 7
+#define DATUM_FORMAT_EMB_OPAQUE 7
 #define DATUM_FORMAT_unused9 9
 #define DATUM_FORMAT_unused11 11
 #define DATUM_FORMAT_FZ 13
@@ -68,7 +68,7 @@ static const char *datum_types[] = {
     "DATUM_FORMAT_RECORD",
     "DATUM_FORMAT_BROKEN_HEART",
     "DATUM_FORMAT_BACKPTR",
-    "<unused 7>",
+    "DATUM_FORMAT_EMB_OPAQUE",
     "<unused 9>",
     "<unused 11>",
     "DATUM_FORMAT_FZ",
@@ -146,9 +146,7 @@ relocate(datum refloc)
                 *refloc += p[1] - ((size_t) (p + 2));
                 return;
 
-            /*
-            case DATUM_FORMAT_EMBEDDED:
-            */
+            case DATUM_FORMAT_EMB_OPAQUE:
             default:
                 p--;
                 continue;
