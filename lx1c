@@ -13,7 +13,8 @@ def basename(name):
 def read_file(n):
     return reader.read(open(n).read(), n)
 
-opts, args = getopt(sys.argv[1:], 'mco:', [
+opts, args = getopt(sys.argv[1:], 'bmco:', [
+        'bare',
         'module',
         'generate-c',
         'output=',
@@ -22,13 +23,15 @@ opts, args = getopt(sys.argv[1:], 'mco:', [
 infile = args[0]
 outfile = None
 gen_c = False
-module = False
+module = True
 
 for opt, val in opts:
     if opt in ('--generate-c', '-c'):
         gen_c = True
     elif opt in ('--module', '-m'):
         module = True
+    elif opt in ('--bare', '-b'):
+        module = False
     elif opt in ('--output', '-o'):
         outfile = val
 

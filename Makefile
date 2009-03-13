@@ -40,7 +40,7 @@ module-index.c: $(namodules)
 
 # This one is special.
 prelude.na.c: prelude.na *.py
-	./lx1c --generate-c $<
+	./lx1c --bare --generate-c $<
 
 check: vm
 	./check.sh sh-tests/*.na
