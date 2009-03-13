@@ -76,6 +76,7 @@ mole :
      | NAME '::' expr
         '''
 
+        pos = self.p
         if self.peek in follow: return nil
         if self.peek == T.DOT:
           self.match(T.DOT)
@@ -91,8 +92,10 @@ mole :
 
         if self.peek == T.DOTS:
             x = res.append(self.__tail(*follow))
+            current_pos_info[x] = pos
             return x
 
+        current_pos_info[res] = pos
         return res
 
     def __message(self):
@@ -200,10 +203,13 @@ atom : NAME
             return lx.ForeignString(lexeme).setpos(pos)
 
     def match_loop(self, parse, *sentinels):
-        rl = nil
-        while self.peek not in sentinels:
-            rl = cons(parse(), rl)
-        return rl.reverse()
+        if self.peek in sentinels: return nil
+        pos = self.p
+        first = parse()
+        rest = self.match_loop(parse, *sentinels)
+        x = cons(first, rest)
+        current_pos_info[x] = pos
+        return x
 
 def unescape(s):
     i = 0

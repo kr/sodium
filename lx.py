@@ -94,17 +94,29 @@ def expand_seq_macros(seq):
   return seq_macros[tag](seq)
 
 def expand_sequence(seq, cenv):
-  oseq = seq
-  while True:
-    nseq = expand_seq_macros(seq)
-    if nseq == seq: break
-    seq = nseq
-  #if oseq != seq:
-  #  print 'old:', oseq
-  #  print 'new:', seq
-  if cenv is not nil:
-    return scan_out_defines(seq)
-  return seq
+  try:
+    oseq = seq
+    while True:
+      nseq = expand_seq_macros(seq)
+      if nseq == seq: break
+      seq = nseq
+    #if oseq != seq:
+    #  print 'old:', oseq
+    #  print 'new:', seq
+    if cenv is not nil:
+      return scan_out_defines(seq)
+    return seq
+
+  except CompileError, ex:
+    ex.context = (seq,) + getattr(ex, 'context', ())
+
+    thing = seq
+    while thing not in reader.current_pos_info:
+      if thing.nullp(): raise ex
+      thing = thing.car()
+
+    info = reader.current_pos_info[thing]
+    report_compile_error(ex, file=info[0], line=info[1], char=info[2])
 
 def compile_do(exp, target, linkage, cenv, pop_all_symbol):
   return compile_sequence(exp.cdr(), target, linkage, cenv, pop_all_symbol)
