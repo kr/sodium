@@ -1,8 +1,20 @@
-lxmodules := int.lx bytes.lx str.lx pair.lx array.lx nil.lx symbol.lx \
-			 pbox.lx re.lx \
-			 file-io.lx fin.lx module.lx prelude.lx
+namodules := \
+    array.na \
+    bytes.na \
+    file-io.na \
+    fin.na \
+    int.na \
+    module.na \
+    nil.na \
+    pair.na \
+    pbox.na \
+    prelude.na \
+    re.na \
+    str.na \
+    symbol.na \
+
 cmodules := vm.c mem.c gen.c prim.c
-sources := $(cmodules) module-index.c $(lxmodules:.lx=.lx.c)
+sources := $(cmodules) module-index.c $(namodules:.na=.na.c)
 
 export CFLAGS := -g -pg -Wall -Werror
 #export CFLAGS := -O2 -Wall -Werror
@@ -18,31 +30,31 @@ endif
 
 vm: $(sources:.c=.o)
 
-module-index.c: $(lxmodules)
-	./gen-mod-index --output=$@ $(lxmodules:.lx=)
+module-index.c: $(namodules)
+	./gen-mod-index --output=$@ $(namodules:.na=)
 
-%.lx: ;
+%.na: ;
+
+%.na.c: %.na *.py
+	./lx1c --module --generate-c $<
 
 # This one is special.
-prelude.lx.c: prelude.lx *.py
+prelude.na.c: prelude.na *.py
 	./lx1c --generate-c $<
-
-%.lx.c: %.lx *.py
-	./lx1c --module --generate-c $<
 
 check: vm
 	./check.sh sh-tests/*.na
 
 clean:
-	rm -f vm *.o core core.* gmon.out sh-tests/*.out
-	rm -f *.d *.pyc *.lxc ad-hoc-tests/*.lxc lib/*.lxc tests/*.lxc
+	rm -f vm *.o core core.* gmon.out sh-tests/*.out *.d *.pyc
+	rm -f *.lxc ad-hoc-tests/*.lxc lib/*.lxc tests/*.lxc
 	rm -f *.nac ad-hoc-tests/*.nac lib/*.nac tests/*.nac
-	rm -f *.lx.c module-index.c
+	rm -f *.na.c module-index.c
 
 # .DELETE_ON_ERROR:
 .PHONY: all clean distclean reallyclean check
 
-.SECONDARY: $(lxmodules:.lx=.lx.c)
+.SECONDARY: $(namodules:.na=.na.c)
 
 # This tells make how to generate dependency files
 %.d: %.c
