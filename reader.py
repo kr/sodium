@@ -2,7 +2,10 @@ import re
 import lx
 import lexer as T
 from pair import cons, list, nil
-from util import traced
+from util import traced, report_compile_error
+
+class ReadError(RuntimeError):
+    pass
 
 # In BNF comments, lower case names are nonterminals and
 # ALL CAPS names are terminals.
@@ -31,9 +34,12 @@ class Parser:
         peek, lexeme = self.peek, self.lexeme
         if peek not in types:
             if len(types) > 1:
-                raise Exception, '%s: expected one of %s but got %s' % (self.p, map(T.name, types), T.name(peek))
+                more = '\n  expected one of: ' + ', '.join(map(T.name, types))
             else:
-                raise Exception, '%s: expected %s but got %s' % (self.p, T.name(types[0]), T.name(peek))
+                more = ' expected ' + T.name(types[0])
+            ex = ReadError('found %s,%s' % (T.name(peek), more))
+            report_compile_error(ex,
+                    file=self.p[0], line=self.p[1], char=self.p[2])
         self.next()
         return lexeme
 
