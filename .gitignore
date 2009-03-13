@@ -1,6 +1,7 @@
 *.d
 *.lxc
-*.lxc.[ch]
+*.lx.[ch]
+*.na.[ch]
 *.nac
 *.o
 *.pyc

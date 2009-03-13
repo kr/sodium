@@ -156,7 +156,7 @@ class make_ir_seq:
             if tag is name: return i
         return None
 
-    def gen_c(self, name, fd, mtab=None):
+    def gen_c(self, name, fd):
         datums, labels, real_instrs, symbol_offsets = self.extract()
         cname = tr(name, '/-.', '___')
 
@@ -170,8 +170,7 @@ class make_ir_seq:
         print >>fd, 'static uint instr_array[];'
         print >>fd, '#define lxc_module_instr_array (instr_array + 2)'
 
-        mtab_offset = None
-        if mtab: mtab_offset = self.find_mtab_offset(S(mtab), real_instrs)
+        mtab_offset = self.find_mtab_offset(S(cname), real_instrs)
         if mtab_offset:
             print >>fd, '#define mtab (lxc_module_instr_array + %s)' % mtab_offset
 

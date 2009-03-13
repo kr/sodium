@@ -13,18 +13,16 @@ def basename(name):
 def read_file(n):
     return reader.read(open(n).read(), n)
 
-opts, args = getopt(sys.argv[1:], 'mco:t:', [
+opts, args = getopt(sys.argv[1:], 'mco:', [
         'module',
         'generate-c',
         'output=',
-        'mtab=',
         ])
 
 infile = args[0]
-outfile = infile + 'c'
+outfile = None
 gen_c = False
 module = False
-mtab = None
 
 for opt, val in opts:
     if opt in ('--generate-c', '-c'):
@@ -33,8 +31,12 @@ for opt, val in opts:
         module = True
     elif opt in ('--output', '-o'):
         outfile = val
-    elif opt in ('--mtab', '-t'):
-        mtab = val
+
+if outfile is None:
+  if gen_c:
+    outfile = infile + '.c'
+  else:
+    outfile = infile + 'c'
 
 if len(sys.argv) < 2:
     print 'please give me a flie'
@@ -52,6 +54,6 @@ code = lx.compile(exp, lx.S('val'), lx.S('next'), nil, lx.S('pop-all-top'))
 outfd = open(outfile, 'w')
 if gen_c:
     if not outfile.endswith('.c'): raise 'bad output file name', outfile
-    code.gen_c(basename(infile), outfd, mtab=mtab)
+    code.gen_c(basename(infile), outfd)
 else:
     code.assemble(outfd)

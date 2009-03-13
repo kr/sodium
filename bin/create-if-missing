@@ -1,0 +1,6 @@
+#!/bin/sh
+
+for f in "$@"; do
+  test ! -e "$f" && touch -t 198010220000 "$f"
+  echo "$f"
+done
