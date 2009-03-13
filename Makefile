@@ -14,7 +14,7 @@ namodules := \
     symbol.na \
 
 cmodules := vm.c mem.c gen.c prim.c
-sources := $(cmodules) module-index.c $(namodules:.na=.na.c)
+sources := $(cmodules) index.c $(namodules:.na=.na.c)
 
 export CFLAGS := -g -pg -Wall -Werror
 #export CFLAGS := -O2 -Wall -Werror
@@ -30,7 +30,7 @@ endif
 
 vm: $(sources:.c=.o)
 
-module-index.c: $(namodules)
+index.c: $(namodules)
 	./gen-mod-index --output=$@ $(namodules:.na=)
 
 %.na: ;
@@ -48,7 +48,7 @@ clean:
 	rm -f vm *.o core core.* gmon.out sh-tests/*.out *.d *.pyc
 	rm -f *.lxc ad-hoc-tests/*.lxc lib/*.lxc tests/*.lxc
 	rm -f *.nac ad-hoc-tests/*.nac lib/*.nac tests/*.nac
-	rm -f *.na.c module-index.c
+	rm -f *.na.c index.c
 
 # .DELETE_ON_ERROR:
 .PHONY: all clean distclean reallyclean check

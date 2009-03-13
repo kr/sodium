@@ -8,7 +8,7 @@
 gmon.out
 core
 core.*
-module-index.c
+index.c
 prelude.c
 vm
 sh-tests/*.out

@@ -23,7 +23,7 @@
 #include "nil.h"
 #include "int.h"
 #include "config.h"
-#include "module-index.h"
+#include "index.h"
 
 #define OP_NOP 0x00
 #define OP_unused1 0x01
@@ -571,10 +571,19 @@ report_error(datum args)
     return die1("error", args);
 }
 
+void
+link_builtins(lxc_module *modp)
+{
+    lxc_module mod;
+    while ((mod = *modp++)) {
+        nalink(mod->instrs, mod->instrs_count,
+                mod->str_offsets, mod->ime_offsets, mod->sym_offsets);
+    }
+}
+
 int
 main(int argc, char **argv)
 {
-    size_t i;
     datum args;
 
     if (argc != 2) usage();
@@ -584,11 +593,7 @@ main(int argc, char **argv)
     str_init();
     bytes_init();
 
-    for (i = 0; i < lxc_modules_count; i++) {
-        lxc_module mod = lxc_modules[i];
-        nalink(mod->instrs, mod->instrs_count,
-                mod->str_offsets, mod->ime_offsets, mod->sym_offsets);
-    }
+    link_builtins(lxc_modules);
 
     genv = cons(nil, nil);
 
