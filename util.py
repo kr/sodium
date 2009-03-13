@@ -1,3 +1,4 @@
+import sys
 from env import *
 
 l = [0]
@@ -12,3 +13,14 @@ def traced(f):
         return r
     return d
 
+def report_compile_error(ex, file=None, line=None, char=None):
+  location = '<unknown>'
+  if file: location = file
+  if line:
+    location += ':' + str(line)
+    if char: location += ':' + str(char)
+  print >>sys.stderr, '%s: Compile Error: %s' % (location, ex)
+  if hasattr(ex, 'context'):
+    for exp in ex.context:
+      print >>sys.stderr, '...at', exp
+  exit(3)

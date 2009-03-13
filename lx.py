@@ -7,7 +7,7 @@ from pair import cons, nil, pairp
 from pair import list as plist
 from env import *
 from ir import *
-from util import traced
+from util import traced, report_compile_error
 
 import reader
 
@@ -54,14 +54,9 @@ def compile(exp, target, linkage, cenv, pop_all_symbol, **kwargs):
     raise CompileError('Unknown expression type %s' % exp)
   except CompileError, ex:
     ex.context = (exp,) + getattr(ex, 'context', ())
-    if exp in reader.current_pos_info:
-      print >>sys.stderr, '%s:%d:%d:' % reader.current_pos_info[exp],
-      print >>sys.stderr, 'Compile Error:', ex
-      if hasattr(ex, 'context'):
-        for exp in ex.context:
-          print >>sys.stderr, '...at', exp
-      exit(3)
-    raise ex
+    if exp not in reader.current_pos_info: raise ex
+    info = reader.current_pos_info[exp]
+    report_compile_error(ex, file=info[0], line=info[1], char=info[2])
 
 val_r = S('val')
 def compile_return(exp, target, linkage, cenv, pop_all_symbol):
