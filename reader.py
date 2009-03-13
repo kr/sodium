@@ -56,6 +56,7 @@ class Parser:
 
     def parse(self): return self.__program()
 
+    @record_pos_info
     def __program(self):
         '''
 program : stmt* EOF
@@ -109,6 +110,7 @@ mole :
 
         return res
 
+    @record_pos_info
     def __message(self):
       stype, lexeme, pos = self.xmatch(*MESSAGE_TOKENS)
       if stype == T.ASSIGN: return lx.S(lexeme)
@@ -124,6 +126,7 @@ mole :
       if d.nullp(): return a
       return list(self.make_head(d), a)
 
+    @record_pos_info
     def __molex(self, first, *follow):
       '''
 molex : MESS* tail
@@ -137,6 +140,7 @@ molex : MESS* tail
       x = list(cons(head, tail))
       return x
 
+    @record_pos_info
     def __inner_tail(self, *follow):
         '''
 inner_tail :
@@ -146,6 +150,7 @@ inner_tail :
         return self.__molex(self.__expr(), *follow)
 
 
+    @record_pos_info
     def __tail(self, *follow):
         '''
 tail :
@@ -190,6 +195,7 @@ expr : atom
         else:
             return self.__atom()
 
+    @record_pos_info
     def __atom(self):
         '''
 atom : NAME
