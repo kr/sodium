@@ -36,11 +36,10 @@ module-index.c: $(namodules)
 %.na: ;
 
 %.na.c: %.na *.py
-	./lx1c --module --generate-c $<
+	./lx1c $(NAFLAGS) --generate-c $<
 
 # This one is special.
-prelude.na.c: prelude.na *.py
-	./lx1c --bare --generate-c $<
+prelude.na.c: export NAFLAGS += --bare
 
 check: vm
 	./check.sh sh-tests/*.na

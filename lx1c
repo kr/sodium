@@ -13,9 +13,9 @@ def basename(name):
 def read_file(n):
     return reader.read(open(n).read(), n)
 
-opts, args = getopt(sys.argv[1:], 'bmco:', [
+opts, args = getopt(sys.argv[1:], 'btco:', [
         'bare',
-        'module',
+        'thunk',
         'generate-c',
         'output=',
         ])
@@ -23,15 +23,15 @@ opts, args = getopt(sys.argv[1:], 'bmco:', [
 infile = args[0]
 outfile = None
 gen_c = False
-module = True
+use_thunk = True
 
 for opt, val in opts:
     if opt in ('--generate-c', '-c'):
         gen_c = True
-    elif opt in ('--module', '-m'):
-        module = True
+    elif opt in ('--thunk', '-t'):
+        use_thunk = True
     elif opt in ('--bare', '-b'):
-        module = False
+        use_thunk = False
     elif opt in ('--output', '-o'):
         outfile = val
 
@@ -46,7 +46,7 @@ if len(sys.argv) < 2:
     sys.exit()
 
 exps = read_file(infile)
-if module:
+if use_thunk:
     # ((fn () ...))
     exp = cons(cons(lx.fn_s, cons(nil, exps)), nil)
 else:
