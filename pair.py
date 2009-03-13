@@ -67,8 +67,12 @@ class cons:
         return '%s%r . %r' % (sp, self.a, self.d)
 
     def __eq__(a, b):
+        if b is nil: return False
         if type(b) != type(a): return False
         return a.car() == b.car() and a.cdr() == b.cdr()
+
+    def __hash__(self):
+        return id(self)
 
 setattr(cons, 'set-car!', cons.set_car_)
 setattr(cons, 'set-cdr!', cons.set_cdr_)
