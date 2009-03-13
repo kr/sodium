@@ -1,8 +1,30 @@
 
 inline C <<end
+#include <string.h>
+
+#include "str.h"
 #include "bytes.h"
+#include "module-index.h"
 
 const datum module_mtab = mtab;
+
+static datum
+find_builtin_module(datum name)
+{
+    int i;
+
+    if (symbolp(name)) name = (datum) name[1]; /* symbol->str */
+
+    for (i = 0; i < lxc_modules_count; i++) {
+        const char *mname = lxc_modules[i]->name;
+        if (str_cmp_charstar(name, strlen(mname), mname) == 0) {
+            return lxc_modules[i]->instrs;
+        }
+    }
+
+    return nil;
+}
+
 end
 
 def *modules* '()
