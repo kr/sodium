@@ -168,12 +168,12 @@ class make_ir_seq:
         print >>fd
         print >>fd, 'extern struct lxc_module lxc_module_%s;' % (cname,)
         print >>fd, 'static uint instr_array[];'
-        print >>fd, '#define instrs (instr_array + 2)'
+        print >>fd, '#define lxc_module_instr_array (instr_array + 2)'
 
         mtab_offset = None
         if mtab: mtab_offset = self.find_mtab_offset(S(mtab), real_instrs)
         if mtab_offset:
-            print >>fd, '#define mtab (instrs + %s)' % mtab_offset
+            print >>fd, '#define mtab (lxc_module_instr_array + %s)' % mtab_offset
 
         # inline code
         for c_def in self.c_defs:
@@ -218,7 +218,7 @@ class make_ir_seq:
         print >>fd
         print >>fd, 'struct lxc_module lxc_module_%s = {' % (cname,)
         print >>fd, '    "%s",' % (name,)
-        print >>fd, '    instrs,'
+        print >>fd, '    lxc_module_instr_array,'
         print >>fd, '    %d,' % (len(real_instrs),)
         print >>fd, '    str_offsets,'
         print >>fd, '    ime_offsets,'
