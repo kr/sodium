@@ -11,6 +11,7 @@ from util import traced, report_compile_error
 
 import reader
 
+# Indicates a problem with the code to be compiled, not the compiler itself.
 class CompileError(Exception):
     pass
 
@@ -325,6 +326,10 @@ def inline_meth_params(meth):
 
 def meth_name(meth):
     if is_inline_meth(meth): return inline_meth_name(meth)
+    if not pairp(meth):
+        raise CompileError('method must be a list: ' + str(meth))
+    if not pairp(meth.car()):
+        raise CompileError('method signature must be a list: ' + str(meth.car()))
     return meth.caar()
 
 def meth_params(meth):
