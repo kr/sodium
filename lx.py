@@ -160,6 +160,8 @@ def compile_variable(exp, target, linkage, cenv, pop_all_symbol):
     if addr is not_found_s:
         if exp is percent_s:
             raise CompileError(exp, 'lookup of %')
+        if str(exp).startswith('.'):
+            raise CompileError(exp, 'lookup of non-name')
         return end_with_linkage(linkage,
             make_ir_seq((), (target,),
                 LOOKUP(target, global_r, exp)), pop_all_symbol)
