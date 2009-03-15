@@ -13,18 +13,17 @@ import reader
 
 # Indicates a problem with the code to be compiled, not the compiler itself.
 class CompileError(Exception):
-    pass
+    def __init__(self, exp, message):
+        Exception.__init__(self, message)
+        self.annotate_or_report(exp)
 
-def annotate(err, exp):
-    err.context = (exp,) + getattr(err, 'context', ())
-    while exp not in reader.current_pos_info:
-      if not pairp(exp): raise
-      exp = exp.car()
-    return reader.current_pos_info[exp]
-
-def annotate_or_report(err, exp):
-    info = annotate(err, exp)
-    report_compile_error(err, file=info[0], line=info[1], char=info[2])
+    def annotate_or_report(self, exp):
+        self.context = (exp,) + getattr(self, 'context', ())
+        while exp not in reader.current_pos_info:
+          if not pairp(exp): raise
+          exp = exp.car()
+        info = reader.current_pos_info[exp]
+        report_compile_error(self, file=info[0], line=info[1], char=info[2])
 
 quote_s = S('quote')
 set__s = S('set!')
@@ -63,12 +62,9 @@ def compile(exp, target, linkage, cenv, pop_all_symbol, **kwargs):
     if simple_macrop(exp): return compile(expand_simple_macros(exp),
             target, linkage, cenv, pop_all_symbol)
     if pairp(exp): return compile_application(exp, target, linkage, cenv, pop_all_symbol)
-    raise CompileError('Unknown expression type %s' % exp)
+    raise CompileError(exp, 'Unknown expression type')
   except CompileError, err:
-    annotate_or_report(err, exp)
-  except Exception, err:
-    annotate(err, exp)
-    raise
+    err.annotate_or_report(exp)
 
 val_r = S('val')
 def compile_return(exp, target, linkage, cenv, pop_all_symbol):
@@ -120,10 +116,7 @@ def expand_sequence(seq, cenv):
     return seq
 
   except CompileError, err:
-    annotate_or_report(err, seq)
-  except Exception, err:
-    annotate(err, seq)
-    raise
+    err.annotate_or_report(seq)
 
 def compile_do(exp, target, linkage, cenv, pop_all_symbol):
   return compile_sequence(exp.cdr(), target, linkage, cenv, pop_all_symbol)
@@ -157,7 +150,7 @@ def compile_literal(exp, target, linkage, cenv, pop_all_symbol):
                     make_ir_seq((reg, target), (target,),
                         CONS(target, reg, target)),
                     pop_all_symbol)), pop_all_symbol)
-  raise CompileError("Can't compile literal: %r" % exp)
+  raise CompileError(exp, "Can't compile literal")
 
 def compile_quoted(exp, target, linkage, cenv, pop_all_symbol):
     return compile_literal(exp.cadr(), target, linkage, cenv, pop_all_symbol)
@@ -166,7 +159,7 @@ def compile_variable(exp, target, linkage, cenv, pop_all_symbol):
     addr = find_variable(exp, cenv)
     if addr is not_found_s:
         if exp is percent_s:
-            raise CompileError('lookup of %')
+            raise CompileError(exp, 'lookup of %')
         return end_with_linkage(linkage,
             make_ir_seq((), (target,),
                 LOOKUP(target, global_r, exp)), pop_all_symbol)
@@ -182,7 +175,7 @@ def compile_assignment(exp, target, linkage, cenv, pop_all_symbol):
             tag=var)
     addr = find_variable(var, cenv)
     if var is self_s:
-        raise CompileError('cannot assign to pseudo-variable %s' % var)
+        raise CompileError(exp, 'cannot assign to pseudo-variable %s' % var)
     if addr is not_found_s:
         return end_with_linkage(linkage,
                 preserving((), get_value_code,
@@ -199,7 +192,7 @@ def compile_definition(exp, target, linkage, cenv, pop_all_symbol):
     var = definition_variable(exp)
     get_value_code = compile(definition_value(exp), val_r, next_s, cenv, pop_all_symbol)
     if cenv is not nil:
-        raise CompileError('internal error, cannot have define here')
+        raise RuntimeError('internal error, cannot have define here: %r' % exp)
     return end_with_linkage(linkage,
             preserving((env_r,), get_value_code,
                 make_ir_seq((env_r, val_r), (target,),
@@ -230,7 +223,7 @@ def compile_qmark(exp, target, linkage, cenv, pop_all_symbol):
                 after_if), pop_all_symbol)
 
 def compile_sequence(seq, target, linkage, cenv, pop_all_symbol):
-    if seq.nullp(): raise CompileError('value of null sequence is undefined')
+    if seq.nullp(): raise CompileError(seq, 'value of null sequence is undefined')
     seq = expand_sequence(seq, cenv)
     if seq.cdr().nullp(): return compile(seq.car(), target, linkage, cenv, pop_all_symbol)
     first_code = compile(seq.car(), target, next_s, cenv, pop_all_symbol)
@@ -327,9 +320,9 @@ def inline_meth_params(meth):
 def meth_name(meth):
     if is_inline_meth(meth): return inline_meth_name(meth)
     if not pairp(meth):
-        raise CompileError('method must be a list: ' + str(meth))
+        raise CompileError(meth, 'method must be a list')
     if not pairp(meth.car()):
-        raise CompileError('method signature must be a list: ' + str(meth.car()))
+        raise CompileError(meth.car(), 'method signature must be a list')
     return meth.caar()
 
 def meth_params(meth):
@@ -550,7 +543,7 @@ def compile_meth_invoc(target, linkage, cenv, message, pop_all_symbol):
                     GOTO_REG(addr_r))
     else:
         if linkage is return_s:
-            raise CompileError('return linkage, target not val -- COMPILE %s' % target)
+            raise CompileError(target, 'return linkage, target not val')
         else:
             proc_return = make_label('proc_return')
             return make_ir_seq((addr_r,), all_writable_regs,
@@ -723,10 +716,10 @@ def expand_if(seq):
   return cons(help(seq.car(), alternative), tail)
 
 def report_else_error(seq):
-  raise CompileError('else with no preceding if')
+  raise CompileError(seq.car(), 'else with no preceding if')
 
 def report_elif_error(seq):
-  raise CompileError('elif with no preceding if')
+  raise CompileError(seq.car(), 'elif with no preceding if')
 
 in_s = S('in')
 map_s = S('map')
@@ -736,7 +729,7 @@ def expand_for(exp):
   seq_exp = exp.cadddr()
   body_seq = exp.cddddr()
   if in_word is not in_s:
-    raise CompileError('should be "for <expr> in <expr>"')
+    raise CompileError(exp, 'should be "for <expr> in <expr>"')
   f = cons(fn_s, cons(plist(param), body_seq))
   return plist(map_s, f, seq_exp)
 
@@ -795,7 +788,7 @@ def set_merge(l1, l2):
   if l1a is l2a: return cons(l1a, set_merge(l1.cdr(), l2.cdr()))
   if l1a < l2a: return cons(l1a, set_merge(l1.cdr(), l2))
   if l1a > l2a: return cons(l2a, set_merge(l1, l2.cdr()))
-  raise CompileError("can't happen")
+  raise RuntimeError("can't happen")
 
 def scan_out_xyz(exp):
     if self_evaluatingp(exp): return nil
@@ -812,7 +805,7 @@ def scan_out_xyz(exp):
     if tagged_list(exp, do_s): return scan_out_xyz_do(exp)
     if tagged_list(exp, inline_s): return nil
     if pairp(exp): return scan_out_xyz_application(exp)
-    raise CompileError('Unknown expression type in scan_out_xyz %s' % exp)
+    raise CompileError(exp, 'Unknown expression type in scan_out_xyz')
 
 def scan_out_xyz_obj(exp):
     return foldl(set_merge, nil, exp_methods(exp).map(scan_out_xyz_method))
