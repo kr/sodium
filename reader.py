@@ -264,4 +264,6 @@ def read(s, name='<string>'):
 if __name__ == '__main__':
     import sys
     s = open(sys.argv[1]).read()
-    print read(s, sys.argv[1])
+    prog = read(s, sys.argv[1])
+    for expr in prog:
+      print expr
