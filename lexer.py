@@ -11,6 +11,7 @@ DEC     = 'DEC'
 NAME    = 'NAME'
 SMESS   = 'SMESS'
 IMESS   = 'IMESS'
+BINOP   = 'BINOP'
 ASSIGN  = 'ASSIGN'
 DOT     = 'DOT'
 DOTS    = 'DOTS'
@@ -117,7 +118,8 @@ lexer = slex.Lexer((
     (DEC,     r'-?([0-9]*\.[0-9]+|[0-9]+)'),
     (INT,     r'-?[0-9]+',             ),
     (SMESS,   ':' + name_pat + '|' + ':' + non_name_pat,  ),
-    (IMESS,   r'\.' + name_pat + r'|\.' + non_name_pat + '|' + non_name_pat,),
+    (IMESS,   r'\.' + name_pat + r'|\.' + non_name_pat),
+    (BINOP,   non_name_pat),
     (NAME,    name_pat,        ),
     (ASSIGN,  r'::',                   ),
     (DOT,     r'\.',                   ),

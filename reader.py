@@ -20,7 +20,7 @@ class ReadError(RuntimeError):
 # In BNF comments, lower case names are nonterminals and
 # ALL CAPS names are terminals.
 
-MESSAGE_TOKENS = (T.IMESS, T.SMESS, T.ASSIGN)
+MESSAGE_TOKENS = (T.BINOP, T.IMESS, T.SMESS, T.ASSIGN)
 class Parser:
     def __init__(self, tokens):
         current_pos_info.clear()
