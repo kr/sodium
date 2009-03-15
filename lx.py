@@ -20,7 +20,7 @@ class CompileError(Exception):
     def annotate_or_report(self, exp):
         self.context = (exp,) + getattr(self, 'context', ())
         while exp not in reader.current_pos_info:
-          if not pairp(exp): raise
+          if not pairp(exp): raise self
           exp = exp.car()
         info = reader.current_pos_info[exp]
         report_compile_error(self, file=info[0], line=info[1], char=info[2])
