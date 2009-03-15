@@ -11,7 +11,7 @@ from util import traced, report_compile_error
 
 import reader
 
-class CompileError(RuntimeError):
+class CompileError(Exception):
     pass
 
 quote_s = S('quote')
@@ -52,7 +52,7 @@ def compile(exp, target, linkage, cenv, pop_all_symbol, **kwargs):
             target, linkage, cenv, pop_all_symbol)
     if pairp(exp): return compile_application(exp, target, linkage, cenv, pop_all_symbol)
     raise CompileError('Unknown expression type %s' % exp)
-  except CompileError, ex:
+  except Exception, ex:
     ex.context = (exp,) + getattr(ex, 'context', ())
     if exp not in reader.current_pos_info: raise ex
     info = reader.current_pos_info[exp]
@@ -107,7 +107,7 @@ def expand_sequence(seq, cenv):
       return scan_out_defines(seq)
     return seq
 
-  except CompileError, ex:
+  except Exception, ex:
     ex.context = (seq,) + getattr(ex, 'context', ())
 
     thing = seq
