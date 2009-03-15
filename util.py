@@ -13,6 +13,13 @@ def traced(f):
         return r
     return d
 
+def print_context(err):
+  if hasattr(err, 'context'):
+    for exp in err.context:
+      exp = str(exp)
+      if len(exp) > 70: exp = exp[:70] + '...'
+      print >>sys.stderr, '  at', exp
+
 def report_compile_error(ex, file=None, line=None, char=None):
   location = '<unknown>'
   if file: location = file
@@ -20,9 +27,5 @@ def report_compile_error(ex, file=None, line=None, char=None):
     location += ':' + str(line)
     if char: location += ':' + str(char)
   print >>sys.stderr, '%s: Compile Error: %s' % (location, ex)
-  if hasattr(ex, 'context'):
-    for exp in ex.context:
-      exp = str(exp)
-      if len(exp) > 70: exp = exp[:70] + '...'
-      print >>sys.stderr, '  at', exp
+  print_context(ex)
   exit(3)

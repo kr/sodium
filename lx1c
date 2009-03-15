@@ -7,7 +7,7 @@ from pair import cons, nil
 import reader
 import lx
 
-from util import report_compile_error
+from util import report_compile_error, print_context
 
 def basename(name):
   return name[:name.find('.')]
@@ -63,5 +63,8 @@ try:
       code.gen_c(basename(infile), outfd)
   else:
       code.assemble(outfd)
-except lx.CompileError, ex:
-  report_compile_error(ex, file=infile)
+except lx.CompileError, err:
+  report_compile_error(err, file=infile)
+except Exception, err:
+  print_context(err)
+  raise

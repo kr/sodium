@@ -14,12 +14,15 @@ import reader
 class CompileError(Exception):
     pass
 
-def annotate_or_report(err, exp):
+def annotate(err, exp):
     err.context = (exp,) + getattr(err, 'context', ())
     while exp not in reader.current_pos_info:
-      if exp.nullp(): raise err
+      if not pairp(exp): raise
       exp = exp.car()
-    info = reader.current_pos_info[exp]
+    return reader.current_pos_info[exp]
+
+def annotate_or_report(err, exp):
+    info = annotate(err, exp)
     report_compile_error(err, file=info[0], line=info[1], char=info[2])
 
 quote_s = S('quote')
@@ -60,8 +63,11 @@ def compile(exp, target, linkage, cenv, pop_all_symbol, **kwargs):
             target, linkage, cenv, pop_all_symbol)
     if pairp(exp): return compile_application(exp, target, linkage, cenv, pop_all_symbol)
     raise CompileError('Unknown expression type %s' % exp)
-  except Exception, err:
+  except CompileError, err:
     annotate_or_report(err, exp)
+  except Exception, err:
+    annotate(err, exp)
+    raise
 
 val_r = S('val')
 def compile_return(exp, target, linkage, cenv, pop_all_symbol):
@@ -112,8 +118,11 @@ def expand_sequence(seq, cenv):
       return scan_out_defines(seq)
     return seq
 
-  except Exception, err:
+  except CompileError, err:
     annotate_or_report(err, seq)
+  except Exception, err:
+    annotate(err, seq)
+    raise
 
 def compile_do(exp, target, linkage, cenv, pop_all_symbol):
   return compile_sequence(exp.cdr(), target, linkage, cenv, pop_all_symbol)
