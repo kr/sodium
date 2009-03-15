@@ -1,5 +1,6 @@
 
 import sys
+import re
 from string import maketrans
 
 from typ import *
@@ -9,6 +10,7 @@ from env import *
 from ir import *
 from util import traced, report_compile_error
 
+import lexer
 import reader
 
 # Indicates a problem with the code to be compiled, not the compiler itself.
@@ -160,8 +162,9 @@ def compile_quoted(exp, target, linkage, cenv, pop_all_symbol):
 def compile_variable(exp, target, linkage, cenv, pop_all_symbol):
     addr = find_variable(exp, cenv)
     if addr is not_found_s:
-        if exp is percent_s:
-            raise CompileError(exp, 'lookup of %')
+        binop_pat = '^' + lexer.non_name_pat + '$'
+        if re.match(binop_pat, str(exp)):
+            raise CompileError(exp, 'lookup of binop')
         if str(exp).startswith('.'):
             raise CompileError(exp, 'lookup of non-name')
         return end_with_linkage(linkage,
