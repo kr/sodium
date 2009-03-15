@@ -127,7 +127,7 @@ prxf(int fd, datum d)
     } else if (imep(d)) {
         prfmt(fd, "<C func %p>", d[0]);
     } else if (symbolp(d)) {
-        pr_symbol(d);
+        pr_symbol(fd, d);
     } else if (strp(d)) {
         write(fd, d, datum_size(d));
     } else if (bytesp(d)) {

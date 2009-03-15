@@ -128,10 +128,10 @@ intern_str(datum name)
 }
 
 void
-pr_symbol(datum sym)
+pr_symbol(int fd, datum sym)
 {
-    if (!symbolp(sym)) return prfmt(1, "<bad-symbol>");
-    prx(((symbol) sym)->name);
+    if (!symbolp(sym)) return prfmt(fd, "<bad-symbol>");
+    prfmt(fd, "%o", ((symbol) sym)->name);
 }
 
 int
