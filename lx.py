@@ -14,6 +14,14 @@ import reader
 class CompileError(Exception):
     pass
 
+def annotate_or_report(err, exp):
+    err.context = (exp,) + getattr(err, 'context', ())
+    while exp not in reader.current_pos_info:
+      if exp.nullp(): raise err
+      exp = exp.car()
+    info = reader.current_pos_info[exp]
+    report_compile_error(err, file=info[0], line=info[1], char=info[2])
+
 quote_s = S('quote')
 set__s = S('set!')
 def_s = S('def')
@@ -52,11 +60,8 @@ def compile(exp, target, linkage, cenv, pop_all_symbol, **kwargs):
             target, linkage, cenv, pop_all_symbol)
     if pairp(exp): return compile_application(exp, target, linkage, cenv, pop_all_symbol)
     raise CompileError('Unknown expression type %s' % exp)
-  except Exception, ex:
-    ex.context = (exp,) + getattr(ex, 'context', ())
-    if exp not in reader.current_pos_info: raise ex
-    info = reader.current_pos_info[exp]
-    report_compile_error(ex, file=info[0], line=info[1], char=info[2])
+  except Exception, err:
+    annotate_or_report(err, exp)
 
 val_r = S('val')
 def compile_return(exp, target, linkage, cenv, pop_all_symbol):
@@ -107,16 +112,8 @@ def expand_sequence(seq, cenv):
       return scan_out_defines(seq)
     return seq
 
-  except Exception, ex:
-    ex.context = (seq,) + getattr(ex, 'context', ())
-
-    thing = seq
-    while thing not in reader.current_pos_info:
-      if thing.nullp(): raise ex
-      thing = thing.car()
-
-    info = reader.current_pos_info[thing]
-    report_compile_error(ex, file=info[0], line=info[1], char=info[2])
+  except Exception, err:
+    annotate_or_report(err, seq)
 
 def compile_do(exp, target, linkage, cenv, pop_all_symbol):
   return compile_sequence(exp.cdr(), target, linkage, cenv, pop_all_symbol)
