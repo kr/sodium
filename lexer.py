@@ -60,6 +60,7 @@ def bef(l, s, name, lexeme, pos):
     while col < l.levels[-1]:
         l.levels.pop()
         res.append((DEDENT, ''))
+        res.append((EOL, ''))
     if col > l.levels[-1]:
         raise '%d:%d: indent levels do not match' % (0, 0)
     return tuple(res)

@@ -155,7 +155,7 @@ inner_tail :
         '''
 tail :
      | ':' mole
-     | ':' EOL INDENT stmt+ DEDENT
+     | ':' EOL INDENT stmt+ DEDENT EOL
         '''
 
         if self.peek != T.DOTS: return nil
@@ -166,6 +166,7 @@ tail :
         self.match(T.INDENT)
         exprs = self.match_loop(self.__stmt, T.DEDENT)
         self.match(T.DEDENT)
+        self.match(T.EOL)
         return exprs
 
     @record_pos_info
