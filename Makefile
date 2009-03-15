@@ -32,8 +32,8 @@ endif
 
 vm: $(sources:.c=.o)
 
-index.c: $(namodules) gen-mod-index
-	./gen-mod-index --output=$@ $(namodules:.na=)
+index.c: $(namodules) bin/gen-mod-index
+	bin/gen-mod-index --output=$@ $(namodules:.na=)
 
 %.na: ;
 
@@ -44,7 +44,7 @@ index.c: $(namodules) gen-mod-index
 prelude.na.c: export NAFLAGS += --bare
 
 check: vm
-	./check.sh sh-tests/*.na
+	bin/check sh-tests/*.na
 
 clean:
 	rm -f vm *.o core core.* gmon.out sh-tests/*.out *.d *.pyc
