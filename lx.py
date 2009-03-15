@@ -19,6 +19,8 @@ class CompileError(Exception):
 
     def annotate_or_report(self, exp):
         self.context = (exp,) + getattr(self, 'context', ())
+        if self.context[0:1] == self.context[1:2]:
+          self.context = self.context[1:]
         while exp not in reader.current_pos_info:
           if not pairp(exp): raise self
           exp = exp.car()
