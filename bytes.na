@@ -102,7 +102,7 @@ def bytes: sobj:
     return int2datum(datum_size(rcv));
   end
 
-  inline C (= x) <<end
+  inline C (== x) <<end
     size_t i, rcv_size = datum_size(rcv), n_x_size = datum_size(n_x);
 
     if (rcv_size != n_x_size) return nil;
@@ -143,7 +143,7 @@ def bytes: sobj:
     self.substring 0 n
 
   (starts-with? sub):
-    (self.head (sub.length)) = sub
+    (self.head (sub.length)) == sub
 
   (find-from n sub):
     def (helper s i):
@@ -162,7 +162,7 @@ def bytes: sobj:
   #   def i (self.find "%")
   #   ? (not i):
   #     . self
-  #     ? ((self 0) = "%"):
+  #     ? ((self 0) == "%"):
   #       (format (self 1) (a.car)) / ((self.tail 2) % . (a.cdr))
   #       (self.head i) / ((self.tail i) % . a)
 
@@ -173,7 +173,7 @@ def bytes: sobj:
     def i (self.find "%")
     ? (is? i l):
       . self
-      ? ((self 0) = "%"):
+      ? ((self 0) == "%"):
         (format (self 1) (a.car)) / ((self.tail 2).%* (a.cdr))
         (self.head i) / ((self.tail i).%* a)
 

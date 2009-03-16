@@ -10,15 +10,15 @@ pr (x / y)
 pr ""
 
 pr "()"
-pr (x = y)
+pr (x == y)
 pr ""
 
 pr "1"
-pr (y = z)
+pr (y == z)
 pr ""
 
 pr "()"
-pr (y = "there")
+pr (y == "there")
 pr ""
 
 pr "ell"

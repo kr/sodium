@@ -17,7 +17,7 @@ def nil: sobj:
   (filter f) '()
   (run f) 'ok
   (schedule f) 'ok
-  (= x) (is? x nil)
+  (== x) (is? x nil)
   (assq name) '()
 
 . '()

@@ -49,9 +49,9 @@ def pair: sobj:
     (self.cdr) f
     . 'ok
 
-  (= p):
-    ? ((self.car) = (p.car)):
-      ? ((self.cdr) = (p.cdr)) true false
+  (== p):
+    ? ((self.car) == (p.car)):
+      ? ((self.cdr) == (p.cdr)) true false
       . false
 
   (assq name):

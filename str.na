@@ -105,7 +105,7 @@ def str: sobj:
     return int2datum(datum_size(rcv));
   end
 
-  inline C (= x) <<end
+  inline C (== x) <<end
     size_t i, rcv_size = datum_size(rcv), n_x_size = datum_size(n_x);
 
     if (rcv_size != n_x_size) return nil;
@@ -141,7 +141,7 @@ def str: sobj:
     self.substring 0 n
 
   (starts-with? sub):
-    (self.head (sub.length)) = sub
+    (self.head (sub.length)) == sub
 
   (find-from n sub):
     def (helper s i):
@@ -163,7 +163,7 @@ def str: sobj:
   #   if (not i):
   #     . self
   #   else:
-  #     if ((self 0) = "%"):
+  #     if ((self 0) == "%"):
   #       (format (self 1) (a.car)) / ((self.tail 2) % . (a.cdr))
   #     else:
   #       (self.head i) / ((self.tail i) % . a)
@@ -178,7 +178,7 @@ def str: sobj:
     if (is? i l):
       . self
     else:
-      if ((self 0) = "%"):
+      if ((self 0) == "%"):
         (format (self 1) (a.car)) / ((self.tail 2).%* (a.cdr))
       else:
         (self.head i) / ((self.tail i).%* a)

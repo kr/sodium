@@ -21,7 +21,7 @@ def int: sobj:
     return (a < b) ? int2datum(-1) : (a > b) ? int2datum(1) : int2datum(0);
   end
 
-  (= x) (is? (self.cmp x) 0)
+  (== x) (is? (self.cmp x) 0)
   (> x) (is? (self.cmp x) 1)
   (< x) (is? (self.cmp x) -1)
 

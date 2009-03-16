@@ -79,15 +79,15 @@ def array: sobj:
   (each f):
     def (iter i):
       if (i > self.length): return 'ok
-      if (i = self.length): return 'ok
+      if (i == self.length): return 'ok
       f (self.get i)
       iter (i + 1)
     iter 0
     . 'ok
 
-  (= p):
-    ? ((self.car) = (p.car)):
-      ? ((self.cdr) = (p.cdr)) true false
+  (== p):
+    ? ((self.car) == (p.car)):
+      ? ((self.cdr) == (p.cdr)) true false
       . false
 
   (assq name):

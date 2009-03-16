@@ -8,18 +8,18 @@
   pr "boo"
   pr "yay"
 
-? (3 = 4):
+? (3 == 4):
   pr "boo"
   pr "yay"
 
 def x 7
 def y (3 + 4)
 
-? (x = y):
+? (x == y):
   pr "yay"
   pr "boo"
 
-if (3 + 4) = 7:
+if (3 + 4) == 7:
   pr "yay"
 else:
   pr "boo"
