@@ -38,13 +38,6 @@ class S(object):
     def __getitem__(self, k):
         return self.s[k]
 
-class Mess(object):
-    def __init__(self, s):
-        self.name = S(s)
-
-    def __str__(self): return str(self.name)
-    def __repr__(self): return repr(self.name)
-
 class Integer(int):
     pass
 setattr(Integer, '+', op_add)

@@ -460,15 +460,20 @@ def compile_application(exp, target, linkage, cenv, pop_all_symbol):
 def message_send(exp):
     return call_app(exp) or send_app(exp)
 
+def messp(x):
+    if not symbolp(x): return False
+    return ((str(x)[0] in ('.', ':')) or
+            re.match(lexer.non_name_pat + '$', str(x)))
+
 def call_app(exp):
     if exp.len() < 2: return False
     m = exp.cadr()
-    return (type(m) is Mess) and (m.name[0] != ':')
+    return messp(m) and (str(m)[0] != ':')
 
 def send_app(exp):
     if exp.len() < 2: return False
     m = exp.cadr()
-    return (type(m) is Mess) and (m.name[0] == ':')
+    return messp(m) and (str(m)[0] == ':')
 
 send_s = S('send')
 def exp_object(exp):
@@ -477,7 +482,6 @@ def exp_object(exp):
     if send_app(exp): return send_s
 
 def extract_message(token):
-    token = token.name
     if token[0] in (':', '.'): return S(token[1:])
     return token
 
@@ -658,10 +662,10 @@ def make_def(name, exp):
   return plist(def_s, name, exp)
 
 def make_call(rcv, msg, *args):
-  return plist(rcv, Mess(S('.' + str(msg))), *args)
+  return plist(rcv, S('.' + str(msg)), *args)
 
 def make_send(rcv, msg, *args):
-  return plist(rcv, Mess(S(':' + str(msg))), *args)
+  return plist(rcv, S(':' + str(msg)), *args)
 
 def make_if(test, consequent, alternative=None):
   if alternative is None: return plist(if_s, test, consequent)
