@@ -20,7 +20,7 @@ class ReadError(RuntimeError):
 # In BNF comments, lower case names are nonterminals and
 # ALL CAPS names are terminals.
 
-MESSAGE_TOKENS = (T.BINOP, T.IMESS, T.SMESS)
+MESSAGE_TOKENS = (T.BINOP, T.UNOP)
 class Parser:
     def __init__(self, tokens):
         current_pos_info.clear()
@@ -115,15 +115,15 @@ class Parser:
         '''
         if self.peek in follow: return False, nil
 
-        if self.peek in (T.IMESS, T.SMESS, T.BINOP):
-          atom = lx.S(self.match(T.IMESS, T.SMESS, T.BINOP))
+        if self.peek in (T.BINOP, T.UNOP):
+          atom = lx.S(self.match(T.BINOP, T.UNOP))
         else:
           atom = self.__atom()
         if self.peek in follow: return True, atom
 
         first, mess = atom, None
-        while self.peek in (T.IMESS, T.SMESS, T.BINOP):
-          mess = self.match(T.IMESS, T.SMESS, T.BINOP)
+        while self.peek in (T.BINOP, T.UNOP):
+          mess = self.match(T.BINOP, T.UNOP)
           first = list(first, lx.S(mess))
 
         if not mess: first = list(atom)
@@ -148,7 +148,7 @@ class Parser:
                : unexpr BINOP binexpr
         '''
         left = self.__unexpr()
-        if self.peek not in (T.BINOP): return left
+        if self.peek != T.BINOP: return left
 
         message = lx.S(self.match(T.BINOP))
         right = self.__binexpr()
@@ -162,8 +162,8 @@ class Parser:
         atom = self.__atom()
 
         first = atom
-        while self.peek in (T.IMESS, T.SMESS):
-            first = list(first, lx.S(self.match(T.IMESS, T.SMESS)))
+        while self.peek == T.UNOP:
+            first = list(first, lx.S(self.match(T.UNOP)))
 
         return first
 

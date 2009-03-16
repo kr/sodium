@@ -9,8 +9,7 @@ INVALID = 'INVALID'
 INT     = 'INT'
 DEC     = 'DEC'
 NAME    = 'NAME'
-SMESS   = 'SMESS'
-IMESS   = 'IMESS'
+UNOP    = 'UNOP'
 BINOP   = 'BINOP'
 DOT     = 'DOT'
 DOTS    = 'DOTS'
@@ -117,8 +116,8 @@ lexer = slex.Lexer((
     (HEREDOC, r'<<:?[a-zA-Z0-9]+', heredoc),
     (DEC,     r'-?([0-9]*\.[0-9]+|[0-9]+)'),
     (INT,     r'-?[0-9]+',             ),
-    (SMESS,   ':' + name_pat + '|' + ':' + non_name_pat,  ),
-    (IMESS,   r'\.' + name_pat + r'|\.' + non_name_pat),
+    (UNOP,    r'\.' + name_pat + r'|\.' + non_name_pat + '|' +
+              ':' + name_pat + '|' + ':' + non_name_pat,  ),
     (BINOP,   non_name_pat + '|' + '::'),
     (NAME,    name_pat,        ),
     (DOT,     r'\.',                   ),
