@@ -39,11 +39,11 @@
 [+] rename "begin" to "do"
 [ ] cond exprs
 [+] new import and export source transformations
-[ ] re-arrange punctuation ops: use == for equality, and = for assignment
-[ ] let set! (aka =, nee ::) implicitly define, without shadowing
+[+] re-arrange punctuation ops: use == for equality, and = for assignment
+[ ] let set! (aka =) implicitly define, without shadowing
 [ ] have set! return the new value
 [ ] make a bigint type for arbitrary precision
-[ ] (x y z) :: 3-list
+[ ] (x y z) = 3-list
 [ ] overloading by number of args
 [ ] var args
 [ ] fix handling of unassigned variables

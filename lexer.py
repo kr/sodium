@@ -118,7 +118,7 @@ lexer = slex.Lexer((
     (INT,     r'-?[0-9]+',             ),
     (UNOP,    r'\.' + name_pat + r'|\.' + non_name_pat + '|' +
               ':' + name_pat + '|' + ':' + non_name_pat,  ),
-    (BINOP,   non_name_pat + '|' + '::'),
+    (BINOP,   non_name_pat),
     (NAME,    name_pat,        ),
     (DOT,     r'\.',                   ),
     (DOTS,    r':',                    ),

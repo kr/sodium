@@ -44,7 +44,7 @@ obj_s = S('obj')
 sobj_s = S('sobj')
 do_s = S('do')
 inline_s = S('inline')
-assign_s = S('::')
+assign_s = S('=')
 def compile(exp, target, linkage, cenv, pop_all_symbol, **kwargs):
   try:
     if self_evaluatingp(exp):

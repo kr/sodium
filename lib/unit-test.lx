@@ -121,25 +121,25 @@ def (make-collector suite):
   def pass-count 0
 
   def collector ():
-    (start.) (start-time :: (time .now))
+    (start.) (start-time = (time .now))
 
-    (stop.) (stop-time :: (time .now))
+    (stop.) (stop-time = (time .now))
 
     (error-in ex case):
       errors (make-result .error ex case)
-      total-run :: (total-run + 1)
+      total-run = (total-run + 1)
       pr "E"
       #STDOUT .flush
 
     (failure-in ex case):
       failures (make-result .failure ex case)
-      total-run :: (total-run + 1)
+      total-run = (total-run + 1)
       pr "F"
       #STDOUT .flush
 
     (pass-in case):
-      pass-count :: (pass-count + 1)
-      total-run :: (total-run + 1)
+      pass-count = (pass-count + 1)
+      total-run = (total-run + 1)
       pr "."
       #STDOUT .flush
 

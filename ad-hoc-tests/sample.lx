@@ -29,7 +29,7 @@ x:run 9 5
 pr "about to print '(x y)"
 pr '(x
      y)
-x :: 3
+x = 3
 pr "about to print x, which should equal 3"
 pr x
 ? x:

@@ -7,8 +7,8 @@ def (make-tester.):
 
   obj ():
     (set-up.):
-      empty :: '()
-      single :: '(4.)
+      empty = '()
+      single = '(4.)
   
     (test-car.):
       #should [4 == (single.car)]

@@ -32,7 +32,7 @@ def is? ():
 def module (): inline C (run name) "return lxc_module_module.instrs;"
 
 # Now load the real module module so we can load any module.
-module :: module.run.run
+module = module.run.run
 
 def pr ():
   inline C (run x) <<end
@@ -139,7 +139,7 @@ def (make-dict.):
       if pair:
         pair.set-cdr! value
       else:
-        items :: (cons (cons key value) items)
+        items = (cons (cons key value) items)
     (run key):
       def pair (assq key items)
       if pair: return pair.cdr
@@ -159,11 +159,11 @@ def (make-queue.):
     (run item):
       def new (cons item '())
       if (queue.empty?):
-        front :: new
-        rear :: new
+        front = new
+        rear = new
       else:
         rear.set-cdr! new
-        rear :: new
+        rear = new
       . queue
     (remove!.):
       def item queue.front
@@ -171,7 +171,7 @@ def (make-queue.):
       . item
     (delete!.):
       if (queue.empty?): error "delete! called on an empty queue"
-      front :: front.cdr
+      front = front.cdr
       . queue
     (consume! f):
       if (queue.empty?):
@@ -209,9 +209,9 @@ def (make-promise.):
       if (broken?.) (f err-name err-val)
 
     def (process state err):
-      status :: state
-      success-queue :: '()
-      err-queue :: '()
+      status = state
+      success-queue = '()
+      err-queue = '()
 
     def promise ():
       # This is the fully general wait function.
@@ -253,15 +253,15 @@ def (make-promise.):
     def sink ():
       (run val):
         if (resolved?.): error "already resolved"
-        status :: 'resolved
-        value :: val
+        status = 'resolved
+        value = val
         success-queue.consume! [x val]
         process 'resolved
       (break! name val):
         if (broken?.): error "already broken"
-        status :: 'broken
-        err-name :: name
-        err-val :: val
+        status = 'broken
+        err-name = name
+        err-val = val
         err-queue.consume! [x name val]
         process 'broken
 
