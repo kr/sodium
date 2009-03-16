@@ -21,7 +21,6 @@
 [ ] move bytecode loading into sodium code
 [ ] add debugging info to byte code files
 [ ] exceptions
-[ ] direct threading
 [+] macros
 [+] macro: if/elif/else
 [+] macro: for
@@ -47,16 +46,13 @@
 [ ] overloading by number of args
 [ ] var args
 [ ] fix handling of unassigned variables
-[ ] global constants (names that can be assigned exactly once)
 
 [ ] bootstrap
-[ ] embed the compiler to form one do-it-all binary
 [ ] repl
-[ ] make the compiler also emit real C-code (not just packaged byte codes)
 [ ] inline bytecode notation
 [ ] reimplement CISCy operations (e.g. variable lookup, call) in bytecode
+[ ] JIT
 [ ] PIC optimization
-[ ] use qhasm or similar to produce native binaries
 [ ] lexer macros
 
 [+] redesign punctuation messages
