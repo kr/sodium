@@ -14,6 +14,7 @@ void str_init();
 
 int strp(datum x);
 
+datum make_str(size_t size);
 datum make_str_init(size_t size, const char *bytes);
 datum make_str_init_permanent(size_t size, const char *bytes);
 

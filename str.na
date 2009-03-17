@@ -25,11 +25,17 @@ strp(datum x)
 }
 
 datum
+make_str(size_t size)
+{
+    return make_opaque(size, mtab);
+}
+
+datum
 make_str_init(size_t size, const char *bytes)
 {
-    datum s = make_opaque(size, mtab);
+    datum s = make_str(size);
     memcpy(s, bytes, size);
-    return (datum) s;
+    return s;
 }
 
 datum
