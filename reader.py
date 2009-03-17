@@ -171,8 +171,9 @@ class Parser:
     def __atom(self):
         '''
         atom : NAME
-             : INT
              : DEC
+             : DECF
+             : HEX
              : STR
              : HEREDOC
              : "(" expr ")"
@@ -196,14 +197,16 @@ class Parser:
             atom = self.__atom()
             return list(lx.S('quote'), atom)
 
-        type, lexeme, pos = self.xmatch(T.INT, T.DEC, T.NAME, T.STR, T.HEREDOC)
-        if type == T.INT:
+        type, lexeme, pos = self.xmatch(T.DEC, T.DECF, T.HEX, T.NAME, T.STR, T.HEREDOC)
+        if type == T.DEC:
             return lx.Integer(lexeme)
+        if type == T.HEX:
+            return lx.Integer(lexeme, 16)
         if type == T.NAME:
             return lx.S(lexeme)
         if type == T.STR:
             return lx.String(unescape(lexeme[1:-1])).setpos(pos)
-        if type == T.DEC:
+        if type == T.DECF:
             return lx.Decimal(lexeme)
         if type == T.HEREDOC:
             return lx.ForeignString(lexeme).setpos(pos)

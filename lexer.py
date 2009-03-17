@@ -6,8 +6,9 @@ INDENT  = 'INDENT'
 EOL     = 'EOL'
 EOF     = 'EOF'
 INVALID = 'INVALID'
-INT     = 'INT'
 DEC     = 'DEC'
+DECF    = 'DECF'
+HEX     = 'HEX'
 NAME    = 'NAME'
 UNOP    = 'UNOP'
 BINOP   = 'BINOP'
@@ -114,8 +115,9 @@ def filter(seq):
 # special chars are . : ( ) '
 lexer = slex.Lexer((
     (HEREDOC, r'<<:?[a-zA-Z0-9]+', heredoc),
-    (DEC,     r'-?([0-9]*\.[0-9]+|[0-9]+)'),
-    (INT,     r'-?[0-9]+',             ),
+    (DECF,     r'-?([0-9]*\.[0-9]+|[0-9]+)'),
+    (DEC,     r'-?[0-9]+',             ),
+    (HEX,     r'-?0x[0-9a-fA-F]+',             ),
     (UNOP,    r'\.' + name_pat + r'|\.' + non_name_pat + '|' +
               ':' + name_pat + '|' + ':' + non_name_pat,  ),
     (BINOP,   non_name_pat),
