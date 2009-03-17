@@ -7,7 +7,7 @@ def f (p:a)
 
 f.wait [pr x]
 
-s (obj () ((a.) 5))
+s (obj ((a.) 5))
 
 
 #def p (load-module pm)

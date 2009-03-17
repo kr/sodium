@@ -29,7 +29,7 @@ end
 
 def *modules* '()
 
-def loader: obj ():
+def loader: obj:
   (run name):
     def ent (*modules*.assq name)
     if ent: return ent.cdr
@@ -53,19 +53,19 @@ def (find-file name):
   name = ("lib/"./ (name.str ./ ".lxc"))
   name.encode
 
-def find-builtin: obj ():
+def find-builtin: obj:
   inline C (run name) <<end
     return find_builtin_module(n_name);
   end
 
-def read-file: obj ():
+def read-file: obj:
   inline C (run path) <<end
     char name[datum_size(n_path) + 1];
     copy_bytes_contents0(name, n_path, datum_size(n_path) + 1);
     return read_module_file(name);
   end
 
-def (make-placeholder.) (obj ())
+def (make-placeholder.) (obj.)
 
 def module: sobj:
   inline C (run.) <<end

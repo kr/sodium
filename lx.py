@@ -300,7 +300,7 @@ def compile_sobj(exp, target, linkage, cenv, pop_all_symbol, tag=None):
         after_obj)
 
 def exp_methods(exp):
-    return exp.cddr()
+    return exp.cdr()
 
 def sobj_methods(exp):
     return exp.cdr()
@@ -609,7 +609,7 @@ def definition_value(exp):
     return make_fn(exp.cdadr(), exp.cddr())
 
 def make_obj(tos):
-    return cons(obj_s, cons(nil, tos))
+    return cons(obj_s, tos)
 
 def make_fn(parameters, body):
     return cons(fn_s, cons(parameters, body))

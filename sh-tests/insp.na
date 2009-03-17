@@ -1,5 +1,5 @@
 
-def o: obj ():
+def o: obj:
   (a.) 3
 
 pr (inspect .has-method? o 'a)

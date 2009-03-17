@@ -176,12 +176,12 @@ def bytes: sobj:
   end
 
   (decode.):
-      def alloc-str: obj ():
+      def alloc-str: obj:
         inline C (run b) <<end
           return make_str(datum_size(n_b));
         end
 
-      def decode-into: obj ():
+      def decode-into: obj:
         inline C (run b s) <<end
           decode_utf8(datum_size(n_b), (unsigned char *) n_b, (char *) n_s);
           return n_s;

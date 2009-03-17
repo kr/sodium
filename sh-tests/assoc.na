@@ -26,8 +26,8 @@ pr 3 * 2 + 1
 pr x
 
 pr ""
-def o: obj ():
-  (a.): obj ():
+def o: obj:
+  (a.): obj:
     (b.) 3
 
 pr 5

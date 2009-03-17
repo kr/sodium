@@ -2,10 +2,10 @@
 
 # This is a sample LX file
 
-def a: obj ():
+def a: obj:
   (m.) 5
 
-def b: obj ():
+def b: obj:
   (n.) a
 
 def x b:n
@@ -21,7 +21,7 @@ y.wait:
 def x 7
 
 pr x# this is a comment
-def x: obj ():
+def x: obj:
   (run p1 p2):
     pr p1
     pr p2
@@ -43,7 +43,7 @@ pr (8 - 3)
 pr (8 :- 3)
 fn (x.) (* x x)
 
-def o: obj ():
+def o: obj:
   (run.) "yess"
 
 pr (o.)

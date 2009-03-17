@@ -13,7 +13,7 @@ datum mtab = 0;
 
 end
 
-def re: obj ():
+def re: obj:
   inline C dotall <<end
     return int2datum(PCRE_DOTALL);
   end
@@ -21,7 +21,7 @@ def re: obj ():
   (run pat) (re.make pat (re.dotall))
 
   (make pat opts):
-    def compile: obj ():
+    def compile: obj:
       inline C (run.) <<end
         pcre *re;
         const char *error;
@@ -36,7 +36,7 @@ def re: obj ():
 
     def compiled (compile.)
 
-    def r: obj ():
+    def r: obj:
       (run subj) (r.match subj (r.runopts))
       (find subj) (r.match subj (r.findopts))
 

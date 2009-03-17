@@ -1,6 +1,6 @@
 def (y.) 5
 
-def x: obj (): (run.):
+def x: obj: (run.):
   y.
 
 pr: x.
