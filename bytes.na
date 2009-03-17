@@ -14,6 +14,99 @@ bytes_init()
     percent_star_sym = intern("%*");
 }
 
+/* Based on the table in Python's unicodeobject.c. */
+static char utf8_code_length[256] = {
+    /* Map UTF-8 encoded prefix byte to sequence length. Zero means illegal
+       prefix. Negative one means a prefix of an overlong sequence. Negative
+       two means a restricted range. See RFC 2279 for details. */
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+   -1,-1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+    2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+    3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,
+    4, 4, 4, 4, 4,-2,-2,-2, 5, 5, 5, 5, 6, 6, 0, 0,
+};
+
+static void
+decode_utf8(size_t size, const unsigned char *s, char *t)
+{
+    const unsigned char *e;
+
+    e = s + size;
+    while (s < e) {
+        char n;
+        const unsigned char c = *s;
+
+        /* fast path for common case */
+        if (c < 0x80) {
+            *t++ = c;
+            s++;
+            continue;
+        }
+
+        n = utf8_code_length[(int) c];
+        switch (n) {
+            case -2:
+            case -1:
+            case 0:
+            case 1: goto err;
+
+            case 2:
+                if ((s[1] & 0xc0) != 0x80) goto err;
+
+                *t++ = c;
+                *t++ = s[1];
+                break;
+
+            case 3:
+                if (!(c & 0xf) && !(s[1] & 0x20)) goto err;
+                if ((s[1] & 0xc0) != 0x80) goto err;
+                if ((s[2] & 0xc0) != 0x80) goto err;
+
+                if ((c == 0xef) && (s[1] == 0xbf) && (s[2] == 0xbe)) goto err;
+                if ((c == 0xef) && (s[1] == 0xbf) && ((s[2] & 0xfe) == 0xbe)) {
+                    goto err;
+                }
+
+                *t++ = c;
+                *t++ = s[1];
+                *t++ = s[2];
+                break;
+
+            case 4:
+                if ((s[1] & 0xc0) != 0x80) goto err;
+                if ((s[2] & 0xc0) != 0x80) goto err;
+                if ((s[3] & 0xc0) != 0x80) goto err;
+                if (!(c & 0x7) && !(s[1] & 0x30)) goto err;
+
+                *t++ = c;
+                *t++ = s[1];
+                *t++ = s[2];
+                *t++ = s[3];
+                break;
+
+            default: goto err;
+        }
+
+        s += n;
+        continue;
+
+err:
+        *t++ = '?';
+        s++;
+    }
+}
+
 datum
 make_bytes(uint size)
 {
@@ -82,10 +175,19 @@ def bytes: sobj:
     return (datum) new_str;
   end
 
-  inline C (decode.) <<end
-    /* TODO check for valid UTF-8 */
-    return make_str_init(datum_size(rcv), (char *) rcv);
-  end
+  (decode.):
+      def alloc-str: obj ():
+        inline C (run b) <<end
+          return make_str(datum_size(n_b));
+        end
+
+      def decode-into: obj ():
+        inline C (run b s) <<end
+          decode_utf8(datum_size(n_b), (unsigned char *) n_b, (char *) n_s);
+          return n_s;
+        end
+
+      decode-into self (alloc-str self)
 
   inline C (run i) <<end
     /* index a single byte */

@@ -16,7 +16,7 @@
 [+] simple sh testing
 [+] better error reporting in the compiler
 [+] new grammar
-[ ] proper (unicode) string and bytes types
+[+] proper (unicode) string and bytes types
 [ ] proper file i/o
 [ ] move bytecode loading into sodium code
 [ ] add debugging info to byte code files
