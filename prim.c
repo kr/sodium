@@ -71,7 +71,6 @@ prfmt(int fd, char *fmt, ...)
                 break;
             case 'x':
                 uval = va_arg(ap, unsigned int);
-                write(fd, "0x", 2);
                 pradix(fd, uval, 16, 1);
                 break;
             case 'd':
