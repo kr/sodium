@@ -1,5 +1,5 @@
 
-def (one.) (pr "this is c")
-
 export one
+
+def (one.) (pr "this is c")
 

@@ -1,3 +1,5 @@
+export f
+
 inline C <<end
 #include "prim.h"
 #include "pbox.h"
@@ -23,4 +25,3 @@ def (f.):
   #def pbox (make-box.)
   #obj ()
 
-export f

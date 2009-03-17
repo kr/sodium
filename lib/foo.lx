@@ -1,9 +1,9 @@
 
 import mod one
 
+export a (b -> y) c
+
 def (a.) (pr "this is a")
 def (b.) (pr "this is b")
 def (c.) (one.)
-
-export a (b -> y) c
 

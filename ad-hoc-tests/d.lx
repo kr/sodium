@@ -1,6 +1,6 @@
 import (ad-hoc-tests/c -> c)
+export f
 
 def (f.):
   c.x
 
-export f

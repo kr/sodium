@@ -60,7 +60,6 @@ def compile(exp, target, linkage, cenv, pop_all_symbol, **kwargs):
     if tagged_list(exp, sobj_s): return compile_sobj(exp, target, linkage, cenv, pop_all_symbol, **kwargs)
     if tagged_list(exp, do_s): return compile_do(exp, target, linkage, cenv, pop_all_symbol)
     if tagged_list(exp, inline_s): return compile_inline(exp)
-    if tagged_list(exp, export_s): return compile(export2obj(exp), target, linkage, cenv, pop_all_symbol)
     if tagged_list(exp, return_s): return compile_return(exp, target, linkage, cenv, pop_all_symbol)
     if tagged_list2(exp, assign_s): return compile(assign2setbang(exp), target, linkage, cenv, pop_all_symbol)
     if simple_macrop(exp): return compile(expand_simple_macros(exp),
@@ -594,13 +593,6 @@ def fn2obj(exp):
     body = fn_body(exp)
     return make_obj(plist(cons(sig, body)))
 
-def export2obj(exp):
-  def export_term2to(term):
-    if symbolp(term): return cons(plist(term), plist(term))
-    return cons(plist(term.caddr()), plist(term.car()))
-  tos = exp.cdr().map(export_term2to)
-  return make_obj(tos)
-
 def shfn2fn(exp):
     seq = exp.cdr()
     return make_fn(scan_out_xyz_sequence(seq), seq)
@@ -693,6 +685,18 @@ def expand_imports(seq):
   if seq.nullp(): return seq
   return expand_import(seq.car()).append(seq.cdr())
 
+def expand_export(seq):
+    def export2obj(exp):
+      def export_term2to(term):
+        if symbolp(term): return cons(plist(term), plist(term))
+        return cons(plist(term.caddr()), plist(term.car()))
+      tos = exp.cdr().map(export_term2to)
+      return make_obj(tos)
+
+    export_stmt = seq.car()
+    rest = seq.cdr()
+    return rest.append(plist(export2obj(export_stmt)))
+
 else_s = S('else')
 false_s = S('false')
 def if_macro_alternative(seq):
@@ -746,6 +750,7 @@ def expand_for(exp):
 
 seq_macros = {
   'import': expand_imports,
+  'export': expand_export,
   'if': expand_if,
   'else': report_else_error,
   'elif': report_elif_error,

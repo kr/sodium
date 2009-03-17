@@ -1,5 +1,5 @@
 import (ad-hoc-tests/d -> d) f
+export x
 
 def x "success!!!"
 
-export x
