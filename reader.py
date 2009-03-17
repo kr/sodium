@@ -9,7 +9,7 @@ def record_pos_info(f):
     def d(self, *a, **k):
         p = self.p
         r = f(self, *a, **k)
-        if isinstance(p, (cons, tuple, list)):
+        if isinstance(r, (cons, tuple)) and r:
           current_pos_info[r] = p
         return r
     return d
