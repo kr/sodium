@@ -1,4 +1,3 @@
-
 inline C <<end
 
 #include <string.h>
@@ -290,4 +289,21 @@ def (to-str x):
     . x
     to-str (x.str)
 
-. '()
+def maker: obj:
+  inline C run <<end
+    datum x;
+    uint n = 0;
+
+    for (x = args; pairp(x); x = cdr(x)) n++;
+
+    {
+        uint i = 0;
+        char buf[n];
+        for (x = args; pairp(x); x = cdr(x)) {
+            buf[i++] = datum2int(car(x));
+        }
+        return make_bytes_init_len(buf, n);
+    }
+  end
+
+maker

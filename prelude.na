@@ -104,27 +104,9 @@ def (map f a):
   def x (f a.car) # evaluate x before the rest
   cons x (map f a.cdr)
 
-def list: obj:
-  inline C run <<end
-    return args;
-  end
+import pair list
 
-def bytes: obj:
-  inline C run <<end
-    datum x;
-    uint n = 0;
-
-    for (x = args; pairp(x); x = cdr(x)) n++;
-
-    {
-        uint i = 0;
-        char buf[n];
-        for (x = args; pairp(x); x = cdr(x)) {
-            buf[i++] = datum2int(car(x));
-        }
-        return make_bytes_init_len(buf, n);
-    }
-  end
+import bytes
 
 def (assq x a):
   if (is? a '()): return a
