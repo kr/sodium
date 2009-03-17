@@ -49,8 +49,11 @@ class cons:
     def map(self, f):
         return cons(f(self.car()), self.cdr().map(f))
 
+    def __len__(self):
+        return 1 + len(self.cdr())
+
     def len(self):
-        return Integer(1 + self.cdr().len())
+        return Integer(len(self))
 
     def __iter__(self):
         while True:
@@ -110,8 +113,8 @@ class nilcons(cons):
     def map(self, f):
         return self
 
-    def len(self):
-        return Integer(0)
+    def __len__(self):
+        return 0
 
     def __iter__(self):
         return ().__iter__()
