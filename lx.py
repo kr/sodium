@@ -164,7 +164,7 @@ def compile_variable(exp, target, linkage, cenv, pop_all_symbol):
         binop_pat = '^' + lexer.non_name_pat + '$'
         if re.match(binop_pat, str(exp)):
             raise CompileError(exp, 'lookup of binop')
-        if str(exp).startswith('.'):
+        if str(exp).startswith('.') or str(exp).startswith(':'):
             raise CompileError(exp, 'lookup of non-name')
         return end_with_linkage(linkage,
             make_ir_seq((), (target,),
