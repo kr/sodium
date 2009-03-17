@@ -29,7 +29,7 @@ end
 
 def *modules* '()
 
-def loader ():
+def loader: obj ():
   (run name):
     def ent (*modules*.assq name)
     if ent: return ent.cdr

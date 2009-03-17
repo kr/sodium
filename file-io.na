@@ -25,14 +25,14 @@ fsize(int f)
 
 end
 
-def intern-syms ():
+def intern-syms: obj ():
   inline C (run.) <<end
     read_sym = intern("read");
     write_sym = intern("write");
     return ok_sym;
   end
 
-def file ():
+def file: obj ():
   (run name flags):
     def prepare: obj ():
       inline C (run.) <<end
@@ -65,7 +65,7 @@ def file ():
 
     def pbox (prepare.)
 
-    def f ():
+    def f: obj ():
       inline C (read.) <<end
         int r;
         uint len;

@@ -8,12 +8,12 @@ end
 
 def false '()
 
-def cons ():
+def cons: obj ():
   inline C (run x y) <<end
     return cons(n_x, n_y);
   end
 
-def become ():
+def become: obj ():
   inline C (run x y keep_y) <<end
     datum x, y;
     x = n_x;
@@ -22,25 +22,25 @@ def become ():
     return nil;
   end
 
-def is? ():
+def is?: obj ():
   inline C (run x y) <<end
     if (n_x == n_y) return int2datum(1);
     return nil;
   end
 
 # Define a trampoline for loading modules.
-def module (): inline C (run name) "return lxc_module_module.instrs;"
+def module: obj (): inline C (run name) "return lxc_module_module.instrs;"
 
 # Now load the real module module so we can load any module.
 module = module.run.run
 
-def pr ():
+def pr: obj ():
   inline C (run x) <<end
     pr(n_x);
     return ok_sym;
   end
 
-def prx ():
+def prx: obj ():
   inline C (run x) <<end
     prx(n_x);
     return ok_sym;
@@ -52,17 +52,17 @@ def true 1
 
 def (not x) (? x false true)
 
-def call ():
+def call: obj ():
   inline C (run d msg argl) <<end
     return call(n_d, n_msg, n_argl);
   end
 
-def error ():
+def error: obj ():
   inline C run <<end
     return report_error(args);
   end
 
-def inspect ():
+def inspect: obj ():
   (has-method? c m):
     def (scan x):
       if (is? x '()): return false
@@ -104,12 +104,12 @@ def (map f a):
   def x (f a.car) # evaluate x before the rest
   cons x (map f a.cdr)
 
-def list ():
+def list: obj ():
   inline C run <<end
     return args;
   end
 
-def bytes ():
+def bytes: obj ():
   inline C run <<end
     datum x;
     uint n = 0;
@@ -151,7 +151,7 @@ import (file-io as open)
 def (make-queue.):
   def front '()
   def rear '()
-  def queue ():
+  def queue: obj ():
     (empty?.): is? front '()
     (front.):
       if (queue.empty?): error "front called on an empty queue"
@@ -213,7 +213,7 @@ def (make-promise.):
       success-queue = '()
       err-queue = '()
 
-    def promise ():
+    def promise: obj ():
       # This is the fully general wait function.
       #  f is a unary function to filter the value upon fulfillment
       #  h is a binary function to filter the error notice upon breakage
@@ -250,7 +250,7 @@ def (make-promise.):
 
       (send msg args): promise.wait [call x msg args]
 
-    def sink ():
+    def sink: obj ():
       (run val):
         if (resolved?.): error "already resolved"
         status = 'resolved

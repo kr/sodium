@@ -605,9 +605,7 @@ def definition_variable(exp):
     return exp.caadr()
 
 def definition_value(exp):
-    if symbolp(exp.cadr()):
-        if exp.cdddr().nullp(): return exp.caddr()
-        return make_obj(exp.cdddr())
+    if symbolp(exp.cadr()): return exp.caddr()
     return make_fn(exp.cdadr(), exp.cddr())
 
 def make_obj(tos):
