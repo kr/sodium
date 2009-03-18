@@ -13,12 +13,14 @@ def traced(f):
         return r
     return d
 
+def abbrev(s):
+  if len(s) > 70: s = s[:70] + '...'
+  return s
+
 def print_context(err):
   if hasattr(err, 'context'):
     for exp in err.context:
-      exp = str(exp)
-      if len(exp) > 70: exp = exp[:70] + '...'
-      print >>sys.stderr, '  at', exp
+      print >>sys.stderr, '  at', abbrev(str(exp))
 
 def report_compile_error(ex, file=None, line=None, char=None):
   location = '<unknown>'
