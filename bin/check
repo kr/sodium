@@ -7,7 +7,16 @@ do
     if [ -f "$f" ]
     then
         echo $f
-        ./run "$f" > "${f/%.na/.out}"
-        diff "${f/%.na/.exp}" "${f/%.na/.out}"
+        if [ -f ${f/%.na/.fail} ]
+        then
+            if ./run "$f" > /dev/null 2>&1
+            then
+                echo Expected nonzero status
+                false
+            fi
+        else
+            ./run "$f" > "${f/%.na/.out}"
+            diff "${f/%.na/.exp}" "${f/%.na/.out}"
+        fi
     fi
 done
