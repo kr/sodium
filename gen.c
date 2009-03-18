@@ -31,7 +31,7 @@ die1(const char *m, datum d)
     size_t n = strlen(m);
     write(2, "\n", 1);
     write(2, m, n);
-    write(2, ": ", 1);
+    write(2, ": ", 2);
     prfmt(2, "%o\n", d);
     DUMP_CORE;
     return nil;
