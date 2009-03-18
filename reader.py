@@ -111,19 +111,20 @@ class Parser:
     def __head(self, *follow):
         '''
         head:
-            : mess mess*
-            : atom mess*
-        mess: BINOP
-            : UNOP
+            : BINOP UNOP* [BINOP]
+            : atom UNOP* [BINOP]
         '''
         if self.peek in follow: return nil
 
-        head = self.__atom(T.BINOP, T.UNOP)
+        head = self.__atom(T.BINOP)
 
         if self.peek not in (T.BINOP, T.UNOP): return list(head)
 
-        while self.peek in (T.BINOP, T.UNOP):
-          head = list(head, lx.S(self.match(T.BINOP, T.UNOP)))
+        while self.peek in (T.UNOP):
+          head = list(head, lx.S(self.match(T.UNOP)))
+
+        if self.peek in (T.BINOP):
+          head = list(head, lx.S(self.match(T.BINOP)))
 
         return head
 
