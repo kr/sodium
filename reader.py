@@ -80,56 +80,52 @@ class Parser:
     @record_pos_info
     def __expr(self, *follow):
         '''
-        expr: body
-            : body "." expr
-            : body ":" expr
-            : body ":" EOL block
+        expr: head binexpr*
+            : head binexpr* "." expr
+            : head binexpr* ":" expr
+            : head binexpr* ":" EOL block
         '''
-        singular, body = self.__body(T.DOT, T.DOTS, *follow)
+        head = self.__head(T.DOT, T.DOTS, *follow)
+        args = self.match_loop(self.__binexpr, T.DOT, T.DOTS, *follow)
+        body = head.append(args)
+
+        if self.peek in follow:
+          if len(body) == 1: return body.car() # remove extra parens
+          return body
 
         if self.peek == T.DOT:
           self.match(T.DOT)
           more = self.__expr(*follow)
-          if singular:
-            return cons(body, more)
-          else:
-            return body.append(more)
-
-        if self.peek == T.DOTS:
+        elif self.peek == T.DOTS:
           self.match(T.DOTS)
           if self.try_match(T.EOL):
               more = self.__block()
           else:
               more = list(self.__expr(*follow))
-          if singular: body = list(body)
-          return body.append(more)
+        else:
+          raise RuntimeError('internal error')
 
-        return body
+        return body.append(more)
 
     @record_pos_info
-    def __body(self, *follow):
+    def __head(self, *follow):
         '''
-        body:
-            : atom mess* binexpr*
-            : mess mess* binexpr*
+        head:
+            : mess mess*
+            : atom mess*
+        mess: BINOP
+            : UNOP
         '''
-        if self.peek in follow: return False, nil
+        if self.peek in follow: return nil
 
-        if self.peek in (T.BINOP, T.UNOP):
-          atom = lx.S(self.match(T.BINOP, T.UNOP))
-        else:
-          atom = self.__atom()
-        if self.peek in follow: return True, atom
+        head = self.__atom(T.BINOP, T.UNOP)
 
-        first, mess = atom, None
+        if self.peek not in (T.BINOP, T.UNOP): return list(head)
+
         while self.peek in (T.BINOP, T.UNOP):
-          mess = self.match(T.BINOP, T.UNOP)
-          first = list(first, lx.S(mess))
+          head = list(head, lx.S(self.match(T.BINOP, T.UNOP)))
 
-        if not mess: first = list(atom)
-
-        args = self.match_loop(self.__binexpr, *follow)
-        return False, first.append(args)
+        return head
 
     @record_pos_info
     def __block(self):
@@ -168,7 +164,7 @@ class Parser:
         return first
 
     @record_pos_info
-    def __atom(self):
+    def __atom(self, *extra):
         '''
         atom : NAME
              : DEC
@@ -197,7 +193,7 @@ class Parser:
             atom = self.__atom()
             return list(lx.S('quote'), atom)
 
-        type, lexeme, pos = self.xmatch(T.DEC, T.DECF, T.HEX, T.NAME, T.STR, T.HEREDOC)
+        type, lexeme, pos = self.xmatch(T.DEC, T.DECF, T.HEX, T.NAME, T.STR, T.HEREDOC, *extra)
         if type == T.DEC:
             return lx.Integer(lexeme)
         if type == T.HEX:
@@ -210,6 +206,7 @@ class Parser:
             return lx.Decimal(lexeme)
         if type == T.HEREDOC:
             return lx.ForeignString(lexeme).setpos(pos)
+        return lx.S(lexeme)
 
     @record_pos_info
     def match_loop(self, parse, *sentinels):
