@@ -29,7 +29,7 @@ def is?: obj:
   end
 
 # Define a trampoline for loading modules.
-def module: obj: inline C (run name) "return lxc_module_module.instrs;"
+def module: obj: inline C (run.) "return lxc_module_module.instrs;"
 
 # Now load the real module module so we can load any module.
 module = module.run.run
