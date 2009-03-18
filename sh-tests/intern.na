@@ -1,0 +1,3 @@
+def x "hi".intern
+def y "hi".intern
+pr (is? x y)

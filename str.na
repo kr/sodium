@@ -195,4 +195,8 @@ def str: sobj:
     return call(regs[R_VM0], percent_star_sym, args);
   end
 
+  inline C (intern.) <<end
+    return intern_str(rcv);
+  end
+
 . '()
