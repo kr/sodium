@@ -1,9 +1,9 @@
-(% %* find find-from starts-with? head tail substring == length encode run /)
-(assq == schedule run filter str)
-(assq == run filter cdr car set-cdr!)
-(str)
-(str ** % / * - + < > == cmp)
-(there hi)
+(intern:0 %:0 %:1 %:2 %:3 %:4 %:5 %:6 %:7 %:8 %:9 %:+ %*:1 find:1 find-from:2 starts-with?:1 head:1 tail:1 substring:2 ==:1 length:0 encode:0 run:1 /:1)
+(assq:1 ==:1 schedule:1 run:1 filter:1 str:0)
+(assq:1 ==:1 run:1 filter:1 cdr:0 car:0 set-cdr!:1)
+(str:0)
+(str:0 **:1 %:1 /:1 *:1 -:1 +:1 <:1 >:1 ==:1 cmp:1)
+(there:0 hi:0)
 (a b c)
 ok
 ok

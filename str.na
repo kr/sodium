@@ -15,7 +15,7 @@ static datum percent_star_sym;
 void
 str_init()
 {
-    percent_star_sym = intern("%*");
+    percent_star_sym = intern("%*:1");
 }
 
 int
@@ -189,7 +189,7 @@ def str: sobj:
       else:
         (self.head i) / ((self.tail i).%* a)
 
-  inline C "%" <<end
+  inline C (% . args) <<end
     regs[R_VM0] = rcv;
     args = cons(args, nil);
     return call(regs[R_VM0], percent_star_sym, args);

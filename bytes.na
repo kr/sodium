@@ -290,7 +290,7 @@ def (to-str x):
     to-str (x.str)
 
 def maker: obj:
-  inline C run <<end
+  inline C (run . items) <<end
     datum x;
     uint n = 0;
 

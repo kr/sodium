@@ -63,10 +63,11 @@ def error: obj:
   end
 
 def inspect: obj:
-  (has-method? c m):
+  (has-method? c m a):
+    def sig ("%s:%d" % m a).intern
     def (scan x):
       if (is? x '()): return false
-      if (is? m x.car): return true
+      if (is? sig x.car): return true
       scan x.cdr
     scan (inspect.methods c)
   inline C (same-type? x y) <<end

@@ -279,6 +279,16 @@ class make_ir_seq:
                     real_instrs.append(OP_DATUM_OFFSET(d))
                     symbol_offsets.append(i)
                     i += 1
+                if s.op in (closure_method2_s,):
+                    d1, d2 = s.d1, s.d2
+                    if symbolp(d1): d1 = String(d1.s)
+                    if symbolp(d2): d2 = String(d2.s)
+                    real_instrs.append(OP_DATUM_OFFSET(d1))
+                    symbol_offsets.append(i)
+                    i += 1
+                    real_instrs.append(OP_DATUM_OFFSET(d2))
+                    symbol_offsets.append(i)
+                    i += 1
                 if s.op in (load_imm_s,):
                     if isinstance(s.d, Decimal):
                         real_instrs.append(DATUM(Integer(int(s.d))))
@@ -496,6 +506,7 @@ set__s = S('SET_')
 define_s = S('DEFINE')
 lookup_s = S('LOOKUP')
 def CLOSURE_METHOD(target_reg, obj_reg, name):
+    if not symbolp(name): return CLOSURE_METHOD2(target_reg, obj_reg, *name)
     return OP_RRD(closure_method_s, target_reg, obj_reg, name)
 def SET_(env_reg, val_reg, name):
     return OP_RRD(set__s, env_reg, val_reg, name)
@@ -503,6 +514,11 @@ def DEFINE(env_reg, val_reg, name):
     return OP_RRD(define_s, env_reg, val_reg, name)
 def LOOKUP(target_reg, env_reg, name):
     return OP_RRD(lookup_s, target_reg, env_reg, name)
+
+
+closure_method2_s = S('CLOSURE_METHOD2')
+def CLOSURE_METHOD2(target_reg, obj_reg, name1, name2):
+    return OP_RRDD(closure_method2_s, target_reg, obj_reg, name1, name2)
 
 # Two register, two integer instructions
 
@@ -552,6 +568,7 @@ all_ops = (
     lexical_setbang_s,
     extend_environment_s,
     make_selfobj_s,
+    closure_method2_s,
 )
 all_ops_dict = dict([(k,i) for i,k in enumerate(all_ops)])
 
@@ -870,6 +887,30 @@ class OP_RRD(OP):
 
     def __repr__(self):
         return '%s %s %s %r' % (self.op, self.reg1, self.reg2, self.d)
+
+class OP_RRDD(OP):
+    def __init__(self, op, r1, r2, d1, d2):
+        OP.__init__(self, op)
+        self.reg1 = r1
+        self.reg2 = r2
+        self.r1 = lookup_reg(r1)
+        self.r2 = lookup_reg(r2)
+        if not isinstance(d1, S):
+            raise AssemblingError, 'd1 must be a symbol: %r' % d1
+        if not isinstance(d2, S):
+            raise AssemblingError, 'd2 must be a symbol: %r' % d2
+        self.d1 = d1
+        self.d2 = d2
+
+    def get_body(self, index, labels, datums):
+        return pack((5, self.r1), (5, self.r2), (17, 0))
+
+    def se_datums_and_symbols(self):
+        return self.d1, self.d2, String(self.d1.s), String(self.d2.s)
+
+    def __repr__(self):
+        return '%s %s %s %r %r' % (self.op, self.reg1, self.reg2,
+                self.d1, self.d2)
 
 class OP_RII(OP):
     def __init__(self, op, r, levs, offs):

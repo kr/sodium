@@ -52,7 +52,7 @@
 #define OP_LEXICAL_SETBANG 0x18
 #define OP_EXTEND_ENVIRONMENT 0x19
 #define OP_MAKE_SELFOBJ 0x1a
-#define OP_unused3 0x1b
+#define OP_CLOSURE_METHOD2 0x1b
 #define OP_unused4 0x1c
 #define OP_unused5 0x1d
 #define OP_unused6 0x1e
@@ -111,7 +111,7 @@ static char *instr_names[32] = {
     "OP_LEXICAL_SETBANG",
     "OP_EXTEND_ENVIRONMENT",
     "OP_MAKE_SELFOBJ",
-    "<unused3>",
+    "OP_CLOSURE_METHOD2",
     "<unused4>",
     "<unused5>",
     "<unused6>",
@@ -319,6 +319,31 @@ closure_method(datum d, datum name)
     return die1("closure_method -- no such method", name);
 }
 
+static datum
+closure_method2(datum d, datum name1, datum name2)
+{
+    int i, n;
+    method_table table;
+
+    table = (method_table) datum_mtab(d);
+
+    n = datum2int(table->size);
+    for (i = 0; i < n; ++i) {
+        if (table->items[i].name == name1) {
+            datum pos = (datum) &table->items[i].addr;
+            return pos + datum2int(*pos);
+        }
+    }
+    for (i = 0; i < n; ++i) {
+        if (table->items[i].name == name2) {
+            datum pos = (datum) &table->items[i].addr;
+            return pos + datum2int(*pos);
+        }
+    }
+    prfmt(2, "closure_method2 -- no such method: %o or %o\n", name1, name2);
+    return die1("closure_method2 -- no such method", nil);
+}
+
 datum
 closure_env(datum d)
 {
@@ -433,6 +458,15 @@ start(uint *start_addr)
                 ra = I_R(inst);
                 rb = I_RR(inst);
                 regs[ra] = (datum) closure_method(regs[rb], (datum) *++pc);
+                break;
+            case OP_CLOSURE_METHOD2:
+                ra = I_R(inst);
+                rb = I_RR(inst);
+                {
+                  datum name1 = (datum) *++pc;
+                  datum name2 = (datum) *++pc;
+                  regs[ra] = closure_method2(regs[rb], name1, name2);
+                }
                 break;
             case OP_SETBANG:
                 ra = I_R(inst);

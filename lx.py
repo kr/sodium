@@ -241,19 +241,21 @@ def compile_sequence(seq, target, linkage, cenv, pop_all_symbol):
 def compile_obj(exp, target, linkage, cenv, pop_all_symbol):
     obj_table = make_label('obj-table')
     after_obj = make_label('after-obj')
+    methods_with_names = exp_methods(exp)
+    name_count = sum([len(names) for meth, names in methods_with_names])
     m_tabl_code = make_ir_seq((), (),
         BACKPTR(),
         obj_table,
-        DATUM(exp_methods(exp).len()))
+        DATUM(Integer(name_count)))
     m_body_code = empty_instruction_seq()
-    for meth in exp_methods(exp):
-        name = S(meth_name(meth))
+    for meth, names in methods_with_names:
         #entry = make_label('method-entry')
         entry = make_meth_entry(meth)
-        m_tabl_code = tack_on_ir_seq(m_tabl_code,
-                                     make_ir_seq((), (),
-                                        DATUM(name),
-                                        ADDR(entry)))
+        for name in names:
+          m_tabl_code = tack_on_ir_seq(m_tabl_code,
+                                       make_ir_seq((), (),
+                                          DATUM(name),
+                                          ADDR(entry)))
         m_body_code = tack_on_ir_seq(m_body_code,
                                      compile_meth_body(meth, entry, cenv))
     #meth_linkage = (linkage is next_s) if after_obj else linkage
@@ -272,19 +274,21 @@ self_s = S('self')
 def compile_sobj(exp, target, linkage, cenv, pop_all_symbol, tag=None):
     obj_table = make_label('obj-table')
     after_obj = make_label('after-obj')
+    methods_with_names = sobj_methods(exp)
+    name_count = sum([len(names) for meth, names in methods_with_names])
     m_tabl_code = make_ir_seq((), (),
         BACKPTR(),
         obj_table,
-        DATUM(sobj_methods(exp).len(), tag=tag))
+        DATUM(Integer(name_count), tag=tag))
     m_body_code = empty_instruction_seq()
-    for meth in sobj_methods(exp):
-        name = S(meth_name(meth))
+    for meth, names in methods_with_names:
         #entry = make_label('method-entry')
         entry = make_meth_entry(meth)
-        m_tabl_code = tack_on_ir_seq(m_tabl_code,
-                                     make_ir_seq((), (),
-                                        DATUM(name),
-                                        ADDR(entry)))
+        for name in names:
+          m_tabl_code = tack_on_ir_seq(m_tabl_code,
+                                       make_ir_seq((), (),
+                                          DATUM(name),
+                                          ADDR(entry)))
         m_body_code = tack_on_ir_seq(m_body_code,
                                      compile_smeth_body(meth, entry))
     #meth_linkage = (linkage is next_s) if after_obj else linkage
@@ -299,11 +303,67 @@ def compile_sobj(exp, target, linkage, cenv, pop_all_symbol, tag=None):
             tack_on_ir_seq(m_tabl_code, m_body_code)),
         after_obj)
 
+MEC = 10
+
+def decorate_with_varargs_names(meths):
+    def fixed_arityp(meth):
+      def check(params):
+          if params is nil: return True
+          if pairp(params): return check(params.cdr())
+          return False
+      if is_inline_meth(meth):
+        return check(inline_meth_params(meth))
+      else:
+        return check(meth_params(meth))
+
+    def find_fixed_arities(ms):
+        arities = {}
+        for meth in ms:
+          if fixed_arityp(meth):
+            base = meth_base_name(meth)
+            arities.setdefault(base, ())
+            arities[base] += (meth_arity(meth),)
+        return arities
+
+    def find_variable_arities(ms):
+        arities = {}
+        for meth in ms:
+          if not fixed_arityp(meth):
+            base = meth_base_name(meth)
+            arities.setdefault(base, ())
+            arities[base] += (meth_arity(meth),)
+        return arities
+
+    def make_each(ms):
+      if ms is nil: return nil
+      meth = ms.car()
+      rest = make_each(ms.cdr())
+
+      names = None
+      if fixed_arityp(meth):
+        names = (meth_name(meth, meth_arity(meth)),)
+      else:
+        names = nil
+        arities = fixed_arities.get(meth_base_name(meth), ())
+        this_arity = meth_arity(meth)
+        for i in range(this_arity, max((MEC,) + arities)):
+          if i not in arities:
+            names = cons(meth_name(meth, i), names)
+        if this_arity == max(variable_arities[meth_base_name(meth)]):
+          names = cons(meth_name(meth, '+'), names)
+
+      return cons((meth, names), rest)
+
+    fixed_arities = find_fixed_arities(meths)
+    variable_arities = find_variable_arities(meths)
+    return make_each(meths)
+
+
 def exp_methods(exp):
-    return exp.cdr()
+    return decorate_with_varargs_names(exp.cdr())
 
 def sobj_methods(exp):
-    return exp.cdr()
+    return decorate_with_varargs_names(exp.cdr())
 
 def is_inline_meth(meth):
     return tagged_list(meth, inline_s)
@@ -313,7 +373,10 @@ def make_meth_entry(meth):
         return InlineMethEntry(make_label('inline_meth_entry'))
     return make_label('method-entry')
 
-def inline_meth_name(meth):
+def inline_meth_name(meth, arity):
+    return make_sig(inline_meth_base_name(meth), arity)
+
+def inline_meth_base_name(meth):
     x = meth.caddr()
     if pairp(x): return x.car()
     return x
@@ -323,13 +386,28 @@ def inline_meth_params(meth):
     if pairp(x): return x.cdr()
     return nil
 
-def meth_name(meth):
-    if is_inline_meth(meth): return inline_meth_name(meth)
+def inline_meth_arity(meth):
+    params = inline_meth_params(meth)
+    if pairp(params): return len(params)
+    return 0
+
+def make_sig(base, argc):
+    return S("%s:%s" % (base, argc))
+
+def meth_arity(meth):
+    if is_inline_meth(meth): return inline_meth_arity(meth)
+    return len(meth_params(meth))
+
+def meth_base_name(meth):
+    if is_inline_meth(meth): return inline_meth_base_name(meth)
     if not pairp(meth):
         raise CompileError(meth, 'method must be a list')
     if not pairp(meth.car()):
         raise CompileError(meth.car(), 'method signature must be a list')
     return meth.caar()
+
+def meth_name(meth, arity):
+    return make_sig(meth_base_name(meth), arity)
 
 def meth_params(meth):
     return meth.cdar()
@@ -412,13 +490,15 @@ def make_param_c_defines(params):
         return (make_c_undefine(name) +
                 '#define %s (%s) /* %s */\n' % (munge_sym_to_c(name), code, name))
     def help(code, params):
-        if params.nullp(): return ''
+        if params is nil: return ''
+        if symbolp(params): return ''
         return (make(carcode(code), params.car()) +
                 help(cdrcode(code), params.cdr()))
     return help('args', params)
 
 def make_param_c_undefines(params):
-    if params.nullp(): return ''
+    if params is nil: return ''
+    if symbolp(params): return ''
     return make_c_undefine(params.car()) + make_param_c_undefines(params.cdr())
 
 def compile_inline_meth_body(meth, entry, cenv):
@@ -446,8 +526,18 @@ def compile_inline(exp):
     seq.add_c_defs(exp.caddr())
     return seq
 
+class Indicator(object):
+    pass
+
+self_indicator = Indicator()
+
 def compile_application(exp, target, linkage, cenv, pop_all_symbol):
-    proc_code = compile(exp_object(exp), proc_r, next_s, cenv, pop_all_symbol)
+    proc = exp_object(exp)
+    if proc is self_indicator:
+      raise RuntimeError('xxx')
+      proc_code = empty_instruction_seq() # proc already has the right value
+    else:
+      proc_code = compile(exp_object(exp), proc_r, next_s, cenv, pop_all_symbol)
     message = exp_message(exp)
     operand_codes = exp_operands(exp).map(lambda operand: compile(operand, val_r, next_s, cenv, pop_all_symbol))
     return preserving((env_r, continue_r),
@@ -484,8 +574,15 @@ def extract_message(token):
     if token[0] in (':', '.'): return S(token[1:])
     return token
 
-run_s = S('run')
 def exp_message(exp):
+    base = exp_base_message(exp)
+    argc = len(exp_operands(exp))
+    normal = make_sig(base, argc)
+    if argc < MEC: return normal
+    return (normal, make_sig(base, '+'))
+
+run_s = S('run')
+def exp_base_message(exp):
     if not message_send(exp): return run_s
     if call_app(exp): return extract_message(exp.cadr())
     if send_app(exp): return run_s
@@ -822,10 +919,12 @@ def scan_out_xyz(exp):
     raise CompileError(exp, 'Unknown expression type in scan_out_xyz')
 
 def scan_out_xyz_obj(exp):
-    return foldl(set_merge, nil, exp_methods(exp).map(scan_out_xyz_method))
+    methods = [meth for meth, names in exp_methods(exp)]
+    return foldl(set_merge, nil, plist(*map(scan_out_xyz_method, methods)))
 
 def scan_out_xyz_sobj(exp):
-    return foldl(set_merge, nil, sobj_methods(exp).map(scan_out_xyz_method))
+    methods = [meth for meth, names in sobj_methods(exp)]
+    return foldl(set_merge, nil, plist(*map(scan_out_xyz_method, methods)))
 
 def memq(x, l):
     if l.nullp(): return False
