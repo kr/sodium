@@ -156,13 +156,11 @@ class Parser:
         '''
         unexpr: atom UNOP*
         '''
-        atom = self.__atom()
-
-        first = atom
+        expr = self.__atom()
         while self.peek == T.UNOP:
-            first = list(first, lx.S(self.match(T.UNOP)))
+            expr = list(expr, lx.S(self.match(T.UNOP)))
 
-        return first
+        return expr
 
     @record_pos_info
     def __atom(self, *extra):
