@@ -50,7 +50,12 @@ class cons:
         return cons(f(self.car()), self.cdr().map(f))
 
     def __len__(self):
-        return 1 + len(self.cdr())
+        cdr_len = 0
+        try:
+          cdr_len = len(self.cdr())
+        except:
+          pass
+        return 1 + cdr_len
 
     def len(self):
         return Integer(len(self))
