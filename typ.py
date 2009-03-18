@@ -19,13 +19,14 @@ def op_smod(f, *a): return objectify(operator.mod(f, a))
 class S(object):
     all = {}
     def __new__(clas, s):
-        if type(s) is S: return s
+        if isinstance(s, S): return s
+        if not isinstance(s, str): raise TypeError("can't intern non-string")
         if s not in clas.all:
             clas.all[s] = object.__new__(clas)
         return clas.all[s]
 
     def __init__(self, s):
-        if type(s) is str:
+        if isinstance(s, str):
             self.s = s
 
     def __str__(self): return self.s
