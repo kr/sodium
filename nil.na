@@ -19,5 +19,7 @@ def nil: sobj:
   (schedule f) 'ok
   (== x) (is? x nil)
   (assq name) '()
+  (length.): 0
+
 
 . '()

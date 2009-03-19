@@ -70,6 +70,16 @@ def array: sobj:
     return int2datum(datum_size(rcv));
   end
 
+  (car.): self.get 0
+
+  (cdr.):
+    def (make-cursor i):
+      if i >= self.length: return '()
+      obj:
+        (car.): self.get i
+        (cdr.): make-cursor i + 1
+    make-cursor 1
+
   (filter f):
     def rest ((self.cdr).filter f)
     ? (f (self.car)):
@@ -94,6 +104,17 @@ def array: sobj:
     ? (is? (self.car.car) name) (self.car) (self.cdr.assq name)
 
 def array-factory: sobj:
+  (run . args):
+      len = args.length
+      new = (array.make len)
+      i = 0
+      for x in args:
+        if i >= len: error "internal error"
+        new.put! i x
+        i = i + 1
+
+      new
+
   inline C (make size) <<end
     if (!intp(n_size)) die1("array.make -- not an int", n_size);
     return make_array(datum2int(n_size));

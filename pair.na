@@ -39,6 +39,8 @@ def pair: sobj:
     return cdr(rcv);
   end
 
+  (length.) 1 + self.cdr.length
+
   (filter f):
     def rest ((self.cdr).filter f)
     ? (f (self.car)):

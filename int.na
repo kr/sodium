@@ -24,6 +24,7 @@ def int: sobj:
   (== x) (is? (self.cmp x) 0)
   (> x) (is? (self.cmp x) 1)
   (< x) (is? (self.cmp x) -1)
+  (>= x) (self.cmp x) > -1
 
   inline C (+ b) <<end
     register long a, b, r;
