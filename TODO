@@ -39,7 +39,7 @@
 [ ] cond exprs
 [+] new import and export source transformations
 [+] re-arrange punctuation ops: use == for equality, and = for assignment
-[ ] let set! (aka =) implicitly define, without shadowing
+[+] let set! (aka =) implicitly define, without shadowing
 [ ] have set! return the new value
 [ ] make a bigint type for arbitrary precision
 [ ] (x y z) = 3-list

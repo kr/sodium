@@ -61,7 +61,7 @@ def compile(exp, target, linkage, cenv, pop_all_symbol, **kwargs):
     if tagged_list(exp, do_s): return compile_do(exp, target, linkage, cenv, pop_all_symbol)
     if tagged_list(exp, inline_s): return compile_inline(exp)
     if tagged_list(exp, return_s): return compile_return(exp, target, linkage, cenv, pop_all_symbol)
-    if tagged_list2(exp, assign_s): return compile(assign2setbang(exp), target, linkage, cenv, pop_all_symbol)
+    if tagged_list2(exp, assign_s): return compile(assign2prefix(exp, set__s), target, linkage, cenv, pop_all_symbol)
     if simple_macrop(exp): return compile(expand_simple_macros(exp),
             target, linkage, cenv, pop_all_symbol)
     if pairp(exp): return compile_application(exp, target, linkage, cenv, pop_all_symbol)
@@ -73,8 +73,8 @@ val_r = S('val')
 def compile_return(exp, target, linkage, cenv, pop_all_symbol):
   return compile(exp.cadr(), val_r, return_s, cenv, pop_all_symbol);
 
-def assign2setbang(exp):
-  return plist(set__s, exp.car(), exp.caddr())
+def assign2prefix(exp, tag):
+  return plist(tag, exp.car(), exp.caddr())
 
 def compile_shfn(exp, target, linkage, cenv, pop_all_symbol):
   return compile(shfn2fn(exp), target, linkage, cenv, pop_all_symbol)
@@ -115,7 +115,7 @@ def expand_sequence(seq, cenv):
     #  print 'old:', oseq
     #  print 'new:', seq
     if cenv is not nil:
-      return scan_out_defines(seq)
+      return scan_out_defines(seq, cenv)
     return seq
 
   except CompileError, err:
@@ -876,7 +876,7 @@ simple_macros = {
 
 unassigned_s = S(':unassigned:')
 q_unassigned_s = plist(quote_s, unassigned_s)
-def scan_out_defines(body):
+def scan_out_defines(body, cenv):
     def scan(body):
         if body.nullp(): return nil, nil, nil
         exp = body.car()
@@ -886,6 +886,17 @@ def scan_out_defines(body):
             val = definition_value(exp)
             set = plist(set__s, var, val)
             return cons(var, vars), cons(set, exps), cons(q_unassigned_s, voids)
+        if tagged_list2(exp, assign_s):
+            var = exp.car()
+            addr, tail = find_variable(var, cenv)
+            if addr is not_found_s:
+              exp = assign2prefix(exp, def_s)
+              val = definition_value(exp)
+              set = plist(set__s, var, val)
+              return cons(var, vars), cons(set, exps), cons(q_unassigned_s, voids)
+            else:
+              set = assign2prefix(exp, set__s)
+              return vars, cons(set, exps), voids
         else:
             return vars, cons(exp, exps), voids
     vars, exps, voids = scan(body)
