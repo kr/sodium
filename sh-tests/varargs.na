@@ -1,0 +1,33 @@
+def x: obj:
+  (run a . z):
+    pr a
+    pr z
+
+def y: obj:
+  (run . z):
+    pr z
+
+def (f a . z):
+  pr a
+  pr z
+
+def (g . z):
+  pr z
+
+def a: obj:
+  (run a . z):
+    pr a
+    def (f.): pr z
+    f.
+
+def b: obj:
+  (run . z):
+    def (f.): pr z
+    f.
+
+x 1 2 3
+y 1 2 3
+f 1 2 3
+g 1 2 3
+a 1 2 3
+b 1 2 3

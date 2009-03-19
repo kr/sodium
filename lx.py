@@ -159,7 +159,9 @@ def compile_quoted(exp, target, linkage, cenv, pop_all_symbol):
     return compile_literal(exp.cadr(), target, linkage, cenv, pop_all_symbol)
 
 def compile_variable(exp, target, linkage, cenv, pop_all_symbol):
-    addr = find_variable(exp, cenv)
+    addr, tail = find_variable(exp, cenv)
+    lookup = LEXICAL_LOOKUP
+    if tail: lookup = LEXICAL_LOOKUP_TAIL
     if addr is not_found_s:
         binop_pat = '^' + lexer.non_name_pat + '$'
         if re.match(binop_pat, str(exp)):
@@ -171,7 +173,7 @@ def compile_variable(exp, target, linkage, cenv, pop_all_symbol):
                 LOOKUP(target, global_r, exp)), pop_all_symbol)
     return end_with_linkage(linkage,
             make_ir_seq((env_r,), (target,),
-                LEXICAL_LOOKUP(target, addr)), pop_all_symbol)
+                lookup(target, addr)), pop_all_symbol)
 
 next_s = S('next')
 ok_s = S('ok')
@@ -179,7 +181,9 @@ def compile_assignment(exp, target, linkage, cenv, pop_all_symbol):
     var = exp.cadr()
     get_value_code = compile(exp.caddr(), val_r, next_s, cenv, pop_all_symbol,
             tag=var)
-    addr = find_variable(var, cenv)
+    addr, tail = find_variable(var, cenv)
+    setbang = LEXICAL_SETBANG
+    if tail: setbang = LEXICAL_SETBANG_TAIL
     if var is self_s:
         raise CompileError(exp, 'cannot assign to pseudo-variable %s' % var)
     if addr is not_found_s:
@@ -191,7 +195,7 @@ def compile_assignment(exp, target, linkage, cenv, pop_all_symbol):
     return end_with_linkage(linkage,
             preserving((env_r,), get_value_code,
                 make_ir_seq((env_r, val_r), (target,),
-                    LEXICAL_SETBANG(val_r, addr),
+                    setbang(val_r, addr),
                     LOAD_IMM(target, ok_s)), pop_all_symbol), pop_all_symbol)
 
 def compile_definition(exp, target, linkage, cenv, pop_all_symbol):
@@ -402,7 +406,9 @@ def make_sig(base, argc):
 
 def meth_arity(meth):
     if is_inline_meth(meth): return inline_meth_arity(meth)
-    return len(meth_params(meth))
+    params = meth_params(meth)
+    if pairp(params): return len(params)
+    return 0
 
 def meth_base_name(meth):
     if is_inline_meth(meth): return inline_meth_base_name(meth)
@@ -466,15 +472,20 @@ def make_c_undefine(name):
     return '#undef %s /* %s */\n' % (munge_sym_to_c(name), name)
 
 def make_lexical_c_defines(cenv):
-    def make_c_define(name, i, j):
-        p = munge_sym_to_c(name), i, j, name
+    def make_c_define(name, i, j, tail):
+        if tail:
+          tail = 1
+        else:
+          tail = 0
+        p = munge_sym_to_c(name), i, j, tail, name
         return (make_c_undefine(name) +
-                '#define %s (lexical_lookup(closure_env(rcv), %d, %d)) /* %s */\n' % p)
+                '#define %s (lexical_lookup(closure_env(rcv), %d, %d, %d)) /* %s */\n' % p)
     def help(i, env):
         def hhelp(j, names):
-            if names.nullp(): return ''
+            if names is nil: return ''
+            if symbolp(names): return make_c_define(names, i, j, True)
             name = names.car()
-            return make_c_define(name, i, j) + hhelp(j + 1, names.cdr())
+            return make_c_define(name, i, j, False) + hhelp(j + 1, names.cdr())
         if env.nullp(): return ''
         return hhelp(0, env.car()) + help(i + 1, env.cdr())
     return help(0, cenv)
@@ -497,7 +508,7 @@ def make_param_c_defines(params):
                 '#define %s (%s) /* %s */\n' % (munge_sym_to_c(name), code, name))
     def help(code, params):
         if params is nil: return ''
-        if symbolp(params): return ''
+        if symbolp(params): return make(code, params)
         return (make(carcode(code), params.car()) +
                 help(cdrcode(code), params.cdr()))
     return help('args', params)
@@ -733,15 +744,17 @@ def lexical_address_set(addr, env, val):
     return env.lexical_lookup(addr[0], addr[1], val)
 
 def find_variable(var, cenv):
-    def find(cframe, var):
-        for i, x in enumerate(cframe):
-            if var is x: return i
-        return -1
+    def find(cframe, var, i):
+        if cframe is var: return i, True
+        if not pairp(cframe): return None, False
+        if cframe.car() is var: return i, False
+        return find(cframe.cdr(), var, i + 1)
     def help(n, cenv):
-        if cenv.nullp(): return not_found_s
+        if cenv.nullp(): return not_found_s, False
         cframe = cenv.car()
-        if var in cframe:
-            return n, find(cframe, var)
+        ofs, tail = find(cframe, var, 0)
+        if ofs is not None:
+            return (n, ofs), tail
         return help(n + 1, cenv.cdr())
     return help(0, cenv)
 

@@ -44,7 +44,7 @@
 [ ] make a bigint type for arbitrary precision
 [ ] (x y z) = 3-list
 [+] overloading by number of args
-[ ] var args
+[+] var args
 [ ] fix handling of unassigned variables
 
 [ ] bootstrap

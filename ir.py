@@ -524,12 +524,20 @@ def CLOSURE_METHOD2(target_reg, obj_reg, name1, name2):
 
 lexical_lookup_s = S('LEXICAL_LOOKUP')
 lexical_setbang_s = S('LEXICAL_SETBANG')
+lexical_lookup_tail_s = S('LEXICAL_LOOKUP_TAIL')
+lexical_setbang_tail_s = S('LEXICAL_SETBANG_TAIL')
 def LEXICAL_LOOKUP(target_reg, addr):
     # env_r is implied
     return OP_RII(lexical_lookup_s, target_reg, addr[0], addr[1])
 def LEXICAL_SETBANG(val_reg, addr):
     # env_r is implied
     return OP_RII(lexical_setbang_s, val_reg, addr[0], addr[1])
+def LEXICAL_LOOKUP_TAIL(target_reg, addr):
+    # env_r is implied
+    return OP_RII(lexical_lookup_tail_s, target_reg, addr[0], addr[1])
+def LEXICAL_SETBANG_TAIL(val_reg, addr):
+    # env_r is implied
+    return OP_RII(lexical_setbang_tail_s, val_reg, addr[0], addr[1])
 
 # Three register, one list instructions
 
@@ -569,6 +577,8 @@ all_ops = (
     extend_environment_s,
     make_selfobj_s,
     closure_method2_s,
+    lexical_lookup_tail_s,
+    lexical_setbang_tail_s,
 )
 all_ops_dict = dict([(k,i) for i,k in enumerate(all_ops)])
 

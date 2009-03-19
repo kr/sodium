@@ -53,8 +53,8 @@
 #define OP_EXTEND_ENVIRONMENT 0x19
 #define OP_MAKE_SELFOBJ 0x1a
 #define OP_CLOSURE_METHOD2 0x1b
-#define OP_unused4 0x1c
-#define OP_unused5 0x1d
+#define OP_LEXICAL_LOOKUP_TAIL 0x1c
+#define OP_LEXICAL_SETBANG_TAIL 0x1d
 #define OP_unused6 0x1e
 #define OP_NOP2 0x1f
 
@@ -112,8 +112,8 @@ static char *instr_names[32] = {
     "OP_EXTEND_ENVIRONMENT",
     "OP_MAKE_SELFOBJ",
     "OP_CLOSURE_METHOD2",
-    "<unused4>",
-    "<unused5>",
+    "OP_LEXICAL_LOOKUP_TAIL",
+    "OP_LEXICAL_SETBANG_TAIL",
     "<unused6>",
     "OP_NOP2",
 };
@@ -263,29 +263,34 @@ lookup(datum env, datum name)
 }
 
 datum
-lexical_lookup(datum env, uint level, uint index)
+lexical_lookup(datum env, uint level, uint index, int tail)
 {
     datum cell;
 
     for (;level--;) env = cdr(env);
     cell = car(env);
     for (;index--;) cell = cdr(cell);
+    if (tail) return cell;
     return car(cell);
 }
 
 datum
-lexical_setbang(datum env, uint level, uint index, datum val)
+lexical_setbang(datum env, uint level, uint index, int tail, datum val)
 {
-    datum cell;
-
-    /*prfmt(1, "\n\n\nlexical_setbang(%p, %d, %d, %p)\n", env, level, index, val);*/
+    /*prfmt(1fdfc9d96950441dabc8e29ab380d2fc78a8b4798, "\n\n\nlexical_setbang(%p, %d, %d, %p)\n", env, level, index, val);*/
 
     for (;level--;) /*pr(env),*/ env = cdr(env);
     /*pr(env);*/
-    cell = car(env);
     /*pr(cell);*/
-    for (;index--;) cell = cdr(cell);
-    car(cell) = val;
+    if (tail) {
+        datum *mcel = &car(env);
+        for (;index--;) mcel = &cdr(*mcel);
+        *mcel = val;
+    } else {
+        datum cell = car(env);
+        for (;index--;) cell = cdr(cell);
+        car(cell) = val;
+    }
     return ok_sym;
 }
 
@@ -354,7 +359,8 @@ static void
 start(uint *start_addr)
 {
     register uint *pc, *tmp;
-    uint ra, rb, rc, rd, di, level, index;
+    uint ra, rb, rc, rd, di, level;
+    int index;
 
     /* save continue register */
     stack = cons(regs[R_CONTINUE], stack);
@@ -487,13 +493,25 @@ start(uint *start_addr)
                 ra = I_R(inst);
                 level = I_RI(inst);
                 index = I_RII(inst);
-                regs[ra] = lexical_lookup(regs[R_ENV], level, index);
+                regs[ra] = lexical_lookup(regs[R_ENV], level, index, 0);
                 break;
             case OP_LEXICAL_SETBANG:
                 ra = I_R(inst);
                 level = I_RI(inst);
                 index = I_RII(inst);
-                lexical_setbang(regs[R_ENV], level, index, regs[ra]);
+                lexical_setbang(regs[R_ENV], level, index, 0, regs[ra]);
+                break;
+            case OP_LEXICAL_LOOKUP_TAIL:
+                ra = I_R(inst);
+                level = I_RI(inst);
+                index = I_RII(inst);
+                regs[ra] = lexical_lookup(regs[R_ENV], level, index, 1);
+                break;
+            case OP_LEXICAL_SETBANG_TAIL:
+                ra = I_R(inst);
+                level = I_RI(inst);
+                index = I_RII(inst);
+                lexical_setbang(regs[R_ENV], level, index, 1, regs[ra]);
                 break;
             case OP_EXTEND_ENVIRONMENT:
                 ra = I_R(inst);
