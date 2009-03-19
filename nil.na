@@ -20,6 +20,7 @@ def nil: sobj:
   (== x) (is? x nil)
   (assq name) '()
   (length.): 0
+  (frozen.) self
 
 
 . '()

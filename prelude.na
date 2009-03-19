@@ -99,6 +99,7 @@ def (ensure try finally):
   try:run.wait+ success failure
 
 import array
+import tuple
 
 def (map f a):
   if (is? a '()): return a

@@ -93,4 +93,6 @@ def int: sobj:
     else:
       (upper.str) / (table lower)
 
+  (frozen.) self
+
 '()

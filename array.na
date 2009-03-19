@@ -103,6 +103,8 @@ def array: sobj:
   (assq name):
     ? (is? (self.car.car) name) (self.car) (self.cdr.assq name)
 
+  (frozen.): tuple.from (map [x.frozen] self)
+
 def array-factory: sobj:
   (run . args):
       len = args.length

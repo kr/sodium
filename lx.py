@@ -466,7 +466,7 @@ def compile_smeth_body(meth, meth_entry):
         compile_sequence(body, val_r, return_s, cenv, pop_all_symbol))
 
 def munge_sym_to_c(name):
-    return 'n_' + str(name).translate(maketrans('-*', '__'))
+    return 'n_' + str(name).translate(maketrans('-*!', '___'))
 
 def make_c_undefine(name):
     return '#undef %s /* %s */\n' % (munge_sym_to_c(name), name)

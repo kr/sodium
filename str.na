@@ -199,4 +199,6 @@ def str: sobj:
     return intern_str(rcv);
   end
 
+  (frozen.) self
+
 . '()

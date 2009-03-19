@@ -12,6 +12,7 @@ namodules := \
     re.na \
     str.na \
     symbol.na \
+    tuple.na \
 
 cmodules := vm.c mem.c gen.c prim.c
 sources := $(cmodules) index.c $(namodules:.na=.na.c)

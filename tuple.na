@@ -1,0 +1,108 @@
+
+inline C <<end
+#include "tuple.h"
+
+#define CLIP_LEN(l) ((l) & 0x0fffffff)
+
+datum
+make_tuple(uint len)
+{
+    datum p;
+
+    if (len < 1) return nil;
+    if (len != CLIP_LEN(len)) die("make_tuple -- too big");
+    p = make_record(len, mtab, nil, nil);
+    for (;--len;) p[len] = (size_t) nil;
+    return p;
+}
+
+datum
+tuple_get(datum arr, uint index)
+{
+    if (!tuplep(arr)) die1("tuple_get -- not an tuple", arr);
+    if (index >= datum_size(arr)) die("tuple_get -- index out of bounds");
+    return (datum) arr[index];
+}
+
+datum
+tuple_put(datum arr, uint index, datum val)
+{
+    if (!tuplep(arr)) die1("tuple_put -- not an tuple", arr);
+    if (index >= datum_size(arr)) die("tuple_put -- index out of bounds");
+    return (datum) (arr[index] = (size_t) val);
+}
+
+uint
+tuple_len(datum arr)
+{
+    return datum_size(arr);
+}
+
+int
+tuplep(datum x)
+{
+    return !(((size_t) x) & 1) && (((datum) x[-1]) == mtab);
+}
+
+end
+
+def tuple: sobj:
+  inline C (run i) <<end
+    int i;
+
+    if (!intp(n_i)) die1("tuple#get -- not an int", n_i);
+
+    i = datum2int(n_i);
+    return tuple_get(rcv, i);
+  end
+
+  inline C (length.) <<end
+    return int2datum(datum_size(rcv));
+  end
+
+  (filter f):
+    def rest ((self.cdr).filter f)
+    ? (f (self.car)):
+      cons (self.car) rest
+      . rest
+
+  (each f):
+    def (iter i):
+      if (i > self.length): return 'ok
+      if (i == self.length): return 'ok
+      f (self.get i)
+      iter (i + 1)
+    iter 0
+    . 'ok
+
+  (== p):
+    ? ((self.car) == (p.car)):
+      ? ((self.cdr) == (p.cdr)) true false
+      . false
+
+  (assq name):
+    ? (is? (self.car.car) name) (self.car) (self.cdr.assq name)
+
+def tuple-set!: obj:
+  inline C (run t i x) <<end
+    n_t[datum2int(n_i)] = (size_t) n_x;
+    return nil;
+  end
+
+def maker: obj:
+  inline C (make size) <<end
+    if (!intp(n_size)) die1("tuple.make -- not an int", n_size);
+    return make_tuple(datum2int(n_size));
+  end
+
+  (from container):
+    len = container.length
+    new = (maker.make len)
+    i = 0
+    for x in container:
+      if i > len: error "boo"
+      tuple-set! new i x
+      i = i + 1
+    new
+
+maker

@@ -1,0 +1,4 @@
+x = (tuple.make 3)
+
+# attempt some sort of setting... lame.
+x 1 "hi"

@@ -1,0 +1,13 @@
+x = (tuple.make 3)
+
+pr (x 1)
+
+y = (array.make 3)
+y.put! 1 "hi"
+
+pr (y.get 1)
+
+z = (tuple.from y)
+pr (z 1)
+zz = y.frozen
+pr (zz 1)
