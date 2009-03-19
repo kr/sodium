@@ -30,9 +30,10 @@ print >>outfd
 print >>outfd, '#include "lxc.h"'
 print >>outfd, '#include "index.h"'
 for module in modules:
-  module = tr(module, '/-.', '___')
+  #module = tr(module, '/-.', '___')
   if match('.*[^-_/A-Za-z0-9]', module): raise 'bad module name', module
-  print >>outfd, 'extern struct lxc_module lxc_module_%s;' % (module,)
+  #print >>outfd, 'extern struct lxc_module lxc_module_%s;' % (module,)
+  print >>outfd, '#include "%s.na.h"' % module
 
 print >>outfd
 

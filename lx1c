@@ -15,21 +15,25 @@ def basename(name):
 def read_file(n):
     return reader.read(open(n).read(), n)
 
-opts, args = getopt(sys.argv[1:], 'btco:', [
+opts, args = getopt(sys.argv[1:], 'btcho:', [
         'bare',
         'thunk',
         'generate-c',
+        'generate-h',
         'output=',
         ])
 
 infile = args[0]
 outfile = None
 gen_c = False
+gen_h = False
 use_thunk = True
 
 for opt, val in opts:
     if opt in ('--generate-c', '-c'):
         gen_c = True
+    if opt in ('--generate-h', '-h'):
+        gen_h = True
     elif opt in ('--thunk', '-t'):
         use_thunk = True
     elif opt in ('--bare', '-b'):
@@ -40,6 +44,8 @@ for opt, val in opts:
 if outfile is None:
   if gen_c:
     outfile = infile + '.c'
+  elif gen_h:
+    outfile = infile + '.h'
   else:
     outfile = infile + 'c'
 
@@ -61,6 +67,8 @@ try:
   if gen_c:
       if not outfile.endswith('.c'): raise 'bad output file name', outfile
       code.gen_c(basename(infile), outfd)
+  elif gen_h:
+      code.gen_h(basename(infile), outfd)
   else:
       code.assemble(outfd)
 except lx.CompileError, err:

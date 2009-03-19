@@ -41,6 +41,9 @@ index.c: $(namodules) bin/gen-mod-index
 %.na.c: %.na *.py lx1c
 	$(NAC) $(NAFLAGS) --generate-c $<
 
+%.na.h: %.na *.py lx1c
+	$(NAC) $(NAFLAGS) --generate-h $<
+
 # This one is special.
 prelude.na.c: export NAFLAGS += --bare
 
@@ -51,7 +54,7 @@ clean:
 	rm -f vm *.o core core.* gmon.out sh-tests/*.out *.d *.pyc
 	rm -f *.lxc ad-hoc-tests/*.lxc lib/*.lxc tests/*.lxc
 	rm -f *.nac ad-hoc-tests/*.nac lib/*.nac tests/*.nac
-	rm -f *.na.c index.c
+	rm -f *.na.h *.na.c index.c
 
 # .DELETE_ON_ERROR:
 .PHONY: all clean distclean reallyclean check
