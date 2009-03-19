@@ -1,0 +1,21 @@
+def o: obj:
+  (run x) 'a
+  (run x y) 'b
+  (run x y z . w) 'c
+  (run a b c d e f) 'd
+  (run a b c d e f g h i j . k) 'e
+  (run a b c d e f g h i j k l . m) 'f
+
+pr (o 1)
+pr (o 1 2)
+pr (o 1 2 3)
+pr (o 1 2 3 4)
+pr (o 1 2 3 4 5)
+pr (o 1 2 3 4 5 6)
+pr (o 1 2 3 4 5 6 7)
+pr (o 1 2 3 4 5 6 7 8)
+pr (o 1 2 3 4 5 6 7 8 9)
+pr (o 1 2 3 4 5 6 7 8 9 10)
+pr (o 1 2 3 4 5 6 7 8 9 10 11)
+pr (o 1 2 3 4 5 6 7 8 9 10 11 12)
+pr (o 1 2 3 4 5 6 7 8 9 10 11 12 13)

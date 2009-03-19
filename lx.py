@@ -335,6 +335,11 @@ def decorate_with_varargs_names(meths):
         return arities
 
     def make_each(ms):
+      def find_next_arity(this, arities):
+          arities = [x for x in arities if x > this]
+          if not arities: return MEC
+          return max(MEC, min(arities))
+
       if ms is nil: return nil
       meth = ms.car()
       rest = make_each(ms.cdr())
@@ -344,12 +349,13 @@ def decorate_with_varargs_names(meths):
         names = (meth_name(meth, meth_arity(meth)),)
       else:
         names = nil
-        arities = fixed_arities.get(meth_base_name(meth), ())
+        base = meth_base_name(meth)
         this_arity = meth_arity(meth)
-        for i in range(this_arity, max((MEC,) + arities)):
-          if i not in arities:
+        next_arity = find_next_arity(this_arity, variable_arities[base])
+        for i in range(this_arity, next_arity):
+          if i not in fixed_arities.get(base, ()):
             names = cons(meth_name(meth, i), names)
-        if this_arity == max(variable_arities[meth_base_name(meth)]):
+        if this_arity == max(variable_arities[base]):
           names = cons(meth_name(meth, '+'), names)
 
       return cons((meth, names), rest)
