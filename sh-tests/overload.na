@@ -1,10 +1,10 @@
 def o: obj:
-  (run x) 'a
-  (run x y) 'b
-  (run x y z . w) 'c
-  (run a b c d e f) 'd
-  (run a b c d e f g h i j . k) 'e
-  (run a b c d e f g h i j k l . m) 'f
+  (run a) 'one
+  (run a b) 'two
+  (run a b c . z) 'three
+  (run a b c d e f) 'six
+  (run a b c d e f g h i j . z) 'ten
+  (run a b c d e f g h i j k l . z) 'twelve
 
 pr (o 1)
 pr (o 1 2)
