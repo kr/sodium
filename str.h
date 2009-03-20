@@ -8,8 +8,6 @@ typedef struct str {
     char data[];
 } *str;
 
-void str_init();
-
 int strp(datum x);
 
 datum make_str(size_t size);

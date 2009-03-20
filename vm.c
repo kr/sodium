@@ -632,8 +632,6 @@ main(int argc, char **argv)
     if (argc != 2) usage();
 
     init_mem();
-    str_init();
-    bytes_init();
 
     link_builtins(lxc_modules);
 

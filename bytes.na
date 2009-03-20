@@ -5,14 +5,6 @@ inline C <<end
 #include "bytes.h"
 #include "prim.h"
 
-static datum percent_star_sym;
-
-void
-bytes_init()
-{
-    percent_star_sym = intern("%*");
-}
-
 /* Based on the table in Python's unicodeobject.c. */
 static char utf8_code_length[256] = {
     /* Map UTF-8 encoded prefix byte to sequence length. Zero means illegal
@@ -278,11 +270,7 @@ def bytes: sobj:
         (format (self 1) (a.car)) / ((self.tail 2).%* (a.cdr))
         (self.head i) / ((self.tail i).%* a)
 
-  inline C "%" <<end
-    regs[R_VM0] = rcv;
-    args = cons(args, nil);
-    return call(regs[R_VM0], percent_star_sym, args);
-  end
+  (% . a) self %* a
 
 def (to-str x):
   ? (inspect.same-type? x str):

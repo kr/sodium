@@ -8,14 +8,6 @@ inline C <<end
 #include "bytes.h"
 #include "prim.h"
 
-static datum percent_star_sym;
-
-void
-str_init()
-{
-    percent_star_sym = intern("%*:1");
-}
-
 int
 strp(datum x)
 {
@@ -187,11 +179,7 @@ def str: sobj:
       else:
         (self.head i) / ((self.tail i).%* a)
 
-  inline C (% . args) <<end
-    regs[R_VM0] = rcv;
-    args = cons(args, nil);
-    return call(regs[R_VM0], percent_star_sym, args);
-  end
+  (% . a): self %* a
 
   inline C (intern.) <<end
     return intern_str(rcv);
