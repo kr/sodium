@@ -202,6 +202,8 @@ gc(int c, ...)
                 np += (len + 3) / 4 + 2;
                 break;
             case DATUM_FORMAT_FZ:
+                np += len + 2;
+                break;
             case DATUM_FORMAT_RECORD:
             default:
 #if GC_DEBUG
