@@ -80,8 +80,7 @@ datum stack = nil;
 
 datum run_sym, ok_sym;
 
-static const size_t ime_mtab_body = 1;
-static const size_t *ime_mtab = &ime_mtab_body;
+const size_t ime_mtab_body = 1;
 
 static char *instr_names[32] = {
     "OP_NOP",
@@ -182,20 +181,9 @@ check_magic(int f)
     if (strncmp(magic, "\x89LX1\x0d\n\x1a\n", MAGIC_LEN) != 0) die("bad magic");
 }
 
-void
-nalink(uint *insts, uint inst_count,
-        size_t *str_offsets, size_t *ime_offsets, size_t *sym_offsets)
+static void
+link_syms(uint *insts, size_t *sym_offsets)
 {
-    insts[-1] = (size_t) module_mtab;
-
-    for (; *str_offsets; str_offsets++) {
-        insts[*str_offsets - 1] = (size_t) str_mtab;
-    }
-
-    for (; *ime_offsets; ime_offsets++) {
-        insts[*ime_offsets - 1] = (size_t) ime_mtab;
-    }
-
     for (; *sym_offsets; sym_offsets++) {
         size_t loc = *sym_offsets;
         loc += datum2int(insts[loc]); /* insts[loc] is pc-relative */
@@ -536,7 +524,7 @@ datum
 read_module_file(const char *name)
 {
     uint *insts;
-    size_t instr_count = 0, str_offset_count, ime_offsets = 0, sym_offset_count;
+    size_t instr_count = 0, str_offset_count, sym_offset_count;
     int f;
 
     f = open(name, O_RDONLY);
@@ -565,6 +553,7 @@ read_module_file(const char *name)
     if (!insts) die("cannot allocate instr offsets");
     insts += 2; /* skip over the descriptor and mtab */
     insts[-2] = ((instr_count << 5) | 0xf);
+    insts[-1] = (size_t) module_mtab;
 
     load_instrs(f, instr_count, insts);
 
@@ -575,20 +564,25 @@ read_module_file(const char *name)
             str_offsets[i] = read_int(f);
         }
         str_offsets[str_offset_count] = 0;
+        size_t *so = str_offsets;
 
-        sym_offset_count = read_int(f);
-        {
-            size_t sym_offsets[sym_offset_count + 1];
-            for (i = 0; i < sym_offset_count; i++) {
-                sym_offsets[i] = read_int(f);
-            }
-            sym_offsets[sym_offset_count] = 0;
-
-            nalink(insts, instr_count, str_offsets,
-                    &ime_offsets, sym_offsets);
+        for (; *so; so++) {
+            insts[*so - 1] = (size_t) str_mtab;
         }
-
     }
+
+    sym_offset_count = read_int(f);
+    {
+        size_t i, sym_offsets[sym_offset_count + 1];
+        for (i = 0; i < sym_offset_count; i++) {
+            sym_offsets[i] = read_int(f);
+        }
+        sym_offsets[sym_offset_count] = 0;
+
+
+        link_syms(insts, sym_offsets);
+    }
+
 
     return insts;
 }
@@ -627,10 +621,7 @@ void
 link_builtins(lxc_module *modp)
 {
     lxc_module mod;
-    while ((mod = *modp++)) {
-        nalink(mod->instrs, mod->instrs_count,
-                mod->str_offsets, mod->ime_offsets, mod->sym_offsets);
-    }
+    while ((mod = *modp++)) link_syms(mod->instrs, mod->sym_offsets);
 }
 
 int

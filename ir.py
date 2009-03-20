@@ -99,7 +99,7 @@ def encode_str(s):
     head = (
             BACKPTR(),
             ENCODED(make_desc(DATUM_FORMAT_EMB_OPAQUE, len(s)), comment='descriptor'),
-            ENCODED(0, comment='str mtab'),
+            PACKED('(size_t) str_mtab'),
            )
     padded = s + '\0' * (4 - len(s) % 4)
     groups = [''.join(reversed(xs)) for xs in zip(*[iter(padded)]*4)]
@@ -110,7 +110,7 @@ def encode_ime(ime):
     return ((
             BACKPTR(),
             ENCODED(make_desc(DATUM_FORMAT_EMB_OPAQUE, 4), comment='descriptor'),
-            ENCODED(0, comment='ime mtab'),
+            PACKED('(size_t) ime_mtab'),
             PACKED('((uint) %s)' % (ime.name,)),
            ), 3)
 
@@ -185,6 +185,8 @@ class make_ir_seq:
         print >>fd
         print >>fd, '#include "symbol.h"'
         print >>fd, '#include "vm.h"'
+        print >>fd, '#include "module.na.h"'
+        print >>fd, '#include "str.na.h"'
         print >>fd, '#include "%s.na.h"' % name
         print >>fd
 
@@ -196,29 +198,13 @@ class make_ir_seq:
         instrs_desc = make_desc(DATUM_FORMAT_OPAQUE, len(real_instrs) * 4)
         print >>fd, 'uint %s_instr_array[] = {' % (cname,)
         print >>fd, '    0x%x, /* %r */' % (instrs_desc, 'desc')
-        print >>fd, '    0x%x, /* %r */' % (0, 'mtab')
+        print >>fd, '    (size_t) module_mtab,'
         for c, s in enumerate(real_instrs):
             if symbolp(s): continue
             for l,k in the_labels:
                 if c == k: print >>fd, '    /* %s */' % (l,)
             packed = s.pack(c, labels, datums)
             print >>fd, '    %s, /* %r */' % (packed, s)
-        print >>fd, '};'
-
-        # str offsets
-        print >>fd, 'static uint str_offsets[] = {'
-        for d in datums:
-            if isinstance(d, String):
-                print >>fd, '    %d,' % (d.off,)
-        print >>fd, '    0,' # indicate the end of the list
-        print >>fd, '};'
-
-        # ime offsets
-        print >>fd, 'static uint ime_offsets[] = {'
-        for d in datums:
-            if isinstance(d, InlineMethEntry):
-                print >>fd, '    %d,' % (d.off,)
-        print >>fd, '    0,' # indicate the end of the list
         print >>fd, '};'
 
         # sym offsets
@@ -232,9 +218,6 @@ class make_ir_seq:
         print >>fd, 'struct lxc_module lxc_module_%s = {' % (cname,)
         print >>fd, '    "%s",' % (name,)
         print >>fd, '    %s_instrs,' % (cname,)
-        print >>fd, '    %d,' % (len(real_instrs),)
-        print >>fd, '    str_offsets,'
-        print >>fd, '    ime_offsets,'
         print >>fd, '    sym_offsets,'
         print >>fd, '};'
 
@@ -718,6 +701,9 @@ class PACKED(OP):
         OP.__init__(self, packed_op_s)
         self.packed = x
         self.comment = comment
+
+    def encode(self, index, labels, datums):
+        return pad(32)
 
     def pack(self, index, labels, datums):
         return self.packed

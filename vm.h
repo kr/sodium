@@ -46,4 +46,7 @@ extern datum run_sym, ok_sym;
 
 void bail(const char *m);
 
+extern const size_t ime_mtab_body;
+#define ime_mtab (&ime_mtab_body)
+
 #endif /*vm_h*/
