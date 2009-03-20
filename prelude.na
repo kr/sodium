@@ -3,7 +3,7 @@
 inline C <<end
 #include "bytes.h"
 #include "prim.h"
-#include "module.h"
+#include "module.na.h"
 end
 
 def false '()

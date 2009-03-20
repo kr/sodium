@@ -17,11 +17,11 @@
 #include "pair.h"
 #include "array.h"
 #include "bytes.h"
-#include "module.h"
+#include "module.na.h"
 #include "prelude.h"
 #include "str.h"
+#include "str.na.h"
 #include "nil.h"
-#include "int.h"
 #include "config.h"
 #include "index.h"
 

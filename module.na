@@ -6,8 +6,6 @@ inline C <<end
 #include "bytes.h"
 #include "index.h"
 
-const datum module_mtab = mtab;
-
 static datum
 find_builtin_module(datum name)
 {

@@ -8,8 +8,6 @@ inline C <<end
 #include "bytes.h"
 #include "prim.h"
 
-const datum str_mtab = mtab;
-
 static datum percent_star_sym;
 
 void

@@ -8,8 +8,6 @@ inline C <<end
 
 #define bigint(x) (prfmt(1, "%u\n", (x)), die1("no bigints yet", nil))
 
-const datum int_mtab = mtab;
-
 end
 
 def int: sobj:

@@ -5,7 +5,7 @@
 #include "mem.h"
 #include "vm.h"
 #include "prim.h"
-#include "int.h"
+#include "int.na.h"
 #include "symbol.h"
 #include "config.h"
 
