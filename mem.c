@@ -143,6 +143,7 @@ static void
 gc(int c, ...)
 {
     int i, live = 0;
+    int scanned_finalizers = 0;
     datum np, fzp, *fz_prev;
     datum old_become_a, old_become_b, dp;
     va_list ap;
@@ -193,46 +194,52 @@ gc(int c, ...)
 
     np = free_chunks;
     while (np < &free_chunks[free_index]) {
-        ++live;
-        datum p = np + 2;
-        size_t descr = *np, len = datum_desc_len(descr);
-        relocate(np + 1); /* relocate the method table pointer */
-        switch (datum_desc_format(descr)) {
-            case DATUM_FORMAT_OPAQUE:
-                np += (len + 3) / 4 + 2;
-                break;
-            case DATUM_FORMAT_FZ:
-                np += len + 2;
-                break;
-            case DATUM_FORMAT_RECORD:
-            default:
+        while (np < &free_chunks[free_index]) {
+            ++live;
+            datum p = np + 2;
+            size_t descr = *np, len = datum_desc_len(descr);
+            relocate(np + 1); /* relocate the method table pointer */
+            switch (datum_desc_format(descr)) {
+                case DATUM_FORMAT_OPAQUE:
+                    np += (len + 3) / 4 + 2;
+                    break;
+                case DATUM_FORMAT_FZ:
+                    np += len + 2;
+                    break;
+                case DATUM_FORMAT_RECORD:
+                default:
 #if GC_DEBUG
-                prdesc("scanning", descr);
+                    prdesc("scanning", descr);
 #endif
-                np += len + 2;
-                while (p < np) relocate(p++);
+                    np += len + 2;
+                    while (p < np) relocate(p++);
+            }
+        }
+
+        if (!scanned_finalizers) {
+            /* Now process the finalizer list. For each entry:
+             *  - if the object survived, update the finalizer's pointer
+             *  - else, call the free function and remove the finalizer
+             */
+            fz_prev = &fz_list;
+            for (fzp = fz_list; fzp != nil; fzp = ((datum *)fzp)[1]) {
+                datum p = ((datum *) fzp)[2];
+                if (datum_desc_format(p[-2]) == DATUM_FORMAT_BROKEN_HEART) {
+                    ((datum *) fzp)[2] = (datum) *p;
+                    fz_prev = (datum *) (fzp + 2); /* update the prev pointer */
+                } else {
+                    ((na_fn_free) fzp[0])(p);
+                    *fz_prev = (datum) fzp[1]; /* remove fzp from the list */
+                }
+            }
+
+            scanned_finalizers = 1;
         }
     }
 
     old_chunks = busy_chunks;
     busy_chunks = free_chunks;
     if (free_index >= HEAP_SIZE) die("gc -- no progress");
-
-    /* Now process the finalizer list. For each entry:
-     *  - if the object survived, update the finalizer's pointer
-     *  - else, call the free function and remove the finalizer
-     */
-    fz_prev = &fz_list;
-    for (fzp = fz_list; fzp != nil; fzp = ((datum *)fzp)[1]) {
-        datum p = ((datum *) fzp)[2];
-        if (datum_desc_format(p[-2]) == DATUM_FORMAT_BROKEN_HEART) {
-            ((datum *) fzp)[2] = (datum) *p;
-            fz_prev = (datum *) (fzp + 2); /* update the prev pointer */
-        } else {
-            ((na_fn_free) fzp[0])(p);
-            *fz_prev = (datum) fzp[1]; /* remove fzp from the list */
-        }
-    }
 
     free(old_chunks);
     old_chunks = 0;
