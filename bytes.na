@@ -109,7 +109,7 @@ err:
 datum
 make_bytes(uint size)
 {
-    return make_opaque(size, mtab);
+    return make_opaque(size, bytes_mtab);
 }
 
 datum
@@ -153,7 +153,7 @@ bytes_contents(datum bytes)
 int
 bytesp(datum x)
 {
-    return (!(((size_t) x) & 1)) && (((datum) x[-1]) == mtab);
+    return (!(((size_t) x) & 1)) && (((datum) x[-1]) == bytes_mtab);
 }
 
 end

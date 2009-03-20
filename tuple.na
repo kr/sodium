@@ -11,7 +11,7 @@ make_tuple(uint len)
 
     if (len < 1) return nil;
     if (len != CLIP_LEN(len)) die("make_tuple -- too big");
-    p = make_record(len, mtab, nil, nil);
+    p = make_record(len, tuple_mtab, nil, nil);
     for (;--len;) p[len] = (size_t) nil;
     return p;
 }
@@ -41,7 +41,7 @@ tuple_len(datum arr)
 int
 tuplep(datum x)
 {
-    return !(((size_t) x) & 1) && (((datum) x[-1]) == mtab);
+    return !(((size_t) x) & 1) && (((datum) x[-1]) == tuple_mtab);
 }
 
 end

@@ -1,15 +1,8 @@
 inline C <<end
-struct nil_struct nil_s;
-
-void
-nil_init()
-{
-    datum t;
-
-    t = make_opaque(0, mtab);
-    nil[-2] = t[-2];
-    nil[-1] = t[-1];
-}
+struct nil_struct nil_s = {
+    15, /* len 0; type DATUM_FORMAT_OPAQUE */
+    nil_mtab,
+};
 end
 
 def nil: sobj:

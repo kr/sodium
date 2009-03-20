@@ -45,4 +45,15 @@ int broken_heartp(datum x);
 
 void become(datum *a, datum *b, int keep_b);
 
+#define make_desc(format,len) ((size_t) (((len) << 4) | ((format) & 0xf)))
+
+#define DATUM_FORMAT_RECORD 1
+#define DATUM_FORMAT_BROKEN_HEART 3
+#define DATUM_FORMAT_BACKPTR 5
+#define DATUM_FORMAT_EMB_OPAQUE 7
+#define DATUM_FORMAT_unused9 9
+#define DATUM_FORMAT_unused11 11
+#define DATUM_FORMAT_FZ 13
+#define DATUM_FORMAT_OPAQUE 15
+
 #endif /*mem_h*/

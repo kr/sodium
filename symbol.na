@@ -82,7 +82,7 @@ store(symbol ent)
 static datum
 make_symbol(size_t len, const char *name)
 {
-    return make_record_permanent(2, mtab, nil,
+    return make_record_permanent(2, symbol_mtab, nil,
             make_str_init_permanent(len, name));
 }
 
@@ -139,7 +139,7 @@ symbolp(datum x)
 {
     return (!(((size_t)x)&1) &&
             (datum_size(x) == 2) &&
-            ((datum) x[-1]) == mtab);
+            ((datum) x[-1]) == symbol_mtab);
 }
 
 size_t

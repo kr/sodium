@@ -5,7 +5,7 @@ inline C <<end
 datum
 cons(datum x, datum y)
 {
-    return make_record(2, mtab, x, y);
+    return make_record(2, pair_mtab, x, y);
 }
 
 inline pair
@@ -20,7 +20,7 @@ pairp(datum x)
 {
     return (!(((size_t) x) & 1)) &&
         (datum_size(x) == 2) &&
-        (((datum) x[-1]) == mtab);
+        (((datum) x[-1]) == pair_mtab);
 }
 
 end

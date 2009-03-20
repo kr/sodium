@@ -14,7 +14,7 @@ make_pbox(void *p, void (*fn)(void *))
 {
     datum pbox;
 
-    pbox = make_opaque(sizeof(void *) * 2, mtab);
+    pbox = make_opaque(sizeof(void *) * 2, pbox_mtab);
     pbox[0] = (size_t) p;
     pbox[1] = (size_t) fn;
     if (fn) install_fz(&pbox, &pbox_free);

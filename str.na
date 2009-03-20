@@ -19,13 +19,13 @@ str_init()
 int
 strp(datum x)
 {
-    return !(((size_t)x)&1) && ((datum) x[-1]) == mtab;
+    return !(((size_t)x)&1) && ((datum) x[-1]) == str_mtab;
 }
 
 datum
 make_str(size_t size)
 {
-    return make_opaque(size, mtab);
+    return make_opaque(size, str_mtab);
 }
 
 datum
@@ -39,7 +39,7 @@ make_str_init(size_t size, const char *bytes)
 datum
 make_str_init_permanent(size_t size, const char *bytes)
 {
-    datum s = make_opaque_permanent(size, mtab);
+    datum s = make_opaque_permanent(size, str_mtab);
     memcpy(s, bytes, size);
     return (datum) s;
 }
@@ -82,7 +82,7 @@ def str: sobj:
     copy_str_contents(s1, rcv, az);
     copy_str_contents(s2, n_x, bz);
 
-    s = make_opaque(az + bz, mtab);
+    s = make_opaque(az + bz, str_mtab);
     memcpy(s, s1, az);
     memcpy(((char *) s) + az, s2, bz);
 

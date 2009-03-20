@@ -641,7 +641,6 @@ main(int argc, char **argv)
     if (argc != 2) usage();
 
     init_mem();
-    nil_init();
     str_init();
     bytes_init();
 

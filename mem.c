@@ -36,12 +36,6 @@ init_mem(void)
     free_index = 0;
 }
 
-static inline size_t
-make_desc(char format, size_t len)
-{
-    return (len << 4) | (format & 0xf);
-}
-
 static inline char
 datum_desc_format(size_t desc)
 {
@@ -53,15 +47,6 @@ datum_desc_len(size_t desc)
 {
     return desc >> 4;
 }
-
-#define DATUM_FORMAT_RECORD 1
-#define DATUM_FORMAT_BROKEN_HEART 3
-#define DATUM_FORMAT_BACKPTR 5
-#define DATUM_FORMAT_EMB_OPAQUE 7
-#define DATUM_FORMAT_unused9 9
-#define DATUM_FORMAT_unused11 11
-#define DATUM_FORMAT_FZ 13
-#define DATUM_FORMAT_OPAQUE 15
 
 #if GC_DEBUG
 static const char *datum_types[] = {

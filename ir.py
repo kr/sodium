@@ -167,10 +167,12 @@ class make_ir_seq:
 
         print >>fd, '#include "lxc.h"'
         print >>fd, 'extern struct lxc_module lxc_module_%s;' % (cname,)
+        print >>fd, 'extern uint %s_instr_array[];' % (cname,)
+        print >>fd, '#define %s_instrs (%s_instr_array + 2)' % (cname, cname)
 
         mtab_offset = self.find_mtab_offset(S(cname), real_instrs)
         if mtab_offset:
-            print >>fd, ('#define %s_mtab (lxc_module_%s.instrs + %s)' %
+            print >>fd, ('#define %s_mtab (%s_instrs + %s)' %
                     (cname, cname, mtab_offset))
 
         print >>fd, '#endif /* %s_na_h */' % cname
@@ -185,12 +187,6 @@ class make_ir_seq:
         print >>fd, '#include "vm.h"'
         print >>fd, '#include "%s.na.h"' % name
         print >>fd
-        print >>fd, 'static uint instr_array[];'
-        print >>fd, '#define lxc_module_instr_array (instr_array + 2)'
-
-        mtab_offset = self.find_mtab_offset(S(cname), real_instrs)
-        if mtab_offset:
-            print >>fd, '#define mtab (lxc_module_instr_array + %s)' % mtab_offset
 
         # inline code
         for c_def in self.c_defs:
@@ -198,7 +194,7 @@ class make_ir_seq:
 
         # instrs
         instrs_desc = make_desc(DATUM_FORMAT_OPAQUE, len(real_instrs) * 4)
-        print >>fd, 'static uint instr_array[] = {'
+        print >>fd, 'uint %s_instr_array[] = {' % (cname,)
         print >>fd, '    0x%x, /* %r */' % (instrs_desc, 'desc')
         print >>fd, '    0x%x, /* %r */' % (0, 'mtab')
         for c, s in enumerate(real_instrs):
@@ -235,7 +231,7 @@ class make_ir_seq:
         print >>fd
         print >>fd, 'struct lxc_module lxc_module_%s = {' % (cname,)
         print >>fd, '    "%s",' % (name,)
-        print >>fd, '    lxc_module_instr_array,'
+        print >>fd, '    %s_instrs,' % (cname,)
         print >>fd, '    %d,' % (len(real_instrs),)
         print >>fd, '    str_offsets,'
         print >>fd, '    ime_offsets,'
