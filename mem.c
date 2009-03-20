@@ -315,6 +315,8 @@ install_fz(datum *x, na_fn_free fn)
 {
     datum fz;
 
+    if (intp(*x)) return;
+
     regs[R_GC0] = *x;
     fz = dalloc(&busy_chunks, &free_index,
                 DATUM_FORMAT_FZ, 4, nil, (datum) fn, fz_list);
