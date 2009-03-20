@@ -539,8 +539,10 @@ def compile_inline_meth_body(meth, entry, cenv):
     return seq
 
 def compile_inline(exp):
+    body = exp.caddr()
+    c_def = '#line %d "%s"\n%s' % (body.pos[1], body.pos[0], body)
     seq = empty_instruction_seq()
-    seq.add_c_defs(exp.caddr())
+    seq.add_c_defs(c_def)
     return seq
 
 class Indicator(object):
