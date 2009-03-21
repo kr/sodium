@@ -1,0 +1,18 @@
+#register-finalizer 'finalize: obj: (finalize.): pr 'finalized
+
+import fin f
+
+def x (f.)
+
+def (dec n):
+    if n < 1: return 'ok
+    dec n - 1
+
+pr 'a
+dec 40000
+pr 'b
+x = '()
+dec 40000
+pr 'c
+dec 40000
+pr 'd

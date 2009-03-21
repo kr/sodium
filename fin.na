@@ -8,7 +8,7 @@ static void
 fin_test_fn(void *i)
 {
     if (i == (void *) 3) {
-        prfmt(1, "success\n");
+        prfmt(1, "finalized\n");
     } else {
         prfmt(1, "FAIL %p\n", i);
     }

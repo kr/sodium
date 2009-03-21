@@ -205,6 +205,8 @@ gc(int c, ...)
                     break;
                 case DATUM_FORMAT_FZ:
                     np += len + 2;
+                    //relocate(p);
+                    relocate(p + 1);
                     break;
                 case DATUM_FORMAT_RECORD:
                 default:
@@ -219,17 +221,21 @@ gc(int c, ...)
         if (!scanned_finalizers) {
             /* Now process the finalizer list. For each entry:
              *  - if the object survived, update the finalizer's pointer
-             *  - else, call the free function and remove the finalizer
+             *  - else, if the object has been finalized, lose it
+             *  - else, relocate the object and put it on death row
              */
             fz_prev = &fz_list;
             for (fzp = fz_list; fzp != nil; fzp = ((datum *)fzp)[1]) {
                 datum p = ((datum *) fzp)[2];
                 if (datum_desc_format(p[-2]) == DATUM_FORMAT_BROKEN_HEART) {
-                    ((datum *) fzp)[2] = (datum) *p;
-                    fz_prev = (datum *) (fzp + 2); /* update the prev pointer */
-                } else {
-                    ((na_fn_free) fzp[0])(p);
+                    relocate(fzp + 2);
+                    fz_prev = (datum *) fzp + 2; /* update the prev pointer */
+                } else if (fzp[3] == (size_t) int2datum(2)) {
                     *fz_prev = (datum) fzp[1]; /* remove fzp from the list */
+                } else {
+                    relocate(fzp + 2);
+                    fzp[3] = (size_t) int2datum(1);
+                    fz_prev = (datum *) fzp + 2; /* update the prev pointer */
                 }
             }
 
@@ -250,6 +256,15 @@ gc(int c, ...)
 
     gc_in_progress = 0;
     become_a = become_b = nil;
+
+    /* Call x.finalize for each x in death row. */
+    for (fzp = fz_list; fzp != nil; fzp = ((datum *)fzp)[1]) {
+        datum p = (datum) fzp[2];
+        if (fzp[3] != (size_t) int2datum(1)) continue; /* not on death row */
+
+        ((na_fn_free) fzp[0])(p);
+        fzp[3] = (size_t) int2datum(2);
+    }
 }
 
 static datum
@@ -321,7 +336,7 @@ install_fz(datum *x, na_fn_free fn)
     fz = dalloc(&busy_chunks, &free_index,
                 DATUM_FORMAT_FZ, 4, nil, (datum) fn, fz_list);
     fz[2] = ((size_t) (*x = regs[R_GC0]));
-    fz[3] = (size_t) nil;
+    fz[3] = (size_t) int2datum(0);
     regs[R_GC0] = nil;
     fz_list = fz;
 }
