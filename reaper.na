@@ -1,8 +1,8 @@
 def reaper: sobj:
   (run.):
       if (is? self.state 'dead):
-        self.object.finalize
         self.set-state 'finalized
+        self.object.finalize # this may re-register the object
 
   (find.):
       if (is? self.state 'dead): return self
