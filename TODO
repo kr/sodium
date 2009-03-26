@@ -1,58 +1,29 @@
-[+] garbage collect strings
-[+] garbage collect vectors
-[+] generalized array notation output: (a . b . c . d)
-[+] modules
-[+] convert stuff from prim.c into mixed LX/C modules where possible
-[+] flesh out int methods
-[+] fix lexing of quoted strings
-[+] broken promises
-[+] C function pointers are not datums -- treat them accordingly
-[+] fix finalization
-[+] fix return linkage for the "call" function
-[+] use become() in C prepare methods
-[+] map out and fix type names in vm and language (e.g. pair, obj, etc.)
-[+] fix line numbers in generated C files
-[+] generate C macros for sodium variable access
-[+] simple sh testing
-[+] better error reporting in the compiler
-[+] new grammar
-[+] proper (unicode) string and bytes types
+[ ] change free index to a free pointer
+[ ] load/store word/half-word/byte instrs
+[ ] redo OP_MAKE_CLOSURE and OP_MAKE_SELFOBJ interms of store instrs
+[ ] ensure that the continue register always points to a referencable spot
+[ ] inline assembly notation
+[ ] convert inline C to inline assembly where possible
+[ ] remove DATUM_FORMAT_FZ
 [ ] proper file i/o
 [ ] move bytecode loading into sodium code
+
 [ ] add debugging info to byte code files
 [ ] exceptions
-[+] macros
-[+] macro: if/elif/else
-[+] macro: for
 [ ] macro: try/catch/ensure
-[+] return expr
 [ ] unit testing
 [ ] change name to "sodium"
 [ ] flesh out str methods
 [ ] flesh out other primitive type methods
-[+] Make input "x:y" or "x.y" lex as 2 tokens
-[+] Lex with maximum munch rather than a priority order
-[+] change single-expr stmt form from "ex ." to ". ex"
-[+] allow chaining of indentation tokens "f : g : EOL INDENT ... DEDENT"
-[+] square brackets for super-shorthand lambda exprs
-[+] rename "begin" to "do"
 [ ] cond exprs
-[+] new import and export source transformations
-[+] re-arrange punctuation ops: use == for equality, and = for assignment
-[+] let set! (aka =) implicitly define, without shadowing
 [ ] have set! return the new value
 [ ] make a bigint type for arbitrary precision
 [ ] (x y z) = 3-list
-[+] overloading by number of args
-[+] var args
 [ ] fix handling of unassigned variables
 
 [ ] bootstrap
 [ ] repl
-[ ] inline bytecode notation
-[ ] reimplement CISCy operations (e.g. variable lookup, call) in bytecode
+[ ] reimplement remaining CISCy operations in bytecode
 [ ] JIT
 [ ] PIC optimization
 [ ] lexer macros
-
-[+] redesign punctuation messages
