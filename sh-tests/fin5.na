@@ -1,0 +1,28 @@
+import reaper
+
+def x: obj:
+  (finalize.):
+    pr 'finalizedx
+    reaper.register y
+    y = '()
+    dec 40000
+    pr 'xa
+
+def y: obj:
+  (finalize.):
+    pr 'finalizedy
+
+reaper.register x
+
+def (dec n):
+    if n < 1: return 'ok
+    dec n - 1
+
+pr 'a
+dec 40000
+pr 'b
+x = '()
+dec 40000
+pr 'c
+dec 40000
+pr 'd

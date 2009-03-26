@@ -1,8 +1,16 @@
 import reaper
 
-def x: obj: (finalize.): pr 'finalized
+def x: obj:
+  (finalize.):
+    pr 'finalizedx
+    y = '()
+
+def y: obj:
+  (finalize.):
+    pr 'finalizedy
 
 reaper.register x
+reaper.register y
 
 def (dec n):
     if n < 1: return 'ok

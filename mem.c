@@ -6,6 +6,7 @@
 #include "vm.h"
 #include "prim.h"
 #include "int.na.h"
+#include "reaper.na.h"
 #include "symbol.h"
 #include "config.h"
 
@@ -18,8 +19,26 @@
                               ((x) < &old_chunks[HEAP_SIZE]))
 #define in_chunk_range(x) (in_busy_chunk_range(x) || in_old_chunk_range(x))
 
-int gc_in_progress = 0, become_keep_b = 0;
-datum perm_busy_chunks, busy_chunks, old_chunks, fz_list = nil;
+int gc_in_progress = 0, fin_in_progress = 0, become_keep_b = 0;
+
+struct fz_head_struct {
+    size_t desc;
+    datum mtab;
+    datum object;
+    datum cdr;
+    datum state;
+};
+
+struct fz_head_struct fz_head = {
+    make_desc(DATUM_FORMAT_FZ, 3),
+    reaper_mtab,
+    nil, /* object */
+    nil, /* cdr */
+    nil, /* state */
+};
+
+datum perm_busy_chunks, busy_chunks, old_chunks,
+      fz_list = (datum) &fz_head.object;
 static datum free_chunks;
 static size_t perm_free_index = 0, free_index = 0, scan_index = 0;
 static datum become_a = nil, become_b = nil;
@@ -139,14 +158,44 @@ relocate(datum refloc)
     }
 }
 
+static datum saved_stack = 0, saved_x1 = 0, saved_x2 = 0,
+             saved_regs[REG_COUNT] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+
 static void
-gc(int c, ...)
+save_regs(datum x1, datum x2)
+{
+    int i;
+
+    saved_stack = stack;
+    for (i = 0; i < REG_COUNT; i++) {
+        saved_regs[i] = regs[i];
+    }
+    saved_x1 = x1;
+    saved_x2 = x2;
+}
+
+static void
+restore_regs(datum *x1, datum *x2)
+{
+    int i;
+
+    stack = saved_stack;
+    saved_stack = 0;
+    for (i = 0; i < REG_COUNT; i++) {
+        regs[i] = saved_regs[i];
+        saved_regs[i] = 0;
+    }
+    *x1 = saved_x1;
+    *x2 = saved_x2;
+}
+
+static void
+gc(datum *x1, datum *x2)
 {
     int i, live = 0;
     int scanned_finalizers = 0;
-    datum np, fzp, *fz_prev;
-    datum old_become_a, old_become_b, dp;
-    va_list ap;
+    datum np, fzp;
+    datum old_become_a, old_become_b;
 
     if (gc_in_progress) die("ran out of memory during GC");
     gc_in_progress = 1;
@@ -179,16 +228,19 @@ gc(int c, ...)
     relocate((datum) &stack);
     relocate((datum) &genv);
     relocate((datum) &symbols);
-    relocate((datum) &fz_list);
-    va_start(ap, c);
-    for (; c; --c) {
-        dp = va_arg(ap, datum);
-        relocate(dp);
-    }
-    va_end(ap);
+    relocate((datum) (fz_list + 1));
+    relocate((datum) x1);
+    relocate((datum) x2);
     for (i = 0; i < REG_COUNT; ++i) {
         relocate((datum) &regs[i]);
     }
+
+    relocate((datum) &saved_stack);
+    for (i = 0; i < REG_COUNT; ++i) {
+        relocate((datum) saved_regs + i);
+    }
+    relocate((datum) &saved_x1);
+    relocate((datum) &saved_x2);
 
     scan_index = 0;
 
@@ -220,23 +272,15 @@ gc(int c, ...)
 
         if (!scanned_finalizers) {
             /* Now process the finalizer list. For each entry:
-             *  - if the object survived, update the finalizer's pointer
-             *  - else, if the object has been finalized, lose it
-             *  - else, relocate the object and put it on death row
+             *  - if the object died, set fzp's state to 'dead
+             *  - relocate the object
              */
-            fz_prev = &fz_list;
-            for (fzp = fz_list; fzp != nil; fzp = ((datum *)fzp)[1]) {
-                datum p = ((datum *) fzp)[2];
-                if (datum_desc_format(p[-2]) == DATUM_FORMAT_BROKEN_HEART) {
-                    relocate(fzp + 2);
-                    fz_prev = (datum *) fzp + 2; /* update the prev pointer */
-                } else if (fzp[3] == (size_t) int2datum(2)) {
-                    *fz_prev = (datum) fzp[1]; /* remove fzp from the list */
-                } else {
-                    relocate(fzp + 2);
-                    fzp[3] = (size_t) int2datum(1);
-                    fz_prev = (datum *) fzp + 2; /* update the prev pointer */
+            for (fzp = fz_list; fzp != nil; fzp = (datum) fzp[1]) {
+                datum p = (datum) fzp[0];
+                if (datum_desc_format(p[-2]) != DATUM_FORMAT_BROKEN_HEART) {
+                    if (fzp[2] == (size_t) live_sym) fzp[2] = (size_t) dead_sym;
                 }
+                relocate(fzp);
             }
 
             scanned_finalizers = 1;
@@ -257,13 +301,13 @@ gc(int c, ...)
     gc_in_progress = 0;
     become_a = become_b = nil;
 
-    /* Call x.finalize for each x in death row. */
-    for (fzp = fz_list; fzp != nil; fzp = ((datum *)fzp)[1]) {
-        datum p = (datum) fzp[2];
-        if (fzp[3] != (size_t) int2datum(1)) continue; /* not on death row */
-
-        ((na_fn_free) fzp[0])(p);
-        fzp[3] = (size_t) int2datum(2);
+    /* Call x.finalize for each dead x. */
+    if (!fin_in_progress) {
+        fin_in_progress = 1;
+        save_regs(*x1, *x2);
+        call(fz_list, reap0_sym, nil);
+        restore_regs(x1, x2);
+        fin_in_progress = 0;
     }
 }
 
@@ -278,7 +322,7 @@ dalloc(size_t **base, size_t *free,
         delta = (len + 3 / 4) + 2;
     }
 
-    if ((*free + delta) >= HEAP_SIZE) gc(2, &x, &y);
+    if ((*free + delta) >= HEAP_SIZE) gc(&x, &y);
     if ((*free + delta) >= HEAP_SIZE) die("dalloc -- OOM after gc");
     p = *base + *free;
     *p = make_desc(type, len);
@@ -321,24 +365,21 @@ become(datum *a, datum *b, int keep_b)
     become_a = *a;
     become_b = *b;
     become_keep_b = keep_b;
-    gc(2, a, b);
+    gc(a, b);
 }
 
 /* Note: *x must be the only pointer to x */
 void
-install_fz(datum *x, na_fn_free fn)
+install_fz(datum *x)
 {
     datum fz;
 
     if (intp(*x)) return;
 
-    regs[R_GC0] = *x;
-    fz = dalloc(&busy_chunks, &free_index,
-                DATUM_FORMAT_FZ, 4, nil, (datum) fn, fz_list);
-    fz[2] = ((size_t) (*x = regs[R_GC0]));
-    fz[3] = (size_t) int2datum(0);
-    regs[R_GC0] = nil;
-    fz_list = fz;
+    fz = dalloc(&busy_chunks, &free_index, DATUM_FORMAT_FZ, 3,
+            reaper_mtab, (datum) *x, (datum) fz_list[1]);
+    fz[2] = (size_t) live_sym;
+    fz_list[1] = (size_t) fz;
 }
 
 datum

@@ -1,0 +1,67 @@
+def reaper: sobj:
+  (run.):
+      if (is? self.state 'dead):
+        self.object.finalize
+        self.set-state 'finalized
+
+  (find.):
+      if (is? self.state 'dead): return self
+      self.cdr-find
+
+  (cdr-find.):
+      if (is? self.cdr '()): return '()
+      self.cdr.find
+
+  (clean.):
+      self.set-cdr! self.cdr-clean
+      if (is? self.state 'finalized): return self.cdr
+      self
+
+  (cdr-clean.):
+      if (is? self.cdr '()): return '()
+      self.cdr.clean
+
+  inline C (function.) <<end
+    return (datum) rcv[2];
+  end
+
+  (car.) self
+
+  inline C (cdr.) <<end
+    return (datum) rcv[1];
+  end
+
+  inline C (object.) <<end
+    return (datum) rcv[0];
+  end
+
+  inline C (state.) <<end
+    return (datum) rcv[2];
+  end
+
+  inline C (set-cdr! new) <<end
+    return (datum) (rcv[1] = (size_t) n_new);
+  end
+
+  inline C (set-state new) <<end
+    return (datum) (rcv[2] = (size_t) n_new);
+  end
+
+  (run-finalizers.):
+      x = self.cdr-find
+      if (not x): return 'ok
+      x.
+      self.run-finalizers
+
+  # This should only be called on the head of fz_list.
+  (reap.):
+      self.run-finalizers
+      self.clean
+
+def manager: obj:
+  inline C (register x) <<end
+    install_fz(&n_x);
+    return nil;
+  end
+
+manager

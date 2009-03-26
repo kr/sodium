@@ -9,8 +9,6 @@
 #include "str.h"
 #include "pair.h"
 
-typedef void(*na_fn_free)(datum);
-
 typedef struct method_item {
     datum name;
     datum addr;
@@ -22,7 +20,7 @@ typedef struct method_table {
 } *method_table;
 
 /* Note: *x must be the only pointer to x */
-void install_fz(datum *x, na_fn_free);
+void install_fz(datum *x);
 
 size_t datum_size(datum d);
 datum datum_mtab(datum d);

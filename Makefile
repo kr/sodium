@@ -2,7 +2,6 @@ namodules := \
     array.na \
     bytes.na \
     file-io.na \
-    fin.na \
     int.na \
     module.na \
     nil.na \
@@ -10,6 +9,7 @@ namodules := \
     pbox.na \
     prelude.na \
     re.na \
+    reaper.na \
     str.na \
     symbol.na \
     tuple.na \

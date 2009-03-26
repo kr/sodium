@@ -78,7 +78,7 @@ datum genv, regs[REG_COUNT];
 
 datum stack = nil;
 
-datum run_sym, ok_sym;
+datum run0_sym, ok_sym, reap0_sym, live_sym, dead_sym;
 
 const size_t ime_mtab_body = 1;
 
@@ -598,6 +598,7 @@ datum
 call(datum o, datum m, datum a)
 {
     if (!symbolp(m)) die1("call -- not a symbol", m);
+
     regs[R_PROC] = o;
     regs[R_ARGL] = a;
     regs[R_VM0] = closure_method(regs[R_PROC], m);
@@ -637,8 +638,11 @@ main(int argc, char **argv)
 
     genv = cons(nil, nil);
 
-    run_sym = intern("run");
+    run0_sym = intern("run:0");
     ok_sym = intern("ok");
+    reap0_sym = intern("reap:0");
+    live_sym = intern("live");
+    dead_sym = intern("dead");
 
     /* must evaluate this before the call to define */
     args = cons(make_bytes_init(argv[1]), nil);

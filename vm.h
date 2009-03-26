@@ -42,7 +42,7 @@ extern datum regs[REG_COUNT];
 extern datum stack;
 extern datum genv;
 
-extern datum run_sym, ok_sym;
+extern datum run0_sym, ok_sym, reap0_sym, live_sym, dead_sym;
 
 void bail(const char *m);
 
