@@ -26,8 +26,8 @@
 #include "index.h"
 
 #define OP_NOP 0x00
-#define OP_unused1 0x01
-#define OP_unused2 0x02
+#define OP_LW 0x01
+#define OP_SW 0x02
 #define OP_GOTO_REG 0x03
 #define OP_PUSH 0x04
 #define OP_POP 0x05
@@ -84,8 +84,8 @@ const size_t ime_mtab_body = 1;
 
 static char *instr_names[32] = {
     "OP_NOP",
-    "<unused1>",
-    "<unused2>",
+    "OP_LW",
+    "OP_SW",
     "OP_GOTO_REG",
     "OP_PUSH",
     "OP_POP",
@@ -365,6 +365,10 @@ start(uint *start_addr)
             case OP_NOP: break;
             case OP_NOP2: break;
             case OP_QUIT: goto halt;
+            case OP_LW:
+                die("implement lw");
+            case OP_SW:
+                die("implement sw");
             case OP_GOTO_REG:
                 ra = I_R(inst);
                 pc = ((uint *) regs[ra]) - 1;
