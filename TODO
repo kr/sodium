@@ -1,4 +1,4 @@
-[ ] change free index to a free pointer
+[+] change free index to a free pointer
 [ ] load/store word/half-word/byte instrs
 [ ] redo OP_MAKE_CLOSURE and OP_MAKE_SELFOBJ interms of store instrs
 [ ] ensure that the continue register always points to a referencable spot

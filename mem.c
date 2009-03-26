@@ -12,13 +12,6 @@
 
 #define HEAP_SIZE (2 * 1024 * 1024)
 
-/*bool*/
-#define in_busy_chunk_range(x) (((x) >= busy_chunks) && \
-                               ((x) < &busy_chunks[HEAP_SIZE]))
-#define in_old_chunk_range(x) (old_chunks && ((x) >= old_chunks) && \
-                              ((x) < &old_chunks[HEAP_SIZE]))
-#define in_chunk_range(x) (in_busy_chunk_range(x) || in_old_chunk_range(x))
-
 int gc_in_progress = 0, fin_in_progress = 0, become_keep_b = 0;
 
 struct fz_head_struct {
@@ -37,22 +30,25 @@ struct fz_head_struct fz_head = {
     nil, /* state */
 };
 
-datum perm_busy_chunks, busy_chunks, old_chunks,
-      fz_list = (datum) &fz_head.object;
-static datum free_chunks;
-static size_t perm_free_index = 0, free_index = 0, scan_index = 0;
+static datum perm_base, perm_top, perm_ptr;
+static datum busy_base, busy_top, busy_ptr;
+static datum to_base, to_top, to_ptr;
+
 static datum become_a = nil, become_b = nil;
+static datum fz_list = (datum) &fz_head.object;
 
 void
 init_mem(void)
 {
-    perm_busy_chunks = malloc(sizeof(datum) * HEAP_SIZE);
-    if (!perm_busy_chunks) die("init_mem -- out of memory");
-    perm_free_index = 0;
+    perm_base = malloc(sizeof(datum) * HEAP_SIZE);
+    if (!perm_base) die("init_mem -- out of memory");
+    perm_ptr = perm_base;
+    perm_top = perm_base + HEAP_SIZE;
 
-    busy_chunks = malloc(sizeof(datum) * HEAP_SIZE);
-    if (!busy_chunks) die("init_mem -- out of memory");
-    free_index = 0;
+    busy_base = malloc(sizeof(datum) * HEAP_SIZE);
+    if (!busy_base) die("init_mem -- out of memory");
+    busy_ptr = busy_base;
+    busy_top = busy_base + HEAP_SIZE;
 }
 
 static inline char
@@ -103,7 +99,8 @@ relocate(datum refloc)
     /* don't try to relocate an unboxed int */
     if (((size_t) p) & 1) return;
 
-    if (!in_chunk_range(p)) return;
+    if (p < busy_base) return;
+    if (p >= busy_top) return;
 
     --p; /* make p point at the mtab or descriptor */
 
@@ -125,10 +122,10 @@ relocate(datum refloc)
                 prfmt(1, "at %p\n", p);
 #endif
                 i = (datum *) p;
-                j = (datum *) free_chunks + free_index;
+                j = (datum *) to_ptr;
 
                 /*
-                while (j + len >= &free_chunks[free_index]) {
+                while (j + len >= to_ptr) {
                     to_lim = gmore();
                 }
                 */
@@ -137,8 +134,8 @@ relocate(datum refloc)
                 *j++ = *i++; /* copy the method table pointer */
                 while (len--) *j++ = *i++; /* copy the body */
 
-                ((datum *) p)[1] = 2 + (datum) &free_chunks[free_index];
-                free_index = ((datum) j) - free_chunks;
+                ((datum *) p)[1] = 2 + (datum) to_ptr;
+                to_ptr = (datum) j;
 #if GC_DEBUG
                 prfmt(1, "Relocated\n");
 #endif
@@ -204,12 +201,13 @@ gc(datum *x1, datum *x2)
     prfmt(1, "Start GC\n");
 #endif
 
-    free_chunks = malloc(sizeof(datum) * HEAP_SIZE);
-    if (!free_chunks) die("gc -- out of memory");
-    free_index = 0;
+    to_base = malloc(sizeof(datum) * HEAP_SIZE);
+    if (!to_base) die("gc -- out of memory");
+    to_ptr = to_base;
+    to_top = to_base + HEAP_SIZE;
 
 #if GC_DEBUG
-    prfmt(1, "free_chunks is %p\n", free_chunks);
+    prfmt(1, "to_base is %p\n", to_base);
 #endif
 
     if (become_a && become_b) {
@@ -242,11 +240,9 @@ gc(datum *x1, datum *x2)
     relocate((datum) &saved_x1);
     relocate((datum) &saved_x2);
 
-    scan_index = 0;
-
-    np = free_chunks;
-    while (np < &free_chunks[free_index]) {
-        while (np < &free_chunks[free_index]) {
+    np = to_base;
+    while (np < to_ptr) {
+        while (np < to_ptr) {
             ++live;
             datum p = np + 2;
             size_t descr = *np, len = datum_desc_len(descr);
@@ -287,12 +283,11 @@ gc(datum *x1, datum *x2)
         }
     }
 
-    old_chunks = busy_chunks;
-    busy_chunks = free_chunks;
-    if (free_index >= HEAP_SIZE) die("gc -- no progress");
-
-    free(old_chunks);
-    old_chunks = 0;
+    free(busy_base);
+    busy_base = to_base;
+    busy_ptr = to_ptr;
+    busy_top = to_top;
+    if (to_ptr >= to_top) die("gc -- no progress");
 
 #if GC_DEBUG
     prfmt(1, "Finish GC\n");
@@ -312,7 +307,7 @@ gc(datum *x1, datum *x2)
 }
 
 static datum
-dalloc(size_t **base, size_t *free,
+dalloc(size_t **ptr, size_t **top,
        unsigned char type, uint len, datum mtab, datum x, datum y)
 {
     datum p;
@@ -322,14 +317,14 @@ dalloc(size_t **base, size_t *free,
         delta = (len + 3 / 4) + 2;
     }
 
-    if ((*free + delta) >= HEAP_SIZE) gc(&x, &y);
-    if ((*free + delta) >= HEAP_SIZE) die("dalloc -- OOM after gc");
-    p = *base + *free;
+    if ((*ptr + delta) >= *top) gc(&x, &y);
+    if ((*ptr + delta) >= *top) die("dalloc -- OOM after gc");
+    p = *ptr;
     *p = make_desc(type, len);
     p[1] = (size_t) mtab;
     if (delta > 2) p[2] = (size_t) x;
     if (delta > 3) p[3] = (size_t) y;
-    *free += delta;
+    *ptr += delta;
 #if GC_DEBUG
     //prdesc("Allocated", *p);
 #endif
@@ -350,6 +345,14 @@ opaquep(datum d)
     if (((size_t) d) & 1) return 1;
     while (!(1 & *--d));
     return datum_desc_format(*d) == DATUM_FORMAT_OPAQUE;
+}
+
+int
+broken_heartp(datum x)
+{
+    if (((size_t) x) & 1) return 1;
+    while (!(1 & *--x));
+    return datum_desc_format(*x) == DATUM_FORMAT_BROKEN_HEART;
 }
 
 datum
@@ -376,7 +379,7 @@ install_fz(datum *x)
 
     if (intp(*x)) return;
 
-    fz = dalloc(&busy_chunks, &free_index, DATUM_FORMAT_FZ, 3,
+    fz = dalloc(&busy_ptr,  &busy_top, DATUM_FORMAT_FZ, 3,
             reaper_mtab, (datum) *x, (datum) fz_list[1]);
     fz[2] = (size_t) live_sym;
     fz_list[1] = (size_t) fz;
@@ -391,34 +394,27 @@ first_reaper()
 datum
 make_opaque(size_t size, datum mtab)
 {
-    return dalloc(&busy_chunks, &free_index,
+    return dalloc(&busy_ptr,  &busy_top,
                   DATUM_FORMAT_OPAQUE, size, mtab, nil, nil);
 }
 
 datum
 make_record(size_t len, datum mtab, datum a, datum b)
 {
-    return dalloc(&busy_chunks, &free_index,
+    return dalloc(&busy_ptr,  &busy_top,
                   DATUM_FORMAT_RECORD, len, mtab, a, b);
 }
 
 datum
 make_opaque_permanent(size_t size, datum mtab)
 {
-    return dalloc(&perm_busy_chunks, &perm_free_index,
+    return dalloc(&perm_ptr, &perm_top,
                   DATUM_FORMAT_OPAQUE, size, mtab, nil, nil);
 }
 
 datum
 make_record_permanent(size_t len, datum mtab, datum a, datum b)
 {
-    return dalloc(&perm_busy_chunks, &perm_free_index,
+    return dalloc(&perm_ptr, &perm_top,
                   DATUM_FORMAT_RECORD, len, mtab, a, b);
-}
-
-int
-broken_heartp(datum x)
-{
-    return in_old_chunk_range(x) &&
-        (datum_desc_format(x[-2]) == DATUM_FORMAT_BROKEN_HEART);
 }
