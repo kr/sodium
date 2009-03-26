@@ -21,6 +21,7 @@ typedef struct method_table {
 
 /* Note: *x must be the only pointer to x */
 void install_fz(datum *x);
+datum first_reaper();
 
 size_t datum_size(datum d);
 datum datum_mtab(datum d);

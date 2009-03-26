@@ -21,6 +21,11 @@ def reaper: sobj:
       if (is? self.cdr '()): return '()
       self.cdr.clean
 
+  (find-object x):
+      if (is? self.object x): return self
+      if (is? self.cdr '()): return '()
+      return (self.cdr.find-object x)
+
   inline C (function.) <<end
     return (datum) rcv[2];
   end
@@ -58,10 +63,21 @@ def reaper: sobj:
       self.run-finalizers
       self.clean
 
-def manager: obj:
-  inline C (register x) <<end
+def install: obj:
+  inline C (run x) <<end
     install_fz(&n_x);
     return nil;
   end
+
+def first-reaper: obj:
+  inline C (run.) <<end
+    return first_reaper();
+  end
+
+def manager: obj:
+  (register x):
+    r = (first-reaper.run.find-object x)
+    if r: return (r.set-state 'live)
+    install x
 
 manager

@@ -383,6 +383,12 @@ install_fz(datum *x)
 }
 
 datum
+first_reaper()
+{
+    return fz_list;
+}
+
+datum
 make_opaque(size_t size, datum mtab)
 {
     return dalloc(&busy_chunks, &free_index,
