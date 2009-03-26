@@ -230,10 +230,9 @@ define(datum env, datum val, datum name)
 
     /* make sure that these get updated properly during a garbage collection */
     regs[R_VM0] = env;
-    regs[R_VM1] = cdr(env);
-    p = cons(val, car(env));
+    p = cons(val, car(regs[R_VM0]));
     car(regs[R_VM0]) = p;
-    p = cons(name, regs[R_VM1]);
+    p = cons(name, cdr(regs[R_VM0]));
     cdr(regs[R_VM0]) = p;
 }
 
@@ -601,12 +600,12 @@ call(datum o, datum m, datum a)
 
     regs[R_PROC] = o;
     regs[R_ARGL] = a;
-    regs[R_VM0] = closure_method(regs[R_PROC], m);
-    if (!imep(regs[R_VM0])) {
-        start(regs[R_VM0]);
+    regs[R_ADDR] = closure_method(regs[R_PROC], m);
+    if (!imep(regs[R_ADDR])) {
+        start(regs[R_ADDR]);
         return regs[R_VAL];
     } else {
-        return ((prim_meth) *regs[R_VM0])(regs[R_PROC], regs[R_ARGL]);
+        return ((prim_meth) *regs[R_ADDR])(regs[R_PROC], regs[R_ARGL]);
     }
 }
 

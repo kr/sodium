@@ -14,6 +14,7 @@ all_writable_regs = (
     S('addr'),
     S('env'),
     S('tmp'),
+    S('vm0'),
     S('void'),
 )
 

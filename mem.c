@@ -156,7 +156,7 @@ relocate(datum refloc)
 }
 
 static datum saved_stack = 0, saved_x1 = 0, saved_x2 = 0,
-             saved_regs[REG_COUNT] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+             saved_regs[REG_COUNT] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
 static void
 save_regs(datum x1, datum x2)
