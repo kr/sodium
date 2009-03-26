@@ -60,8 +60,5 @@ def pair: sobj:
   (assq name):
     ? (is? (self.car.car) name) (self.car) (self.cdr.assq name)
 
-def list: obj:
-  inline C (run . args) <<end
-    return args;
-  end
+def (list . args): args
 
