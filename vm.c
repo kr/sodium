@@ -371,6 +371,8 @@ start(uint *start_addr)
                 ra = I_R(inst);
                 rb = I_RR(inst);
                 imm = ((ssize_t) (I_RRI(inst) << 15)) >> 15;
+                if (regs[rb] + imm > busy_top) fault();
+                if (regs[rb] + imm > busy_top) die("SW -- OOM after gc");
                 regs[rb][imm] = (size_t) regs[ra];
                 break;
             case OP_GOTO_REG:

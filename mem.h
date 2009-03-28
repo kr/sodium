@@ -19,6 +19,9 @@ typedef struct method_table {
     struct method_item items[];
 } *method_table;
 
+extern datum busy_top;
+void fault();
+
 /* Note: *x must be the only pointer to x */
 void install_fz(datum *x);
 datum first_reaper();

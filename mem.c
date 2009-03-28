@@ -31,8 +31,9 @@ struct fz_head_struct fz_head = {
 };
 
 static datum perm_base, perm_top, perm_ptr;
-static datum busy_base, busy_top;
+static datum busy_base;
 #define busy_ptr (regs[R_FREE])
+datum busy_top;
 static datum to_base, to_top, to_ptr;
 
 static datum become_a = nil, become_b = nil;
@@ -309,6 +310,12 @@ gc(datum *x1, datum *x2)
         restore_regs(x1, x2);
         fin_in_progress = 0;
     }
+}
+
+void
+fault()
+{
+    gc(regs + R_NIL, regs + R_NIL);
 }
 
 static datum
