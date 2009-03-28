@@ -479,7 +479,7 @@ def make_lexical_c_defines(cenv):
           tail = 0
         p = munge_sym_to_c(name), i, j, tail, name
         return (make_c_undefine(name) +
-                '#define %s (lexical_lookup(closure_env(rcv), %d, %d, %d)) /* %s */\n' % p)
+                '#define %s (lexical_lookup((datum) *rcv, %d, %d, %d)) /* %s */\n' % p)
     def help(i, env):
         def hhelp(j, names):
             if names is nil: return ''

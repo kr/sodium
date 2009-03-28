@@ -34,7 +34,6 @@ datum lexical_lookup(datum env, uint level, uint index, int tail);
 datum lexical_setbang(datum env, uint level, uint index, int tail, datum val);
 datum call(datum o, datum m, datum a);
 datum report_error(datum args);
-datum closure_env(datum d);
 
 extern datum regs[REG_COUNT];
 extern datum stack;

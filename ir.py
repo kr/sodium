@@ -458,11 +458,10 @@ def GOTO_LABEL(target_label): return OP_L(goto_label_s, target_label)
 # Two register instructions
 
 mov_s = S('MOV')
-closure_env_s = S('CLOSURE_ENV')
 make_selfobj_s = S('MAKE_SELFOBJ')
 def MOV(target_reg, src_reg): return OP_RR(mov_s, target_reg, src_reg)
 def CLOSURE_ENV(target_reg, proc_reg):
-    return OP_RR(closure_env_s, target_reg, proc_reg)
+    return LW(target_reg, proc_reg, 0)
 def LIST(target_reg, val_reg):
     return CONS(target_reg, val_reg, S('nil'))
 def MAKE_SELFOBJ(target_reg, label_reg):
@@ -564,8 +563,8 @@ all_ops = (
     quit_s,
     goto_label_s,
     mov_s,
-    closure_env_s,
-    'unused',
+    'unused1',
+    'unused2',
     load_addr_s,
     bf_s,
     bprim_s,
