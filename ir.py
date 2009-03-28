@@ -16,6 +16,7 @@ all_writable_regs = (
     S('tmp'),
     S('vm0'),
     S('void'),
+    S('free'),
 )
 
 all_regs = all_readonly_regs + all_writable_regs

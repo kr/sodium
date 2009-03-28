@@ -31,7 +31,8 @@ struct fz_head_struct fz_head = {
 };
 
 static datum perm_base, perm_top, perm_ptr;
-static datum busy_base, busy_top, busy_ptr;
+static datum busy_base, busy_top;
+#define busy_ptr (regs[R_FREE])
 static datum to_base, to_top, to_ptr;
 
 static datum become_a = nil, become_b = nil;
@@ -165,6 +166,7 @@ save_regs(datum x1, datum x2)
 
     saved_stack = stack;
     for (i = 0; i < REG_COUNT; i++) {
+        if (i == R_FREE) continue; /* this register doesn't hold a datum */
         saved_regs[i] = regs[i];
     }
     saved_x1 = x1;
@@ -179,6 +181,7 @@ restore_regs(datum *x1, datum *x2)
     stack = saved_stack;
     saved_stack = 0;
     for (i = 0; i < REG_COUNT; i++) {
+        if (i == R_FREE) continue; /* this register doesn't hold a datum */
         regs[i] = saved_regs[i];
         saved_regs[i] = 0;
     }
@@ -230,11 +233,13 @@ gc(datum *x1, datum *x2)
     relocate((datum) x1);
     relocate((datum) x2);
     for (i = 0; i < REG_COUNT; ++i) {
+        if (i == R_FREE) continue; /* this register doesn't hold a datum */
         relocate((datum) &regs[i]);
     }
 
     relocate((datum) &saved_stack);
     for (i = 0; i < REG_COUNT; ++i) {
+        if (i == R_FREE) continue; /* this register doesn't hold a datum */
         relocate((datum) saved_regs + i);
     }
     relocate((datum) &saved_x1);
