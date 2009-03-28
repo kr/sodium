@@ -67,6 +67,7 @@
 #define I_RI(i) (((i) >> 12) & 0x3ff)
 #define I_RRR(i) (((i) >> 12) & 0x1f)
 #define I_RRD(i) ((i) & 0x1ffff)
+#define I_RRI(i) ((i) & 0x1ffff)
 #define I_RII(i) ((i) & 0xfff)
 #define I_RRRR(i) (((i) >> 7) & 0x1f)
 
@@ -348,6 +349,7 @@ start(uint *start_addr)
     register uint *pc, *tmp;
     uint ra, rb, rc, rd, di, level;
     int index;
+    ssize_t imm;
 
     /* save continue register */
     stack = cons(regs[R_CONTINUE], stack);
@@ -366,9 +368,17 @@ start(uint *start_addr)
             case OP_NOP2: break;
             case OP_QUIT: goto halt;
             case OP_LW:
-                die("implement lw");
+                ra = I_R(inst);
+                rb = I_RR(inst);
+                imm = ((ssize_t) (I_RRI(inst) << 15)) >> 15;
+                regs[ra] = (datum) regs[rb][imm];
+                break;
             case OP_SW:
-                die("implement sw");
+                ra = I_R(inst);
+                rb = I_RR(inst);
+                imm = ((ssize_t) (I_RRI(inst) << 15)) >> 15;
+                regs[rb][imm] = (size_t) regs[ra];
+                break;
             case OP_GOTO_REG:
                 ra = I_R(inst);
                 pc = ((uint *) regs[ra]) - 1;

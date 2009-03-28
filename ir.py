@@ -496,6 +496,15 @@ def MAKE_CLOSURE(target_reg, env_reg, label_reg):
     return OP_RRR(make_closure_s, target_reg, env_reg, label_reg)
 
 
+# Two register, one immediate instructions
+lw_s = S('LW')
+sw_s = S('SW')
+def LW(target_reg, address_reg, imm):
+    return OP_RRI(lw_s, target_reg, address_reg, imm)
+def SW(target_reg, address_reg, imm):
+    return OP_RRI(sw_s, target_reg, address_reg, imm)
+
+
 # Two register, one symbol instructions
 
 closure_method_s = S('CLOSURE_METHOD')
@@ -547,8 +556,8 @@ def APPLY_PRIM_METH(target_reg, proc_reg, mess_reg, argl_reg):
 
 all_ops = (
     nop_s,
-    'unused 1',
-    'unused 2',
+    lw_s,
+    sw_s,
     goto_reg_s,
     push_s,
     pop_s,
@@ -897,6 +906,21 @@ class OP_RRD(OP):
 
     def __repr__(self):
         return '%s %s %s %r' % (self.op, self.reg1, self.reg2, self.d)
+
+class OP_RRI(OP):
+    def __init__(self, op, r1, r2, imm):
+        OP.__init__(self, op)
+        self.reg1 = r1
+        self.reg2 = r2
+        self.r1 = lookup_reg(r1)
+        self.r2 = lookup_reg(r2)
+        self.imm = imm
+
+    def get_body(self, index, labels, datums):
+        return pack((5, self.r1), (5, self.r2), (17, self.imm))
+
+    def __repr__(self):
+        return '%s %s %s %d' % (self.op, self.reg1, self.reg2, self.imm)
 
 class OP_RRDD(OP):
     def __init__(self, op, r1, r2, d1, d2):
