@@ -35,7 +35,7 @@
 #define OP_GOTO_LABEL 0x07
 #define OP_MOV 0x08
 #define OP_CLOSURE_ENV 0x09
-#define OP_LIST 0x0a
+#define OP_unused1 0x0a
 #define OP_LOAD_ADDR 0x0b
 #define OP_BF 0x0c
 #define OP_BPRIM 0x0d
@@ -94,7 +94,7 @@ static char *instr_names[32] = {
     "OP_GOTO_LABEL",
     "OP_MOV",
     "OP_CLOSURE_ENV",
-    "OP_LIST",
+    "<unused1>",
     "OP_LOAD_ADDR",
     "OP_BF",
     "OP_BPRIM",
@@ -406,11 +406,6 @@ start(uint *start_addr)
                 ra = I_R(inst);
                 rb = I_RR(inst);
                 regs[ra] = closure_env(regs[rb]);
-                break;
-            case OP_LIST:
-                ra = I_R(inst);
-                rb = I_RR(inst);
-                regs[ra] = cons(regs[rb], nil);
                 break;
             case OP_LOAD_ADDR:
                 ra = I_R(inst);
