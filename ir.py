@@ -121,6 +121,17 @@ def encode_datum(datum):
     if isinstance(datum, InlineMethEntry): return encode_ime(datum)
     return ((), 0)
 
+def flatten(x, types=(list, tuple)):
+    t = type(x)
+    x = list(x)
+    i = 0
+    while i < len(x):
+        if isinstance(x[i], types):
+            x[i:i + 1] = x[i]
+        else:
+            i += 1
+    return t(x)
+
 the_labels = None
 class make_ir_seq:
     def __init__(self, needs, modifies, *statements):
@@ -130,7 +141,7 @@ class make_ir_seq:
             raise RuntimeError('unsuitable modifies: %r' % modifies)
         self.needs = frozenset(needs)
         self.modifies = frozenset(modifies)
-        self.statements = statements
+        self.statements = flatten(statements)
         self.c_defs = ()
 
     def __repr__(self):
