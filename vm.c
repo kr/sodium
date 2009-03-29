@@ -55,7 +55,7 @@
 #define OP_CLOSURE_METHOD2 0x1b
 #define OP_LEXICAL_LOOKUP_TAIL 0x1c
 #define OP_LEXICAL_SETBANG_TAIL 0x1d
-#define OP_unused6 0x1e
+#define OP_SI 0x1e
 #define OP_NOP2 0x1f
 
 #define I_OP(i) (((i) >> 27) & 0x1f)
@@ -114,7 +114,7 @@ static char *instr_names[32] = {
     "OP_CLOSURE_METHOD2",
     "OP_LEXICAL_LOOKUP_TAIL",
     "OP_LEXICAL_SETBANG_TAIL",
-    "<unused6>",
+    "OP_SI",
     "OP_NOP2",
 };
 
@@ -376,6 +376,12 @@ start(uint *start_addr)
                 if (regs[rb] + imm > busy_top) fault();
                 if (regs[rb] + imm > busy_top) die("SW -- OOM after gc");
                 regs[rb][imm] = (size_t) regs[ra];
+                break;
+            case OP_SI:
+                rb = I_RR(inst);
+                imm = sign_ext_imm(inst);
+                tmp = (datum) *++pc;
+                regs[rb][imm] = (size_t) tmp;
                 break;
             case OP_GOTO_REG:
                 ra = I_R(inst);

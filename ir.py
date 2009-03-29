@@ -511,12 +511,15 @@ def MAKE_CLOSURE(target_reg, env_reg, label_reg):
 lw_s = S('LW')
 sw_s = S('SW')
 addi_s = S('ADDI')
+si_s = S('SI')
 def LW(target_reg, address_reg, imm):
     return OP_RRI(lw_s, target_reg, address_reg, imm)
 def SW(value_reg, address_reg, imm):
     return OP_RRI(sw_s, value_reg, address_reg, imm)
 def ADDI(target_reg, imm):
     return OP_RRI(addi_s, target_reg, S('nil'), imm)
+def SI(address_reg, imm):
+    return OP_RRI(si_s, S('nil'), address_reg, imm)
 
 
 # Two register, one symbol instructions
@@ -599,6 +602,7 @@ all_ops = (
     closure_method2_s,
     lexical_lookup_tail_s,
     lexical_setbang_tail_s,
+    si_s,
 )
 all_ops_dict = dict([(k,i) for i,k in enumerate(all_ops)])
 
