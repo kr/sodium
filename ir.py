@@ -513,8 +513,8 @@ sw_s = S('SW')
 addi_s = S('ADDI')
 def LW(target_reg, address_reg, imm):
     return OP_RRI(lw_s, target_reg, address_reg, imm)
-def SW(target_reg, address_reg, imm):
-    return OP_RRI(sw_s, target_reg, address_reg, imm)
+def SW(value_reg, address_reg, imm):
+    return OP_RRI(sw_s, value_reg, address_reg, imm)
 def ADDI(target_reg, imm):
     return OP_RRI(addi_s, target_reg, S('nil'), imm)
 
