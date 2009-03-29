@@ -35,7 +35,7 @@
 #define OP_GOTO_LABEL 0x07
 #define OP_MOV 0x08
 #define OP_unused1 0x09
-#define OP_unused2 0x0a
+#define OP_ADDI 0x0a
 #define OP_LOAD_ADDR 0x0b
 #define OP_BF 0x0c
 #define OP_BPRIM 0x0d
@@ -94,7 +94,7 @@ static char *instr_names[32] = {
     "OP_GOTO_LABEL",
     "OP_MOV",
     "<unused1>",
-    "<unused2>",
+    "OP_ADDI",
     "OP_LOAD_ADDR",
     "OP_BF",
     "OP_BPRIM",
@@ -337,6 +337,8 @@ closure_method2(datum d, datum name1, datum name2)
     return die1("closure_method2 -- no such method", nil);
 }
 
+#define sign_ext_imm(x) (((ssize_t) (I_RRI(x) << 15)) >> 15)
+
 static void
 start(uint *start_addr)
 {
@@ -364,13 +366,13 @@ start(uint *start_addr)
             case OP_LW:
                 ra = I_R(inst);
                 rb = I_RR(inst);
-                imm = ((ssize_t) (I_RRI(inst) << 15)) >> 15;
+                imm = sign_ext_imm(inst);
                 regs[ra] = (datum) regs[rb][imm];
                 break;
             case OP_SW:
                 ra = I_R(inst);
                 rb = I_RR(inst);
-                imm = ((ssize_t) (I_RRI(inst) << 15)) >> 15;
+                imm = sign_ext_imm(inst);
                 if (regs[rb] + imm > busy_top) fault();
                 if (regs[rb] + imm > busy_top) die("SW -- OOM after gc");
                 regs[rb][imm] = (size_t) regs[ra];
@@ -398,6 +400,10 @@ start(uint *start_addr)
                 rb = I_RR(inst);
                 regs[ra] = regs[rb];
                 break;
+            case OP_ADDI:
+                ra = I_R(inst);
+                imm = sign_ext_imm(inst);
+                ((ssize_t *) regs)[ra] += imm;
             case OP_LOAD_ADDR:
                 ra = I_R(inst);
                 tmp = (uint *) *++pc;

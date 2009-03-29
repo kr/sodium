@@ -510,10 +510,13 @@ def MAKE_CLOSURE(target_reg, env_reg, label_reg):
 # Two register, one immediate instructions
 lw_s = S('LW')
 sw_s = S('SW')
+addi_s = S('ADDI')
 def LW(target_reg, address_reg, imm):
     return OP_RRI(lw_s, target_reg, address_reg, imm)
 def SW(target_reg, address_reg, imm):
     return OP_RRI(sw_s, target_reg, address_reg, imm)
+def ADDI(target_reg, imm):
+    return OP_RRI(addi_s, target_reg, S('nil'), imm)
 
 
 # Two register, one symbol instructions
@@ -576,7 +579,7 @@ all_ops = (
     goto_label_s,
     mov_s,
     'unused1',
-    'unused2',
+    addi_s,
     load_addr_s,
     bf_s,
     bprim_s,
