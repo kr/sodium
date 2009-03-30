@@ -63,6 +63,7 @@ else:
 
 try:
   code = lx.compile(exp, lx.S('val'), lx.S('next'), nil, lx.S('pop-all-top'))
+  code = lx.end_with_linkage(lx.S('return'), code, lx.S('fake-pop-all'))
   outfd = open(outfile, 'w')
   if gen_c:
       if not outfile.endswith('.c'): raise 'bad output file name', outfile

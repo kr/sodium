@@ -314,8 +314,6 @@ class make_ir_seq:
                         raise "unsupported data type: %s %r" % (type(s.d), s.d)
                     i += 1
 
-        real_instrs.append(QUIT())
-        i += 1
         for x in datums:
             more, off = encode_datum(x)
             if more:
