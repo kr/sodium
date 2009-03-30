@@ -198,13 +198,12 @@ imep(datum x)
     return !(1 & (size_t) x) && x[-1] == (size_t) ime_mtab;
 }
 
-void
-setbang(datum env, datum val, datum name)
+static void
+setbang(datum val, datum name)
 {
     datum vals, names;
-    if (env != genv) die("set! -- env ought to be the global env\n");
-    vals = car(env);
-    names = cdr(env);
+    vals = car(genv);
+    names = cdr(genv);
     for (; names != nil; vals = cdr(vals), names = cdr(names)) {
         if (car(names) == name) {
             car(vals) = val;
@@ -214,14 +213,13 @@ setbang(datum env, datum val, datum name)
     die1("set! -- no such variable", name);
 }
 
-void
-define(datum env, datum val, datum name)
+static void
+define(datum val, datum name)
 {
     datum p;
     datum vals, names;
-    if (env != genv) die("define -- env ought to be the global env\n");
-    vals = car(env);
-    names = cdr(env);
+    vals = car(genv);
+    names = cdr(genv);
     for (; names != nil; vals = cdr(vals), names = cdr(names)) {
         if (car(names) == name) {
             car(vals) = val;
@@ -230,20 +228,19 @@ define(datum env, datum val, datum name)
     }
 
     /* make sure that these get updated properly during a garbage collection */
-    regs[R_VM0] = env;
+    regs[R_VM0] = genv;
     p = cons(val, car(regs[R_VM0]));
     car(regs[R_VM0]) = p;
     p = cons(name, cdr(regs[R_VM0]));
     cdr(regs[R_VM0]) = p;
 }
 
-datum
-lookup(datum env, datum name)
+static datum
+lookup(datum name)
 {
     datum vals, names;
-    if (env != genv) die("lookup -- env ought to be the global env\n");
-    vals = car(env);
-    names = cdr(env);
+    vals = car(genv);
+    names = cdr(genv);
     for (; names != nil; vals = cdr(vals), names = cdr(names)) {
         if (car(names) == name) return car(vals);
     }
@@ -476,17 +473,17 @@ start(uint *start_addr)
             case OP_SETBANG:
                 ra = I_R(inst);
                 rb = I_RR(inst);
-                setbang(regs[ra], regs[rb], (datum) *++pc);
+                setbang(regs[rb], (datum) *++pc);
                 break;
             case OP_DEFINE:
                 ra = I_R(inst);
                 rb = I_RR(inst);
-                define(regs[ra], regs[rb], (datum) *++pc);
+                define(regs[rb], (datum) *++pc);
                 break;
             case OP_LOOKUP:
                 ra = I_R(inst);
                 rb = I_RR(inst);
-                regs[ra] = lookup(regs[rb], (datum) *++pc);
+                regs[ra] = lookup((datum) *++pc);
                 break;
             case OP_LEXICAL_LOOKUP:
                 ra = I_R(inst);
@@ -657,7 +654,7 @@ main(int argc, char **argv)
 
     /* must evaluate this before the call to define */
     args = cons(make_bytes_init(argv[1]), nil);
-    define(genv, args, intern("*args*"));
+    define(args, intern("*args*"));
 
     /* load and execute the standard prelude */
     start_body(lxc_module_prelude.instrs);

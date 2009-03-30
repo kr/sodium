@@ -23,12 +23,6 @@
 
 int imep(datum x);
 
-/* signal an error if env is not the global environment */
-void setbang(datum env, datum val, datum name);
-void define(datum env, datum val, datum name);
-
-datum lookup(datum env, datum name);
-
 void start_body(uint *start_addr);
 datum read_module_file(const char *name);
 datum lexical_lookup(datum env, uint level, uint index, int tail);
