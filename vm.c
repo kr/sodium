@@ -336,8 +336,8 @@ closure_method2(datum d, datum name1, datum name2)
 
 #define sign_ext_imm(x) (((ssize_t) (I_RRI(x) << 15)) >> 15)
 
-static void
-start(uint *start_addr)
+void
+start_body(uint *start_addr)
 {
     register uint *pc, *tmp;
     uint ra, rb, rc, rd, di, level;
@@ -595,12 +595,6 @@ read_module_file(const char *name)
     return insts;
 }
 
-void
-start_body(uint *start_addr)
-{
-    start(start_addr);
-}
-
 datum
 call(datum o, datum m, datum a)
 {
@@ -610,7 +604,7 @@ call(datum o, datum m, datum a)
     regs[R_ARGL] = a;
     regs[R_ADDR] = closure_method(regs[R_PROC], m);
     if (!imep(regs[R_ADDR])) {
-        start(regs[R_ADDR]);
+        start_body(regs[R_ADDR]);
         return regs[R_VAL];
     } else {
         return ((prim_meth) *regs[R_ADDR])(regs[R_PROC], regs[R_ARGL]);
