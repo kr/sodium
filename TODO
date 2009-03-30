@@ -2,7 +2,7 @@
 [+] load/store word instrs
 [ ] redo OP_MAKE_CLOSURE and OP_MAKE_SELFOBJ interms of store instrs
 [ ] ensure that the continue register always points to a referencable spot
-[ ] inline assembly notation
+[+] inline assembly notation
 [ ] load/store half-word/byte instrs
 [ ] convert inline C to inline assembly where possible
 [ ] remove DATUM_FORMAT_FZ

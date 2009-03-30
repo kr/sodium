@@ -66,9 +66,7 @@ def read-file: obj:
 def (make-placeholder.) (obj.)
 
 def module: sobj:
-  inline C (run.) <<end
-    start_body(rcv);
-    return regs[R_VAL];
-  end
+  asm (run.):
+    GOTO_REG proc
 
 . loader

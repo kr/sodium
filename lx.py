@@ -8,6 +8,7 @@ from pair import cons, nil, pairp
 from pair import list as plist
 from env import *
 from ir import *
+import ir
 from util import traced, report_compile_error
 
 import lexer
@@ -44,6 +45,7 @@ obj_s = S('obj')
 sobj_s = S('sobj')
 do_s = S('do')
 inline_s = S('inline')
+asm_s = S('asm')
 assign_s = S('=')
 def compile(exp, target, linkage, cenv, pop_all_symbol, **kwargs):
   try:
@@ -318,6 +320,8 @@ def decorate_with_varargs_names(meths):
           return False
       if is_inline_meth(meth):
         return check(inline_meth_params(meth))
+      elif is_asm_meth(meth):
+        return check(asm_meth_params(meth))
       else:
         return check(meth_params(meth))
 
@@ -379,6 +383,9 @@ def sobj_methods(exp):
 def is_inline_meth(meth):
     return tagged_list(meth, inline_s)
 
+def is_asm_meth(meth):
+    return tagged_list(meth, asm_s)
+
 def make_meth_entry(meth):
     if is_inline_meth(meth):
         return InlineMethEntry(make_label('inline_meth_entry'))
@@ -392,6 +399,16 @@ def inline_meth_base_name(meth):
     if pairp(x): return x.car()
     return x
 
+def asm_meth_base_name(meth):
+    x = meth.cadr()
+    if pairp(x): return x.car()
+    return x
+
+def asm_meth_params(meth):
+    x = meth.cadr()
+    if pairp(x): return x.cdr()
+    return nil
+
 def inline_meth_params(meth):
     x = meth.caddr()
     if pairp(x): return x.cdr()
@@ -402,17 +419,24 @@ def inline_meth_arity(meth):
     if pairp(params): return len(params)
     return 0
 
+def asm_meth_arity(meth):
+    params = asm_meth_params(meth)
+    if pairp(params): return len(params)
+    return 0
+
 def make_sig(base, argc):
     return S("%s:%s" % (base, argc))
 
 def meth_arity(meth):
     if is_inline_meth(meth): return inline_meth_arity(meth)
+    if is_asm_meth(meth): return asm_meth_arity(meth)
     params = meth_params(meth)
     if pairp(params): return len(params)
     return 0
 
 def meth_base_name(meth):
     if is_inline_meth(meth): return inline_meth_base_name(meth)
+    if is_asm_meth(meth): return asm_meth_base_name(meth)
     if not pairp(meth):
         raise CompileError(meth, 'method must be a list')
     if not pairp(meth.car()):
@@ -435,6 +459,7 @@ def compile_meth_body(meth, meth_entry, cenv):
     pop_all_symbol = make_label('pop-all')
     if is_inline_meth(meth):
         return compile_inline_meth_body(meth, meth_entry, cenv)
+    if is_asm_meth(meth): return compile_asm_meth_body(meth, meth_entry, cenv)
     formals = meth_params(meth)
     body = meth_body(meth)
     cenv = cons(formals, cenv)
@@ -452,6 +477,7 @@ def compile_smeth_body(meth, meth_entry):
     pop_all_symbol = make_label('pop-all')
     if is_inline_meth(meth):
         return compile_inline_meth_body(meth, meth_entry, nil)
+    if is_asm_meth(meth): return compile_asm_meth_body(meth, meth_entry, nil)
     formals = meth_params(meth)
     body = meth_body(meth)
     cenv = cons(formals, plist(plist(self_s)))
@@ -465,6 +491,30 @@ def compile_smeth_body(meth, meth_entry):
         make_ir_seq((env_r, argl_r, tmp_r), (env_r,),
             EXTEND_ENVIRONMENT(env_r, env_r, argl_r, tmp_r)),
         compile_sequence(body, val_r, return_s, cenv, pop_all_symbol))
+
+def asm_meth_instrs(meth, cenv):
+    def f(instr):
+      def check_arg(a):
+        if symbolp(a):
+          if a not in all_regs: raise CompileError(a, 'not a register')
+          return a
+        raise CompileError(a, 'unsupported operand type')
+
+      try:
+        if symbolp(instr): return instr
+        op, args = instr.car(), instr.cdr()
+        return getattr(ir, str(op))(*[check_arg(x) for x in args])
+      except CompileError, err:
+        err.annotate_or_report(instr)
+
+    return make_ir_seq(all_regs, all_writable_regs, map(f, meth.cddr()))
+
+def compile_asm_meth_body(meth, entry, cenv):
+    return tack_on_ir_seq(
+            make_ir_seq((), (),
+                BACKPTR(),
+                entry),
+            asm_meth_instrs(meth, cenv))
 
 def munge_sym_to_c(name):
     return 'n_' + str(name).translate(maketrans('-*!', '___'))
