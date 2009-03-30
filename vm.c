@@ -598,7 +598,6 @@ read_module_file(const char *name)
 void
 start_body(uint *start_addr)
 {
-    regs[R_ENV] = genv;
     start(start_addr);
 }
 
