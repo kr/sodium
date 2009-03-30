@@ -498,6 +498,8 @@ def asm_meth_instrs(meth, cenv):
         if symbolp(a):
           if a not in all_regs: raise CompileError(a, 'not a register')
           return a
+        if isinstance(a, Integer): return int(a)
+        if isinstance(a, Decimal): return int(a)
         raise CompileError(a, 'unsupported operand type')
 
       try:

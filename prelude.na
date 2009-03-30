@@ -9,9 +9,12 @@ end
 def false '()
 
 def cons: obj:
-  inline C (run x y) <<end
-    return cons(n_x, n_y);
-  end
+  asm (run x y):
+    LW val argl 0
+    LW tmp argl 1
+    LW tmp tmp 0
+    CONS val val tmp
+    GOTO_REG continue
 
 def become: obj:
   inline C (run x y keep_y) <<end
