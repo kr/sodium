@@ -230,6 +230,7 @@ def compile_qmark(exp, target, linkage, cenv, pop_all_symbol):
                 parallel_ir_seqs(
                     append_ir_seqs(t_branch, c_code),
                     append_ir_seqs(f_branch, a_code)),
+                make_ir_seq((), (), BACKPTR()),
                 after_if), pop_all_symbol)
 
 def compile_sequence(seq, target, linkage, cenv, pop_all_symbol):
@@ -655,6 +656,7 @@ def compile_procedure_call(target, linkage, cenv, message, pop_all_symbol):
                          end_with_linkage(linkage,
                              make_ir_seq((addr_r, proc_r, argl_r), (target,),
                                APPLY_PRIM_METH(target, addr_r, proc_r, argl_r)), pop_all_symbol))),
+                 make_ir_seq((), (), BACKPTR()),
                  after_call)
 
 def compile_meth_invoc(target, linkage, cenv, message, pop_all_symbol):
@@ -675,6 +677,7 @@ def compile_meth_invoc(target, linkage, cenv, message, pop_all_symbol):
             return make_ir_seq((addr_r,), all_writable_regs,
                 LOAD_ADDR(continue_r, proc_return),
                 GOTO_REG(addr_r),
+                BACKPTR(),
                 proc_return,
                 MOV(target, val_r),
                 GOTO_LABEL(linkage))
