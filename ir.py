@@ -1,6 +1,8 @@
 from typ import S, Integer, String, Decimal, InlineMethEntry
 #from util import traced
 
+py_list = list
+
 all_readonly_regs = (
     S('nil'),
     S('global'),
@@ -25,7 +27,7 @@ all_regs_dict = dict([(str(k),i) for i,k in enumerate(all_regs)])
 ops = {}
 
 def reg_instr(callable):
-    callable.name = S(callable.__name__)
+    callable.name = S(callable.__name__.replace('_', '-'))
     ops[callable.name] = callable
     return callable
 
@@ -62,10 +64,10 @@ def self_evaluatingp(exp):
             isinstance(exp, InlineMethEntry))
 def nullp(l): return len(l) == 0
 def car(t):
-    if isinstance(t, (tuple, list)): return t[0]
+    if isinstance(t, (tuple, py_list)): return t[0]
     return t.car()
 def cdr(t):
-    if isinstance(t, (tuple, list)): return t[1:]
+    if isinstance(t, (tuple, py_list)): return t[1:]
     return t.cdr()
 
 def symbolp(exp):
@@ -106,19 +108,19 @@ def make_desc(format, len):
 
 def encode_str(s):
     head = (
-            BACKPTR(),
-            ENCODED(make_desc(DATUM_FORMAT_EMB_OPAQUE, len(s)), comment='descriptor'),
+            backptr(),
+            encoded(make_desc(DATUM_FORMAT_EMB_OPAQUE, len(s)), comment='descriptor'),
             PACKED('(size_t) str_mtab'),
            )
     padded = s + '\0' * (4 - len(s) % 4)
     groups = [''.join(reversed(xs)) for xs in zip(*[iter(padded)]*4)]
     body = ((pad(32, *[(8, ord(c)) for c in g]), repr(g)) for g in groups)
-    return (head + tuple((ENCODED(x, comment=c) for x,c in body)), 3)
+    return (head + tuple((encoded(x, comment=c) for x,c in body)), 3)
 
 def encode_ime(ime):
     return ((
-            BACKPTR(),
-            ENCODED(make_desc(DATUM_FORMAT_EMB_OPAQUE, 4), comment='descriptor'),
+            backptr(),
+            encoded(make_desc(DATUM_FORMAT_EMB_OPAQUE, 4), comment='descriptor'),
             PACKED('(size_t) ime_mtab'),
             PACKED('((uint) %s)' % (ime.name,)),
            ), 3)
@@ -128,9 +130,9 @@ def encode_datum(datum):
     if isinstance(datum, InlineMethEntry): return encode_ime(datum)
     return ((), 0)
 
-def flatten(x, types=(list, tuple)):
+def flatten(x, types=(py_list, tuple)):
     t = type(x)
-    x = list(x)
+    x = py_list(x)
     i = 0
     while i < len(x):
         if isinstance(x[i], types):
@@ -158,7 +160,7 @@ class make_ir_seq:
         self.c_defs += c_defs
 
     def format(self):
-        s = 'needs:%r modifies:%r\n' % (list(self.needs), list(self.modifies))
+        s = 'needs:%r modifies:%r\n' % (py_list(self.needs), py_list(self.modifies))
         for stmt in self.statements:
             if not symbolp(stmt): s += '  '
             s += str(stmt) + '\n'
@@ -281,7 +283,7 @@ class make_ir_seq:
         i = 0
         for s in self.statements:
             if symbolp(s):
-                #real_instrs.append(BACKPTR())
+                #real_instrs.append(backptr())
                 #i += 1
                 labels.append((s, i))
             else:
@@ -290,16 +292,16 @@ class make_ir_seq:
                     if symbolp(s.d):
                         symbol_offsets.append(i)
                 i += 1 # only count real statements
-                if s.op in (LOAD_ADDR.name, BF.name, BPRIM.name, GOTO_LABEL.name,):
+                if s.op in (la.name, bf.name, bprim.name, j.name,):
                     real_instrs.append(OP_LABEL_OFFSET(s.l))
                     i += 1
-                if s.op in (CLOSURE_METHOD.name, SET_.name, DEFINE.name, LOOKUP.name):
+                if s.op in (closure_method.name, set_.name, define.name, lookup.name):
                     d = s.d
                     if symbolp(d): d = String(d.s)
                     real_instrs.append(OP_DATUM_OFFSET(d))
                     symbol_offsets.append(i)
                     i += 1
-                if s.op in (CLOSURE_METHOD2.name,):
+                if s.op in (closure_method2.name,):
                     d1, d2 = s.d1, s.d2
                     if symbolp(d1): d1 = String(d1.s)
                     if symbolp(d2): d2 = String(d2.s)
@@ -309,7 +311,7 @@ class make_ir_seq:
                     real_instrs.append(OP_DATUM_OFFSET(d2))
                     symbol_offsets.append(i)
                     i += 1
-                if s.op in (LOAD_IMM.name,):
+                if s.op in (load_imm.name,):
                     if isinstance(s.d, Decimal):
                         real_instrs.append(DATUM(Integer(int(s.d))))
                     elif isinstance(s.d, Integer):
@@ -370,14 +372,14 @@ def preserving(regs, s1, s2, pop_all_symbol):
         for stmt in ss:
             nss.append(stmt)
             if stmt is pop_all_symbol:
-                nss.append(POP(void_s))
+                nss.append(pop(void_s))
         return tuple(nss)
     for reg in regs:
         if needs_registerp(s2, reg) and modifies_registerp(s1, reg):
             s1 = make_ir_seq_with_c_defs(
                     frozenset([reg]) | registers_needed(s1),
                     registers_modified(s1) - frozenset([reg]),
-                    (PUSH(reg),) + add_pops(statements(s1)) + (POP(reg),),
+                    (push(reg),) + add_pops(statements(s1)) + (pop(reg),),
                     c_defs(s1))
     return append_ir_seqs(s1, s2)
 
@@ -431,7 +433,7 @@ def make_label(sym):
 
 # The noop instruction
 @reg_instr
-def NOP(): return OP_NOP()
+def nop(): return OP_NOP()
 
 # The datum pseudo-instruction
 def DATUM(d, tag=None):
@@ -440,7 +442,7 @@ def DATUM(d, tag=None):
       if d < 0:
           op = 0x1f
           d = (1 << 26) + d
-      return ENCODED(pad(32, (5, op), (26, d), (1, 1)), tag=tag)
+      return encoded(pad(32, (5, op), (26, d), (1, 1)), tag=tag)
     if not symbolp(d): raise 'oops'
     return OP_DATUM_OFFSET(d, tag=tag)
 
@@ -451,180 +453,180 @@ def ADDR(l):
 
 # The backptr pseudo-instruction
 @reg_instr
-def BACKPTR(): return OP_BACKPTR()
+def backptr(): return OP_BACKPTR()
 
 # The encoded pseudo-instruction
 @reg_instr
-def ENCODED(*args, **kwargs): return OP_ENCODED(*args, **kwargs)
+def encoded(*args, **kwargs): return OP_ENCODED(*args, **kwargs)
 
 # No-payload instructions
 
 @reg_instr
-def QUIT(): return OP_Z(QUIT.name)
+def quit(): return OP_Z(quit.name)
 
 # One register instructions
 
 @reg_instr
-def GOTO_REG(target_reg): return OP_R(GOTO_REG.name, target_reg)
+def jr(target_reg): return OP_R(jr.name, target_reg)
 
 @reg_instr
-def PUSH(reg): return OP_R(PUSH.name, reg)
+def push(reg): return OP_R(push.name, reg)
 
 @reg_instr
-def POP(reg): return OP_R(POP.name, reg)
+def pop(reg): return OP_R(pop.name, reg)
 
 # One label instructions
 
 @reg_instr
-def GOTO_LABEL(target_label): return OP_L(GOTO_LABEL.name, target_label)
+def j(target_label): return OP_L(j.name, target_label)
 
 # Two register instructions
 
 @reg_instr
-def MOV(target_reg, src_reg): return OP_RR(MOV.name, target_reg, src_reg)
+def mov(target_reg, src_reg): return OP_RR(mov.name, target_reg, src_reg)
 
 @reg_instr
-def CLOSURE_ENV(target_reg, proc_reg):
-    return LW(target_reg, proc_reg, 0)
+def closure_env(target_reg, proc_reg):
+    return lw(target_reg, proc_reg, 0)
 
 @reg_instr
-def LIST(target_reg, val_reg):
-    return CONS(target_reg, val_reg, S('nil'))
+def list(target_reg, val_reg):
+    return cons(target_reg, val_reg, S('nil'))
 
 @reg_instr
-def MAKE_SELFOBJ(target_reg, label_reg):
-    return OP_RR(MAKE_SELFOBJ.name, target_reg, label_reg)
+def make_selfobj(target_reg, label_reg):
+    return OP_RR(make_selfobj.name, target_reg, label_reg)
 
 @reg_instr
-def LOAD_OFF(target_reg, val):
+def load_off(target_reg, val):
     if not isinstance(val, String):
         raise CompileError(val, 'not a string')
-    return OP_RO(LOAD_OFF.name, target_reg, val)
+    return OP_RO(load_off.name, target_reg, val)
 
 # One register, one label instructions
 
 @reg_instr
-def LOAD_ADDR(target_reg, label): return OP_RL(LOAD_ADDR.name, target_reg, label)
+def la(target_reg, label): return OP_RL(la.name, target_reg, label)
 
 @reg_instr
-def BF(reg, label): return OP_RL(BF.name, reg, label)
+def bf(reg, label): return OP_RL(bf.name, reg, label)
 
 @reg_instr
-def BPRIM(reg, label): return OP_RL(BPRIM.name, reg, label)
+def bprim(reg, label): return OP_RL(bprim.name, reg, label)
 
 # One register, one value instructions
 
 @reg_instr
-def LOAD_IMM(target_reg, val):
-    if isinstance(val, String): return LOAD_OFF(target_reg, val)
-    return OP_RD(LOAD_IMM.name, target_reg, val)
+def load_imm(target_reg, val):
+    if isinstance(val, String): return load_off(target_reg, val)
+    return OP_RD(load_imm.name, target_reg, val)
 
 # Three register instructions
 
 @reg_instr
-def CONS(target_reg, car_reg, cdr_reg):
-    return OP_RRR(CONS.name, target_reg, car_reg, cdr_reg)
+def cons(target_reg, car_reg, cdr_reg):
+    return OP_RRR(cons.name, target_reg, car_reg, cdr_reg)
 @reg_instr
-def MAKE_CLOSURE(target_reg, env_reg, label_reg):
-    return OP_RRR(MAKE_CLOSURE.name, target_reg, env_reg, label_reg)
+def make_closure(target_reg, env_reg, label_reg):
+    return OP_RRR(make_closure.name, target_reg, env_reg, label_reg)
 
 
 # Two register, one immediate instructions
 @reg_instr
-def LW(target_reg, address_reg, imm):
-    return OP_RRI(LW.name, target_reg, address_reg, imm)
+def lw(target_reg, address_reg, imm):
+    return OP_RRI(lw.name, target_reg, address_reg, imm)
 @reg_instr
-def SW(value_reg, address_reg, imm):
-    return OP_RRI(SW.name, value_reg, address_reg, imm)
+def sw(value_reg, address_reg, imm):
+    return OP_RRI(sw.name, value_reg, address_reg, imm)
 @reg_instr
-def ADDI(target_reg, imm):
-    return OP_RRI(ADDI.name, target_reg, S('nil'), imm)
+def addi(target_reg, imm):
+    return OP_RRI(addi.name, target_reg, S('nil'), imm)
 @reg_instr
-def SI(address_reg, imm):
-    return OP_RRI(SI.name, S('nil'), address_reg, imm)
+def si(address_reg, imm):
+    return OP_RRI(si.name, S('nil'), address_reg, imm)
 
 
 # Two register, one symbol instructions
 
 @reg_instr
-def CLOSURE_METHOD(target_reg, obj_reg, name):
-    if not symbolp(name): return CLOSURE_METHOD2(target_reg, obj_reg, *name)
-    return OP_RRD(CLOSURE_METHOD.name, target_reg, obj_reg, name)
+def closure_method(target_reg, obj_reg, name):
+    if not symbolp(name): return closure_method2(target_reg, obj_reg, *name)
+    return OP_RRD(closure_method.name, target_reg, obj_reg, name)
 @reg_instr
-def SET_(env_reg, val_reg, name):
-    return OP_RRD(SET_.name, env_reg, val_reg, name)
+def set_(env_reg, val_reg, name):
+    return OP_RRD(set_.name, env_reg, val_reg, name)
 @reg_instr
-def DEFINE(env_reg, val_reg, name):
-    return OP_RRD(DEFINE.name, env_reg, val_reg, name)
+def define(env_reg, val_reg, name):
+    return OP_RRD(define.name, env_reg, val_reg, name)
 @reg_instr
-def LOOKUP(target_reg, env_reg, name):
-    return OP_RRD(LOOKUP.name, target_reg, env_reg, name)
+def lookup(target_reg, env_reg, name):
+    return OP_RRD(lookup.name, target_reg, env_reg, name)
 
 
 @reg_instr
-def CLOSURE_METHOD2(target_reg, obj_reg, name1, name2):
-    return OP_RRDD(CLOSURE_METHOD2.name, target_reg, obj_reg, name1, name2)
+def closure_method2(target_reg, obj_reg, name1, name2):
+    return OP_RRDD(closure_method2.name, target_reg, obj_reg, name1, name2)
 
 # Two register, two integer instructions
 
 @reg_instr
-def LEXICAL_LOOKUP(target_reg, addr):
+def lexical_lookup(target_reg, addr):
     # env_r is implied
-    return OP_RII(LEXICAL_LOOKUP.name, target_reg, addr[0], addr[1])
+    return OP_RII(lexical_lookup.name, target_reg, addr[0], addr[1])
 @reg_instr
-def LEXICAL_SETBANG(val_reg, addr):
+def lexical_setbang(val_reg, addr):
     # env_r is implied
-    return OP_RII(LEXICAL_SETBANG.name, val_reg, addr[0], addr[1])
+    return OP_RII(lexical_setbang.name, val_reg, addr[0], addr[1])
 @reg_instr
-def LEXICAL_LOOKUP_TAIL(target_reg, addr):
+def lexical_lookup_tail(target_reg, addr):
     # env_r is implied
-    return OP_RII(LEXICAL_LOOKUP_TAIL.name, target_reg, addr[0], addr[1])
+    return OP_RII(lexical_lookup_tail.name, target_reg, addr[0], addr[1])
 @reg_instr
-def LEXICAL_SETBANG_TAIL(val_reg, addr):
+def lexical_setbang_tail(val_reg, addr):
     # env_r is implied
-    return OP_RII(LEXICAL_SETBANG_TAIL.name, val_reg, addr[0], addr[1])
+    return OP_RII(lexical_setbang_tail.name, val_reg, addr[0], addr[1])
 
 # Three register, one list instructions
 
 @reg_instr
-def EXTEND_ENVIRONMENT(target_reg, env_reg, argl_reg, formals_r):
-    return OP_RRRR(EXTEND_ENVIRONMENT.name, target_reg, env_reg, argl_reg, formals_r)
+def extend_environment(target_reg, env_reg, argl_reg, formals_r):
+    return OP_RRRR(extend_environment.name, target_reg, env_reg, argl_reg, formals_r)
 @reg_instr
-def APPLY_PRIM_METH(target_reg, proc_reg, mess_reg, argl_reg):
-    return OP_RRRR(APPLY_PRIM_METH.name, target_reg, proc_reg, mess_reg, argl_reg)
+def apply_prim_meth(target_reg, proc_reg, mess_reg, argl_reg):
+    return OP_RRRR(apply_prim_meth.name, target_reg, proc_reg, mess_reg, argl_reg)
 
 hardware_op_order = (
-    NOP.name,
-    LW.name,
-    SW.name,
-    GOTO_REG.name,
-    PUSH.name,
-    POP.name,
-    QUIT.name,
-    GOTO_LABEL.name,
-    MOV.name,
+    nop.name,
+    lw.name,
+    sw.name,
+    jr.name,
+    push.name,
+    pop.name,
+    quit.name,
+    j.name,
+    mov.name,
     'unused1',
-    ADDI.name,
-    LOAD_ADDR.name,
-    BF.name,
-    BPRIM.name,
-    LOAD_IMM.name,
-    CONS.name,
-    APPLY_PRIM_METH.name,
-    MAKE_CLOSURE.name,
-    CLOSURE_METHOD.name,
-    SET_.name,
-    LOAD_OFF.name,
-    DEFINE.name,
-    LOOKUP.name,
-    LEXICAL_LOOKUP.name,
-    LEXICAL_SETBANG.name,
-    EXTEND_ENVIRONMENT.name,
-    MAKE_SELFOBJ.name,
-    CLOSURE_METHOD2.name,
-    LEXICAL_LOOKUP_TAIL.name,
-    LEXICAL_SETBANG_TAIL.name,
-    SI.name,
+    addi.name,
+    la.name,
+    bf.name,
+    bprim.name,
+    load_imm.name,
+    cons.name,
+    apply_prim_meth.name,
+    make_closure.name,
+    closure_method.name,
+    set_.name,
+    load_off.name,
+    define.name,
+    lookup.name,
+    lexical_lookup.name,
+    lexical_setbang.name,
+    extend_environment.name,
+    make_selfobj.name,
+    closure_method2.name,
+    lexical_lookup_tail.name,
+    lexical_setbang_tail.name,
+    si.name,
 )
 op_codes = dict([(k,i) for i,k in enumerate(hardware_op_order)])
 
@@ -715,14 +717,14 @@ def find_datum(x, datums):
 
 class OP_NOP(OP):
     def __init__(self):
-        OP.__init__(self, NOP.name)
+        OP.__init__(self, nop.name)
 
     def get_body(self, index, labels, datums):
         return pack((0, 0))
 
 class OP_BACKPTR(OP):
     def __init__(self):
-        OP.__init__(self, BACKPTR.name)
+        OP.__init__(self, backptr.name)
 
     def encode(self, index, labels, datums):
         return make_desc(DATUM_FORMAT_BACKPTR, index + 1)
@@ -732,7 +734,7 @@ class OP_BACKPTR(OP):
 
 class OP_ENCODED(OP):
     def __init__(self, x, comment=None, tag=None):
-        OP.__init__(self, ENCODED.name, tag=tag)
+        OP.__init__(self, encoded.name, tag=tag)
         if x < 0: raise 'woah'
         self.encoded = x
         self.comment = comment
@@ -796,7 +798,7 @@ class OP_L(OP):
 
 class OP_LABEL_OFFSET(OP):
     def __init__(self, label):
-        OP.__init__(self, NOP.name)
+        OP.__init__(self, nop.name)
         self.l = label
 
     def get_body(self, index, labels, datums):
@@ -814,7 +816,7 @@ class OP_LABEL_OFFSET(OP):
 
 class OP_DATUM_OFFSET(OP):
     def __init__(self, datum, tag=None):
-        OP.__init__(self, NOP.name, tag=tag)
+        OP.__init__(self, nop.name, tag=tag)
         self.d = datum
 
     def get_body(self, index, labels, datums):
@@ -858,11 +860,11 @@ class OP_RL(OP):
         if l is S('quit'): raise 'aaa'
 
     def verify(self, instrs, labels):
-        if self.op is LOAD_ADDR.name:
+        if self.op is la.name:
           if self.reg is S('continue'):
             for name, offs in labels:
               if name is self.l: break
-            if instrs[offs - 1].op is not BACKPTR.name:
+            if instrs[offs - 1].op is not backptr.name:
               raise RuntimeError('error: continue label at %d not preceded by backptr: %s' % (offs, self.l))
 
     def get_body(self, index, labels, datums):

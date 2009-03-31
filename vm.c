@@ -25,23 +25,23 @@
 #include "config.h"
 #include "index.h"
 
-#define OP_NOP 0x00
-#define OP_LW 0x01
-#define OP_SW 0x02
-#define OP_GOTO_REG 0x03
-#define OP_PUSH 0x04
-#define OP_POP 0x05
-#define OP_QUIT 0x06
-#define OP_GOTO_LABEL 0x07
-#define OP_MOV 0x08
+#define OP_nop 0x00
+#define OP_lw 0x01
+#define OP_sw 0x02
+#define OP_jr 0x03
+#define OP_push 0x04
+#define OP_pop 0x05
+#define OP_quit 0x06
+#define OP_j 0x07
+#define OP_mov 0x08
 #define OP_unused1 0x09
 #define OP_ADDI 0x0a
-#define OP_LOAD_ADDR 0x0b
-#define OP_BF 0x0c
-#define OP_BPRIM 0x0d
+#define OP_la 0x0b
+#define OP_bf 0x0c
+#define OP_bprim 0x0d
 #define OP_LOAD_IMM 0x0e
-#define OP_CONS 0x0f
-#define OP_APPLY_PRIM_METH 0x10
+#define OP_cons 0x0f
+#define OP_apply_prim_meth 0x10
 #define OP_MAKE_CLOSURE 0x11
 #define OP_CLOSURE_METHOD 0x12
 #define OP_SETBANG 0x13
@@ -84,23 +84,23 @@ datum run0_sym, ok_sym, reap0_sym, live_sym, dead_sym;
 const size_t ime_mtab_body = 1;
 
 static char *instr_names[32] = {
-    "OP_NOP",
-    "OP_LW",
-    "OP_SW",
-    "OP_GOTO_REG",
-    "OP_PUSH",
-    "OP_POP",
-    "OP_QUIT",
-    "OP_GOTO_LABEL",
-    "OP_MOV",
+    "OP_nop",
+    "OP_lw",
+    "OP_sw",
+    "OP_jr",
+    "OP_push",
+    "OP_pop",
+    "OP_quit",
+    "OP_j",
+    "OP_mov",
     "<unused1>",
     "OP_ADDI",
-    "OP_LOAD_ADDR",
-    "OP_BF",
-    "OP_BPRIM",
+    "OP_la",
+    "OP_bf",
+    "OP_bprim",
     "OP_LOAD_IMM",
-    "OP_CONS",
-    "OP_APPLY_PRIM_METH",
+    "OP_cons",
+    "OP_apply_prim_meth",
     "OP_MAKE_CLOSURE",
     "OP_CLOSURE_METHOD",
     "OP_SETBANG",
@@ -357,21 +357,21 @@ start_body(uint *start_addr)
                 pc - start_addr, instr_names[I_OP(inst)], I_OP(inst), pc);
 #endif
         switch (I_OP(inst)) {
-            case OP_NOP: break;
+            case OP_nop: break;
             case OP_NOP2: break;
-            case OP_QUIT: goto halt;
-            case OP_LW:
+            case OP_quit: goto halt;
+            case OP_lw:
                 ra = I_R(inst);
                 rb = I_RR(inst);
                 imm = sign_ext_imm(inst);
                 regs[ra] = (datum) regs[rb][imm];
                 break;
-            case OP_SW:
+            case OP_sw:
                 ra = I_R(inst);
                 rb = I_RR(inst);
                 imm = sign_ext_imm(inst);
                 if (regs[rb] + imm > busy_top) fault();
-                if (regs[rb] + imm > busy_top) die("SW -- OOM after gc");
+                if (regs[rb] + imm > busy_top) die("sw -- OOM after gc");
                 regs[rb][imm] = (size_t) regs[ra];
                 break;
             case OP_SI:
@@ -380,25 +380,25 @@ start_body(uint *start_addr)
                 tmp = (datum) *++pc;
                 regs[rb][imm] = (size_t) tmp;
                 break;
-            case OP_GOTO_REG:
+            case OP_jr:
                 ra = I_R(inst);
                 pc = ((uint *) regs[ra]) - 1;
                 break;
-            case OP_PUSH:
+            case OP_push:
                 ra = I_R(inst);
                 stack = cons(regs[ra], stack);
                 break;
-            case OP_POP:
+            case OP_pop:
                 if (stack == nil) die("cannot pop; stack is empty");
                 ra = I_R(inst);
                 regs[ra] = car(stack);
                 stack = cdr(stack);
                 break;
-            case OP_GOTO_LABEL:
+            case OP_j:
                 tmp = (uint *) *++pc;
                 pc += datum2int(tmp) - 1;
                 break;
-            case OP_MOV:
+            case OP_mov:
                 ra = I_R(inst);
                 rb = I_RR(inst);
                 regs[ra] = regs[rb];
@@ -407,17 +407,17 @@ start_body(uint *start_addr)
                 ra = I_R(inst);
                 imm = sign_ext_imm(inst);
                 ((ssize_t *) regs)[ra] += imm;
-            case OP_LOAD_ADDR:
+            case OP_la:
                 ra = I_R(inst);
                 tmp = (uint *) *++pc;
                 regs[ra] = pc + datum2int(tmp);
                 break;
-            case OP_BF:
+            case OP_bf:
                 ra = I_R(inst);
                 tmp = (uint *) *++pc;
                 if (!truep(regs[ra])) pc += datum2int(tmp) - 1;
                 break;
-            case OP_BPRIM:
+            case OP_bprim:
                 ra = I_R(inst);
                 tmp = (uint *) *++pc;
                 if (imep(regs[ra])) pc += datum2int(tmp) - 1;
@@ -431,13 +431,13 @@ start_body(uint *start_addr)
                 di = I_RD(inst);
                 regs[ra] = pc + di;
                 break;
-            case OP_CONS:
+            case OP_cons:
                 ra = I_R(inst);
                 rb = I_RR(inst);
                 rc = I_RRR(inst);
                 regs[ra] = cons(regs[rb], regs[rc]);
                 break;
-            case OP_APPLY_PRIM_METH:
+            case OP_apply_prim_meth:
                 ra = I_R(inst);
                 rb = I_RR(inst);
                 rc = I_RRR(inst);

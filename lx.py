@@ -4,11 +4,11 @@ import re
 from string import maketrans
 
 from typ import *
-from pair import cons, nil, pairp
 from pair import list as plist
 from env import *
 from ir import *
 import ir
+from pair import cons, nil, pairp
 from util import traced, report_compile_error
 
 import lexer
@@ -133,12 +133,12 @@ not_found_s = S('not-found')
 percent_s = S('%')
 def compile_self_evaluating(exp, target, linkage, cenv, pop_all_symbol):
     return end_with_linkage(linkage,
-            make_ir_seq((), (target,), LOAD_IMM(target, exp)), pop_all_symbol)
+            make_ir_seq((), (target,), load_imm(target, exp)), pop_all_symbol)
 
 def compile_literal(exp, target, linkage, cenv, pop_all_symbol):
   if exp is nil:
     return end_with_linkage(linkage,
-            make_ir_seq((), (target,), MOV(target, nil_r)), pop_all_symbol)
+            make_ir_seq((), (target,), mov(target, nil_r)), pop_all_symbol)
     return compile_self_evaluating(exp, target, linkage, cenv, pop_all_symbol)
   if self_evaluatingp(exp) or symbolp(exp):
     return compile_self_evaluating(exp, target, linkage, cenv, pop_all_symbol)
@@ -153,7 +153,7 @@ def compile_literal(exp, target, linkage, cenv, pop_all_symbol):
                 preserving((target,),
                     a,
                     make_ir_seq((reg, target), (target,),
-                        CONS(target, reg, target)),
+                        ir.cons(target, reg, target)),
                     pop_all_symbol)), pop_all_symbol)
   raise CompileError(exp, "Can't compile literal")
 
@@ -162,8 +162,8 @@ def compile_quoted(exp, target, linkage, cenv, pop_all_symbol):
 
 def compile_variable(exp, target, linkage, cenv, pop_all_symbol):
     addr, tail = find_variable(exp, cenv)
-    lookup = LEXICAL_LOOKUP
-    if tail: lookup = LEXICAL_LOOKUP_TAIL
+    which_lookup = lexical_lookup
+    if tail: which_lookup = lexical_lookup_tail
     if addr is not_found_s:
         binop_pat = '^' + lexer.non_name_pat + '$'
         if re.match(binop_pat, str(exp)):
@@ -172,10 +172,10 @@ def compile_variable(exp, target, linkage, cenv, pop_all_symbol):
             raise CompileError(exp, 'lookup of non-name')
         return end_with_linkage(linkage,
             make_ir_seq((), (target,),
-                LOOKUP(target, global_r, exp)), pop_all_symbol)
+                lookup(target, global_r, exp)), pop_all_symbol)
     return end_with_linkage(linkage,
             make_ir_seq((env_r,), (target,),
-                lookup(target, addr)), pop_all_symbol)
+                which_lookup(target, addr)), pop_all_symbol)
 
 next_s = S('next')
 ok_s = S('ok')
@@ -184,21 +184,21 @@ def compile_assignment(exp, target, linkage, cenv, pop_all_symbol):
     get_value_code = compile(exp.caddr(), val_r, next_s, cenv, pop_all_symbol,
             tag=var)
     addr, tail = find_variable(var, cenv)
-    setbang = LEXICAL_SETBANG
-    if tail: setbang = LEXICAL_SETBANG_TAIL
+    setbang = lexical_setbang
+    if tail: setbang = lexical_setbang_tail
     if var is self_s:
         raise CompileError(exp, 'cannot assign to pseudo-variable %s' % var)
     if addr is not_found_s:
         return end_with_linkage(linkage,
                 preserving((), get_value_code,
                     make_ir_seq((val_r,), (target,),
-                        SET_(global_r, val_r, var),
-                        LOAD_IMM(target, ok_s)), pop_all_symbol), pop_all_symbol)
+                        set_(global_r, val_r, var),
+                        load_imm(target, ok_s)), pop_all_symbol), pop_all_symbol)
     return end_with_linkage(linkage,
             preserving((env_r,), get_value_code,
                 make_ir_seq((env_r, val_r), (target,),
                     setbang(val_r, addr),
-                    LOAD_IMM(target, ok_s)), pop_all_symbol), pop_all_symbol)
+                    load_imm(target, ok_s)), pop_all_symbol), pop_all_symbol)
 
 def compile_definition(exp, target, linkage, cenv, pop_all_symbol):
     var = definition_variable(exp)
@@ -208,8 +208,8 @@ def compile_definition(exp, target, linkage, cenv, pop_all_symbol):
     return end_with_linkage(linkage,
             preserving((env_r,), get_value_code,
                 make_ir_seq((env_r, val_r), (target,),
-                    DEFINE(env_r, val_r, var),
-                    LOAD_IMM(target, ok_s)), pop_all_symbol), pop_all_symbol)
+                    define(env_r, val_r, var),
+                    load_imm(target, ok_s)), pop_all_symbol), pop_all_symbol)
 
 def import_name(exp):
     return exp.cadr()
@@ -228,11 +228,11 @@ def compile_qmark(exp, target, linkage, cenv, pop_all_symbol):
     return preserving((env_r, continue_r), p_code,
             append_ir_seqs(
                 make_ir_seq((val_r,), (),
-                    BF(val_r, f_branch)),
+                    bf(val_r, f_branch)),
                 parallel_ir_seqs(
                     append_ir_seqs(t_branch, c_code),
                     append_ir_seqs(f_branch, a_code)),
-                make_ir_seq((), (), BACKPTR()),
+                make_ir_seq((), (), backptr()),
                 after_if), pop_all_symbol)
 
 def compile_sequence(seq, target, linkage, cenv, pop_all_symbol):
@@ -251,7 +251,7 @@ def compile_obj(exp, target, linkage, cenv, pop_all_symbol):
     methods_with_names = exp_methods(exp)
     name_count = sum([len(names) for meth, names in methods_with_names])
     m_tabl_code = make_ir_seq((), (),
-        BACKPTR(),
+        backptr(),
         obj_table,
         DATUM(Integer(name_count)))
     m_body_code = empty_instruction_seq()
@@ -272,8 +272,8 @@ def compile_obj(exp, target, linkage, cenv, pop_all_symbol):
         tack_on_ir_seq(
             end_with_linkage(meth_linkage,
                 make_ir_seq((env_r,), (target, val_r),
-                    LOAD_ADDR(val_r, obj_table),
-                    MAKE_CLOSURE(target, env_r, val_r)), pop_all_symbol),
+                    la(val_r, obj_table),
+                    make_closure(target, env_r, val_r)), pop_all_symbol),
             tack_on_ir_seq(m_tabl_code, m_body_code)),
         after_obj)
 
@@ -284,7 +284,7 @@ def compile_sobj(exp, target, linkage, cenv, pop_all_symbol, tag=None):
     methods_with_names = sobj_methods(exp)
     name_count = sum([len(names) for meth, names in methods_with_names])
     m_tabl_code = make_ir_seq((), (),
-        BACKPTR(),
+        backptr(),
         obj_table,
         DATUM(Integer(name_count), tag=tag))
     m_body_code = empty_instruction_seq()
@@ -305,8 +305,8 @@ def compile_sobj(exp, target, linkage, cenv, pop_all_symbol, tag=None):
         tack_on_ir_seq(
             end_with_linkage(meth_linkage,
                 make_ir_seq((env_r,), (target, val_r),
-                    LOAD_ADDR(val_r, obj_table),
-                    MAKE_SELFOBJ(target, val_r)), pop_all_symbol),
+                    la(val_r, obj_table),
+                    make_selfobj(target, val_r)), pop_all_symbol),
             tack_on_ir_seq(m_tabl_code, m_body_code)),
         after_obj)
 
@@ -465,12 +465,12 @@ def compile_meth_body(meth, meth_entry, cenv):
     cenv = cons(formals, cenv)
     return append_ir_seqs(
         make_ir_seq((proc_r,), (env_r,),
-            BACKPTR(),
+            backptr(),
             meth_entry,
-            CLOSURE_ENV(env_r, proc_r)),
+            closure_env(env_r, proc_r)),
         compile_literal(formals, tmp_r, next_s, cenv, pop_all_symbol),
         make_ir_seq((env_r, tmp_r, argl_r), (env_r,),
-            EXTEND_ENVIRONMENT(env_r, env_r, argl_r, tmp_r)),
+            extend_environment(env_r, env_r, argl_r, tmp_r)),
         compile_sequence(body, val_r, return_s, cenv, pop_all_symbol))
 
 def compile_smeth_body(meth, meth_entry):
@@ -483,13 +483,13 @@ def compile_smeth_body(meth, meth_entry):
     cenv = cons(formals, plist(plist(self_s)))
     return append_ir_seqs(
         make_ir_seq((proc_r,), (env_r,),
-            BACKPTR(),
+            backptr(),
             meth_entry,
-            LIST(env_r, proc_r),
-            LIST(env_r, env_r)),
+            ir.list(env_r, proc_r),
+            ir.list(env_r, env_r)),
         compile_literal(formals, tmp_r, next_s, cenv, pop_all_symbol),
         make_ir_seq((env_r, argl_r, tmp_r), (env_r,),
-            EXTEND_ENVIRONMENT(env_r, env_r, argl_r, tmp_r)),
+            extend_environment(env_r, env_r, argl_r, tmp_r)),
         compile_sequence(body, val_r, return_s, cenv, pop_all_symbol))
 
 def asm_meth_instrs(meth, cenv):
@@ -514,7 +514,7 @@ def asm_meth_instrs(meth, cenv):
 def compile_asm_meth_body(meth, entry, cenv):
     return tack_on_ir_seq(
             make_ir_seq((), (),
-                BACKPTR(),
+                backptr(),
                 entry),
             asm_meth_instrs(meth, cenv))
 
@@ -669,10 +669,10 @@ def exp_operands(exp):
 def construct_arglist(operand_codes, pop_all_symbol):
     operand_codes = operand_codes.reverse()
     if operand_codes.nullp():
-        return make_ir_seq((), (argl_r,), MOV(argl_r, nil_r))
+        return make_ir_seq((), (argl_r,), mov(argl_r, nil_r))
     code_to_get_last_arg = append_ir_seqs(operand_codes.car(),
                                           make_ir_seq((val_r,), (argl_r,),
-                                              LIST(argl_r, val_r)))
+                                              ir.list(argl_r, val_r)))
     if operand_codes.cdr().nullp(): return code_to_get_last_arg
     return preserving((env_r,), code_to_get_last_arg,
             code_to_get_rest_args(operand_codes.cdr(), pop_all_symbol), pop_all_symbol)
@@ -681,7 +681,7 @@ cons_s = S('cons')
 def code_to_get_rest_args(operand_codes, pop_all_symbol):
     code_for_next_arg = preserving((argl_r,), operand_codes.car(),
                                    make_ir_seq((val_r, argl_r), (argl_r,),
-                                       CONS(argl_r, val_r, argl_r)), pop_all_symbol)
+                                       ir.cons(argl_r, val_r, argl_r)), pop_all_symbol)
     if operand_codes.cdr().nullp(): return code_for_next_arg
     return preserving((env_r,), code_for_next_arg,
             code_to_get_rest_args(operand_codes.cdr(), pop_all_symbol), pop_all_symbol)
@@ -697,8 +697,8 @@ def compile_procedure_call(target, linkage, cenv, message, pop_all_symbol):
   if linkage is next_s: compiled_linkage = after_call
   return \
   append_ir_seqs(make_ir_seq((proc_r,), (addr_r,),
-                      CLOSURE_METHOD(addr_r, proc_r, message),
-                      BPRIM(addr_r, primitive_branch)),
+                      closure_method(addr_r, proc_r, message),
+                      bprim(addr_r, primitive_branch)),
                  parallel_ir_seqs(
                      append_ir_seqs(
                          compiled_branch,
@@ -707,8 +707,8 @@ def compile_procedure_call(target, linkage, cenv, message, pop_all_symbol):
                          primitive_branch,
                          end_with_linkage(linkage,
                              make_ir_seq((addr_r, proc_r, argl_r), (target,),
-                               APPLY_PRIM_METH(target, addr_r, proc_r, argl_r)), pop_all_symbol))),
-                 make_ir_seq((), (), BACKPTR()),
+                               apply_prim_meth(target, addr_r, proc_r, argl_r)), pop_all_symbol))),
+                 make_ir_seq((), (), backptr()),
                  after_call)
 
 def compile_meth_invoc(target, linkage, cenv, message, pop_all_symbol):
@@ -716,30 +716,30 @@ def compile_meth_invoc(target, linkage, cenv, message, pop_all_symbol):
         if linkage is return_s:
             return make_ir_seq((addr_r, continue_r), all_writable_regs,
                     pop_all_symbol,
-                    GOTO_REG(addr_r))
+                    jr(addr_r))
         else:
             return make_ir_seq((addr_r,), all_writable_regs,
-                    LOAD_ADDR(continue_r, linkage),
-                    GOTO_REG(addr_r))
+                    la(continue_r, linkage),
+                    jr(addr_r))
     else:
         if linkage is return_s:
             raise CompileError(target, 'return linkage, target not val')
         else:
             proc_return = make_label('proc_return')
             return make_ir_seq((addr_r,), all_writable_regs,
-                LOAD_ADDR(continue_r, proc_return),
-                GOTO_REG(addr_r),
-                BACKPTR(),
+                la(continue_r, proc_return),
+                jr(addr_r),
+                backptr(),
                 proc_return,
-                MOV(target, val_r),
-                GOTO_LABEL(linkage))
+                mov(target, val_r),
+                j(linkage))
 
 def compile_linkage(linkage, pop_all_symbol):
     if linkage is S('return'):
-        return make_ir_seq((S('continue'),), (), pop_all_symbol, GOTO_REG(S('continue')))
+        return make_ir_seq((S('continue'),), (), pop_all_symbol, jr(S('continue')))
     if linkage is next_s:
         return empty_instruction_seq()
-    return make_ir_seq((), (), GOTO_LABEL(linkage))
+    return make_ir_seq((), (), j(linkage))
 
 def end_with_linkage(linkage, ir_seq, pop_all_symbol):
     return preserving((continue_r,),

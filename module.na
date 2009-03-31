@@ -67,6 +67,6 @@ def (make-placeholder.) (obj.)
 
 def module: sobj:
   asm (run.):
-    GOTO_REG proc
+    jr proc
 
 . loader

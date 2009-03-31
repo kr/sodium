@@ -10,11 +10,11 @@ def false '()
 
 def cons: obj:
   asm (run x y):
-    LW val argl 0
-    LW tmp argl 1
-    LW tmp tmp 0
-    CONS val val tmp
-    GOTO_REG continue
+    lw val argl 0
+    lw tmp argl 1
+    lw tmp tmp 0
+    cons val val tmp
+    jr continue
 
 def become: obj:
   inline C (run x y keep_y) <<end
