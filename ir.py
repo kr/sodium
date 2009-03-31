@@ -22,6 +22,13 @@ all_writable_regs = (
 all_regs = all_readonly_regs + all_writable_regs
 all_regs_dict = dict([(str(k),i) for i,k in enumerate(all_regs)])
 
+ops = {}
+
+def reg_instr(callable):
+    callable.name = S(callable.__name__)
+    ops[callable.name] = callable
+    return callable
+
 def desc_datum(x):
     return '%s: %s' % (type(x).__name__, x)
 
@@ -283,16 +290,16 @@ class make_ir_seq:
                     if symbolp(s.d):
                         symbol_offsets.append(i)
                 i += 1 # only count real statements
-                if s.op in (load_addr_s, bf_s, bprim_s, goto_label_s,):
+                if s.op in (LOAD_ADDR.name, BF.name, BPRIM.name, GOTO_LABEL.name,):
                     real_instrs.append(OP_LABEL_OFFSET(s.l))
                     i += 1
-                if s.op in (closure_method_s, set__s, define_s, lookup_s):
+                if s.op in (CLOSURE_METHOD.name, SET_.name, DEFINE.name, LOOKUP.name):
                     d = s.d
                     if symbolp(d): d = String(d.s)
                     real_instrs.append(OP_DATUM_OFFSET(d))
                     symbol_offsets.append(i)
                     i += 1
-                if s.op in (closure_method2_s,):
+                if s.op in (CLOSURE_METHOD2.name,):
                     d1, d2 = s.d1, s.d2
                     if symbolp(d1): d1 = String(d1.s)
                     if symbolp(d2): d2 = String(d2.s)
@@ -302,7 +309,7 @@ class make_ir_seq:
                     real_instrs.append(OP_DATUM_OFFSET(d2))
                     symbol_offsets.append(i)
                     i += 1
-                if s.op in (load_imm_s,):
+                if s.op in (LOAD_IMM.name,):
                     if isinstance(s.d, Decimal):
                         real_instrs.append(DATUM(Integer(int(s.d))))
                     elif isinstance(s.d, Integer):
@@ -423,7 +430,7 @@ def make_label(sym):
     return S(sym + str(label_counters[sym]))
 
 # The noop instruction
-nop_s = S('NOP')
+@reg_instr
 def NOP(): return OP_NOP()
 
 # The datum pseudo-instruction
@@ -443,170 +450,183 @@ def ADDR(l):
     return OP_LABEL_OFFSET(l)
 
 # The backptr pseudo-instruction
-backptr_op_s = S('BACKPTR')
+@reg_instr
 def BACKPTR(): return OP_BACKPTR()
 
 # The encoded pseudo-instruction
-encoded_op_s = S('ENCODED')
+@reg_instr
 def ENCODED(*args, **kwargs): return OP_ENCODED(*args, **kwargs)
 
 # No-payload instructions
 
-quit_s = S('QUIT')
-def QUIT(): return OP_Z(quit_s)
+@reg_instr
+def QUIT(): return OP_Z(QUIT.name)
 
 # One register instructions
 
-goto_reg_s = S('GOTO_REG')
-push_s = S('PUSH')
-pop_s = S('POP')
-def GOTO_REG(target_reg): return OP_R(goto_reg_s, target_reg)
-def PUSH(reg): return OP_R(push_s, reg)
-def POP(reg): return OP_R(pop_s, reg)
+@reg_instr
+def GOTO_REG(target_reg): return OP_R(GOTO_REG.name, target_reg)
+
+@reg_instr
+def PUSH(reg): return OP_R(PUSH.name, reg)
+
+@reg_instr
+def POP(reg): return OP_R(POP.name, reg)
 
 # One label instructions
 
-goto_label_s = S('GOTO_LABEL')
-def GOTO_LABEL(target_label): return OP_L(goto_label_s, target_label)
+@reg_instr
+def GOTO_LABEL(target_label): return OP_L(GOTO_LABEL.name, target_label)
 
 # Two register instructions
 
-mov_s = S('MOV')
-make_selfobj_s = S('MAKE_SELFOBJ')
-def MOV(target_reg, src_reg): return OP_RR(mov_s, target_reg, src_reg)
+@reg_instr
+def MOV(target_reg, src_reg): return OP_RR(MOV.name, target_reg, src_reg)
+
+@reg_instr
 def CLOSURE_ENV(target_reg, proc_reg):
     return LW(target_reg, proc_reg, 0)
+
+@reg_instr
 def LIST(target_reg, val_reg):
     return CONS(target_reg, val_reg, S('nil'))
-def MAKE_SELFOBJ(target_reg, label_reg):
-    return OP_RR(make_selfobj_s, target_reg, label_reg)
 
+@reg_instr
+def MAKE_SELFOBJ(target_reg, label_reg):
+    return OP_RR(MAKE_SELFOBJ.name, target_reg, label_reg)
+
+@reg_instr
+def LOAD_OFF(target_reg, val):
+    if not isinstance(val, String):
+        raise CompileError(val, 'not a string')
+    return OP_RO(LOAD_OFF.name, target_reg, val)
 
 # One register, one label instructions
 
-load_addr_s = S('LOAD_ADDR')
-bf_s = S('BF')
-bprim_s = S('BPRIM')
-def LOAD_ADDR(target_reg, label): return OP_RL(load_addr_s, target_reg, label)
-def BF(reg, label): return OP_RL(bf_s, reg, label)
-def BPRIM(reg, label): return OP_RL(bprim_s, reg, label)
+@reg_instr
+def LOAD_ADDR(target_reg, label): return OP_RL(LOAD_ADDR.name, target_reg, label)
+
+@reg_instr
+def BF(reg, label): return OP_RL(BF.name, reg, label)
+
+@reg_instr
+def BPRIM(reg, label): return OP_RL(BPRIM.name, reg, label)
 
 # One register, one value instructions
 
-load_off_s = S('LOAD_OFF')
-load_imm_s = S('LOAD_IMM')
+@reg_instr
 def LOAD_IMM(target_reg, val):
-    if isinstance(val, String): return OP_RO(load_off_s, target_reg, val)
-    return OP_RD(load_imm_s, target_reg, val)
+    if isinstance(val, String): return LOAD_OFF(target_reg, val)
+    return OP_RD(LOAD_IMM.name, target_reg, val)
 
 # Three register instructions
 
-cons_s = S('CONS')
-make_closure_s = S('MAKE_CLOSURE')
+@reg_instr
 def CONS(target_reg, car_reg, cdr_reg):
-    return OP_RRR(cons_s, target_reg, car_reg, cdr_reg)
+    return OP_RRR(CONS.name, target_reg, car_reg, cdr_reg)
+@reg_instr
 def MAKE_CLOSURE(target_reg, env_reg, label_reg):
-    return OP_RRR(make_closure_s, target_reg, env_reg, label_reg)
+    return OP_RRR(MAKE_CLOSURE.name, target_reg, env_reg, label_reg)
 
 
 # Two register, one immediate instructions
-lw_s = S('LW')
-sw_s = S('SW')
-addi_s = S('ADDI')
-si_s = S('SI')
+@reg_instr
 def LW(target_reg, address_reg, imm):
-    return OP_RRI(lw_s, target_reg, address_reg, imm)
+    return OP_RRI(LW.name, target_reg, address_reg, imm)
+@reg_instr
 def SW(value_reg, address_reg, imm):
-    return OP_RRI(sw_s, value_reg, address_reg, imm)
+    return OP_RRI(SW.name, value_reg, address_reg, imm)
+@reg_instr
 def ADDI(target_reg, imm):
-    return OP_RRI(addi_s, target_reg, S('nil'), imm)
+    return OP_RRI(ADDI.name, target_reg, S('nil'), imm)
+@reg_instr
 def SI(address_reg, imm):
-    return OP_RRI(si_s, S('nil'), address_reg, imm)
+    return OP_RRI(SI.name, S('nil'), address_reg, imm)
 
 
 # Two register, one symbol instructions
 
-closure_method_s = S('CLOSURE_METHOD')
-set__s = S('SET_')
-define_s = S('DEFINE')
-lookup_s = S('LOOKUP')
+@reg_instr
 def CLOSURE_METHOD(target_reg, obj_reg, name):
     if not symbolp(name): return CLOSURE_METHOD2(target_reg, obj_reg, *name)
-    return OP_RRD(closure_method_s, target_reg, obj_reg, name)
+    return OP_RRD(CLOSURE_METHOD.name, target_reg, obj_reg, name)
+@reg_instr
 def SET_(env_reg, val_reg, name):
-    return OP_RRD(set__s, env_reg, val_reg, name)
+    return OP_RRD(SET_.name, env_reg, val_reg, name)
+@reg_instr
 def DEFINE(env_reg, val_reg, name):
-    return OP_RRD(define_s, env_reg, val_reg, name)
+    return OP_RRD(DEFINE.name, env_reg, val_reg, name)
+@reg_instr
 def LOOKUP(target_reg, env_reg, name):
-    return OP_RRD(lookup_s, target_reg, env_reg, name)
+    return OP_RRD(LOOKUP.name, target_reg, env_reg, name)
 
 
-closure_method2_s = S('CLOSURE_METHOD2')
+@reg_instr
 def CLOSURE_METHOD2(target_reg, obj_reg, name1, name2):
-    return OP_RRDD(closure_method2_s, target_reg, obj_reg, name1, name2)
+    return OP_RRDD(CLOSURE_METHOD2.name, target_reg, obj_reg, name1, name2)
 
 # Two register, two integer instructions
 
-lexical_lookup_s = S('LEXICAL_LOOKUP')
-lexical_setbang_s = S('LEXICAL_SETBANG')
-lexical_lookup_tail_s = S('LEXICAL_LOOKUP_TAIL')
-lexical_setbang_tail_s = S('LEXICAL_SETBANG_TAIL')
+@reg_instr
 def LEXICAL_LOOKUP(target_reg, addr):
     # env_r is implied
-    return OP_RII(lexical_lookup_s, target_reg, addr[0], addr[1])
+    return OP_RII(LEXICAL_LOOKUP.name, target_reg, addr[0], addr[1])
+@reg_instr
 def LEXICAL_SETBANG(val_reg, addr):
     # env_r is implied
-    return OP_RII(lexical_setbang_s, val_reg, addr[0], addr[1])
+    return OP_RII(LEXICAL_SETBANG.name, val_reg, addr[0], addr[1])
+@reg_instr
 def LEXICAL_LOOKUP_TAIL(target_reg, addr):
     # env_r is implied
-    return OP_RII(lexical_lookup_tail_s, target_reg, addr[0], addr[1])
+    return OP_RII(LEXICAL_LOOKUP_TAIL.name, target_reg, addr[0], addr[1])
+@reg_instr
 def LEXICAL_SETBANG_TAIL(val_reg, addr):
     # env_r is implied
-    return OP_RII(lexical_setbang_tail_s, val_reg, addr[0], addr[1])
+    return OP_RII(LEXICAL_SETBANG_TAIL.name, val_reg, addr[0], addr[1])
 
 # Three register, one list instructions
 
-extend_environment_s = S('EXTEND_ENVIRONMENT')
-apply_prim_meth_s = S('APPLY_PRIM_METH')
+@reg_instr
 def EXTEND_ENVIRONMENT(target_reg, env_reg, argl_reg, formals_r):
-    return OP_RRRR(extend_environment_s, target_reg, env_reg, argl_reg, formals_r)
+    return OP_RRRR(EXTEND_ENVIRONMENT.name, target_reg, env_reg, argl_reg, formals_r)
+@reg_instr
 def APPLY_PRIM_METH(target_reg, proc_reg, mess_reg, argl_reg):
-    return OP_RRRR(apply_prim_meth_s, target_reg, proc_reg, mess_reg, argl_reg)
+    return OP_RRRR(APPLY_PRIM_METH.name, target_reg, proc_reg, mess_reg, argl_reg)
 
-all_ops = (
-    nop_s,
-    lw_s,
-    sw_s,
-    goto_reg_s,
-    push_s,
-    pop_s,
-    quit_s,
-    goto_label_s,
-    mov_s,
+hardware_op_order = (
+    NOP.name,
+    LW.name,
+    SW.name,
+    GOTO_REG.name,
+    PUSH.name,
+    POP.name,
+    QUIT.name,
+    GOTO_LABEL.name,
+    MOV.name,
     'unused1',
-    addi_s,
-    load_addr_s,
-    bf_s,
-    bprim_s,
-    load_imm_s,
-    cons_s,
-    apply_prim_meth_s,
-    make_closure_s,
-    closure_method_s,
-    set__s,
-    load_off_s,
-    define_s,
-    lookup_s,
-    lexical_lookup_s,
-    lexical_setbang_s,
-    extend_environment_s,
-    make_selfobj_s,
-    closure_method2_s,
-    lexical_lookup_tail_s,
-    lexical_setbang_tail_s,
-    si_s,
+    ADDI.name,
+    LOAD_ADDR.name,
+    BF.name,
+    BPRIM.name,
+    LOAD_IMM.name,
+    CONS.name,
+    APPLY_PRIM_METH.name,
+    MAKE_CLOSURE.name,
+    CLOSURE_METHOD.name,
+    SET_.name,
+    LOAD_OFF.name,
+    DEFINE.name,
+    LOOKUP.name,
+    LEXICAL_LOOKUP.name,
+    LEXICAL_SETBANG.name,
+    EXTEND_ENVIRONMENT.name,
+    MAKE_SELFOBJ.name,
+    CLOSURE_METHOD2.name,
+    LEXICAL_LOOKUP_TAIL.name,
+    LEXICAL_SETBANG_TAIL.name,
+    SI.name,
 )
-all_ops_dict = dict([(k,i) for i,k in enumerate(all_ops)])
+op_codes = dict([(k,i) for i,k in enumerate(hardware_op_order)])
 
 def pack(*chunks):
     val = 0L
@@ -649,7 +669,7 @@ class OP(object):
         return ()
 
 def lookup_op(op):
-    return all_ops_dict[op]
+    return op_codes[op]
 
 def lookup_reg(r):
     return all_regs_dict[str(r)]
@@ -695,14 +715,14 @@ def find_datum(x, datums):
 
 class OP_NOP(OP):
     def __init__(self):
-        OP.__init__(self, nop_s)
+        OP.__init__(self, NOP.name)
 
     def get_body(self, index, labels, datums):
         return pack((0, 0))
 
 class OP_BACKPTR(OP):
     def __init__(self):
-        OP.__init__(self, backptr_op_s)
+        OP.__init__(self, BACKPTR.name)
 
     def encode(self, index, labels, datums):
         return make_desc(DATUM_FORMAT_BACKPTR, index + 1)
@@ -712,7 +732,7 @@ class OP_BACKPTR(OP):
 
 class OP_ENCODED(OP):
     def __init__(self, x, comment=None, tag=None):
-        OP.__init__(self, encoded_op_s, tag=tag)
+        OP.__init__(self, ENCODED.name, tag=tag)
         if x < 0: raise 'woah'
         self.encoded = x
         self.comment = comment
@@ -776,7 +796,7 @@ class OP_L(OP):
 
 class OP_LABEL_OFFSET(OP):
     def __init__(self, label):
-        OP.__init__(self, nop_s)
+        OP.__init__(self, NOP.name)
         self.l = label
 
     def get_body(self, index, labels, datums):
@@ -794,7 +814,7 @@ class OP_LABEL_OFFSET(OP):
 
 class OP_DATUM_OFFSET(OP):
     def __init__(self, datum, tag=None):
-        OP.__init__(self, nop_s, tag=tag)
+        OP.__init__(self, NOP.name, tag=tag)
         self.d = datum
 
     def get_body(self, index, labels, datums):
@@ -838,11 +858,11 @@ class OP_RL(OP):
         if l is S('quit'): raise 'aaa'
 
     def verify(self, instrs, labels):
-        if self.op is load_addr_s:
+        if self.op is LOAD_ADDR.name:
           if self.reg is S('continue'):
             for name, offs in labels:
               if name is self.l: break
-            if instrs[offs - 1].op is not backptr_op_s:
+            if instrs[offs - 1].op is not BACKPTR.name:
               raise RuntimeError('error: continue label at %d not preceded by backptr: %s' % (offs, self.l))
 
     def get_body(self, index, labels, datums):

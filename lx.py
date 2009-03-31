@@ -505,7 +505,7 @@ def asm_meth_instrs(meth, cenv):
       try:
         if symbolp(instr): return instr
         op, args = instr.car(), instr.cdr()
-        return getattr(ir, str(op))(*[check_arg(x) for x in args])
+        return ir.ops[op](*[check_arg(x) for x in args])
       except CompileError, err:
         err.annotate_or_report(instr)
 
