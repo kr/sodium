@@ -35,28 +35,28 @@
 #define OP_j 0x07
 #define OP_mov 0x08
 #define OP_unused1 0x09
-#define OP_ADDI 0x0a
+#define OP_addi 0x0a
 #define OP_la 0x0b
 #define OP_bf 0x0c
 #define OP_bprim 0x0d
-#define OP_LOAD_IMM 0x0e
+#define OP_load_imm 0x0e
 #define OP_cons 0x0f
 #define OP_apply_prim_meth 0x10
-#define OP_MAKE_CLOSURE 0x11
-#define OP_CLOSURE_METHOD 0x12
-#define OP_SETBANG 0x13
-#define OP_LOAD_OFF 0x14
-#define OP_DEFINE 0x15
-#define OP_LOOKUP 0x16
-#define OP_LEXICAL_LOOKUP 0x17
-#define OP_LEXICAL_SETBANG 0x18
-#define OP_EXTEND_ENVIRONMENT 0x19
-#define OP_MAKE_SELFOBJ 0x1a
-#define OP_CLOSURE_METHOD2 0x1b
-#define OP_LEXICAL_LOOKUP_TAIL 0x1c
-#define OP_LEXICAL_SETBANG_TAIL 0x1d
-#define OP_SI 0x1e
-#define OP_NOP2 0x1f
+#define OP_make_closure 0x11
+#define OP_closure_method 0x12
+#define OP_setbang 0x13
+#define OP_load_off 0x14
+#define OP_define 0x15
+#define OP_lookup 0x16
+#define OP_lexical_lookup 0x17
+#define OP_lexical_setbang 0x18
+#define OP_extend_environment 0x19
+#define OP_make_selfobj 0x1a
+#define OP_closure_method2 0x1b
+#define OP_lexical_lookup_tail 0x1c
+#define OP_lexical_setbang_tail 0x1d
+#define OP_si 0x1e
+#define OP_unused2 0x1f
 
 #define I_OP(i) (((i) >> 27) & 0x1f)
 #define I_D(i) ((i) & 0x7ffffff)
@@ -94,28 +94,28 @@ static char *instr_names[32] = {
     "OP_j",
     "OP_mov",
     "<unused1>",
-    "OP_ADDI",
+    "OP_addi",
     "OP_la",
     "OP_bf",
     "OP_bprim",
-    "OP_LOAD_IMM",
+    "OP_load_imm",
     "OP_cons",
     "OP_apply_prim_meth",
-    "OP_MAKE_CLOSURE",
-    "OP_CLOSURE_METHOD",
-    "OP_SETBANG",
-    "OP_LOAD_OFF",
-    "OP_DEFINE",
-    "OP_LOOKUP",
-    "OP_LEXICAL_LOOKUP",
-    "OP_LEXICAL_SETBANG",
-    "OP_EXTEND_ENVIRONMENT",
-    "OP_MAKE_SELFOBJ",
-    "OP_CLOSURE_METHOD2",
-    "OP_LEXICAL_LOOKUP_TAIL",
-    "OP_LEXICAL_SETBANG_TAIL",
-    "OP_SI",
-    "OP_NOP2",
+    "OP_make_closure",
+    "OP_closure_method",
+    "OP_setbang",
+    "OP_load_off",
+    "OP_define",
+    "OP_lookup",
+    "OP_lexical_lookup",
+    "OP_lexical_setbang",
+    "OP_extend_environment",
+    "OP_make_selfobj",
+    "OP_closure_method2",
+    "OP_lexical_lookup_tail",
+    "OP_lexical_setbang_tail",
+    "OP_si",
+    "<unused2>",
 };
 
 #define USAGE "Usage: vm <file.lxc>\n"
@@ -360,7 +360,6 @@ start_body(uint *start_addr)
 #endif
         switch (I_OP(inst)) {
             case OP_nop: break;
-            case OP_NOP2: break;
             case OP_quit: goto halt;
             case OP_lw:
                 ra = I_R(inst);
@@ -376,7 +375,7 @@ start_body(uint *start_addr)
                 if (regs[rb] + imm > busy_top) die("sw -- OOM after gc");
                 regs[rb][imm] = (size_t) regs[ra];
                 break;
-            case OP_SI:
+            case OP_si:
                 rb = I_RR(inst);
                 imm = sign_ext_imm(inst);
                 tmp = (datum) *++pc;
@@ -405,7 +404,7 @@ start_body(uint *start_addr)
                 rb = I_RR(inst);
                 regs[ra] = regs[rb];
                 break;
-            case OP_ADDI:
+            case OP_addi:
                 ra = I_R(inst);
                 imm = sign_ext_imm(inst);
                 ((ssize_t *) regs)[ra] += imm;
@@ -424,11 +423,11 @@ start_body(uint *start_addr)
                 tmp = (uint *) *++pc;
                 if (imep(regs[ra])) pc += datum2int(tmp) - 1;
                 break;
-            case OP_LOAD_IMM:
+            case OP_load_imm:
                 ra = I_R(inst);
                 regs[ra] = (datum) *++pc;
                 break;
-            case OP_LOAD_OFF:
+            case OP_load_off:
                 ra = I_R(inst);
                 di = I_RD(inst);
                 regs[ra] = pc + di;
@@ -447,23 +446,23 @@ start_body(uint *start_addr)
                 /*regs[ra] = apply_prim_meth((prim_meth) regs[rb], regs[rc], regs[rd]);*/
                 regs[ra] = ((prim_meth) *regs[rb])(regs[rc], regs[rd]);
                 break;
-            case OP_MAKE_CLOSURE:
+            case OP_make_closure:
                 ra = I_R(inst);
                 rb = I_RR(inst);
                 rc = I_RRR(inst);
                 regs[ra] = make_closure(1, regs[rc], regs[rb]);
                 break;
-            case OP_MAKE_SELFOBJ:
+            case OP_make_selfobj:
                 ra = I_R(inst);
                 rb = I_RR(inst);
                 regs[ra] = make_closure(0, regs[rb], nil);
                 break;
-            case OP_CLOSURE_METHOD:
+            case OP_closure_method:
                 ra = I_R(inst);
                 rb = I_RR(inst);
                 regs[ra] = (datum) closure_method(regs[rb], (datum) *++pc);
                 break;
-            case OP_CLOSURE_METHOD2:
+            case OP_closure_method2:
                 ra = I_R(inst);
                 rb = I_RR(inst);
                 {
@@ -472,46 +471,46 @@ start_body(uint *start_addr)
                   regs[ra] = closure_method2(regs[rb], name1, name2);
                 }
                 break;
-            case OP_SETBANG:
+            case OP_setbang:
                 ra = I_R(inst);
                 rb = I_RR(inst);
                 setbang(regs[rb], (datum) *++pc);
                 break;
-            case OP_DEFINE:
+            case OP_define:
                 ra = I_R(inst);
                 rb = I_RR(inst);
                 define(regs[rb], (datum) *++pc);
                 break;
-            case OP_LOOKUP:
+            case OP_lookup:
                 ra = I_R(inst);
                 rb = I_RR(inst);
                 regs[ra] = lookup((datum) *++pc);
                 break;
-            case OP_LEXICAL_LOOKUP:
+            case OP_lexical_lookup:
                 ra = I_R(inst);
                 level = I_RI(inst);
                 index = I_RII(inst);
                 regs[ra] = lexical_lookup(regs[R_ENV], level, index, 0);
                 break;
-            case OP_LEXICAL_SETBANG:
+            case OP_lexical_setbang:
                 ra = I_R(inst);
                 level = I_RI(inst);
                 index = I_RII(inst);
                 lexical_setbang(regs[R_ENV], level, index, 0, regs[ra]);
                 break;
-            case OP_LEXICAL_LOOKUP_TAIL:
+            case OP_lexical_lookup_tail:
                 ra = I_R(inst);
                 level = I_RI(inst);
                 index = I_RII(inst);
                 regs[ra] = lexical_lookup(regs[R_ENV], level, index, 1);
                 break;
-            case OP_LEXICAL_SETBANG_TAIL:
+            case OP_lexical_setbang_tail:
                 ra = I_R(inst);
                 level = I_RI(inst);
                 index = I_RII(inst);
                 lexical_setbang(regs[R_ENV], level, index, 1, regs[ra]);
                 break;
-            case OP_EXTEND_ENVIRONMENT:
+            case OP_extend_environment:
                 ra = I_R(inst);
                 rb = I_RR(inst);
                 rc = I_RRR(inst);
