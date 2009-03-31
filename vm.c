@@ -559,7 +559,7 @@ read_module_file(const char *name)
     check_magic(f);
 
     instr_count = read_int(f);
-    insts = make_opaque_permanent(instr_count * 4, module_mtab);
+    insts = make_opaque(instr_count * 4, module_mtab);
 
     load_instrs(f, instr_count, insts);
 
