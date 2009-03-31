@@ -40,7 +40,7 @@ return_s = S('return')
 qmark_s = S('?')
 if_s = S('if')
 fn_s = S('fn')
-shfn_s = S(':shorthand-fn:')
+bracket_s = S('bracket')
 obj_s = S('obj')
 sobj_s = S('sobj')
 do_s = S('do')
@@ -57,7 +57,7 @@ def compile(exp, target, linkage, cenv, pop_all_symbol, **kwargs):
     if tagged_list(exp, def_s): return compile_definition(exp, target, linkage, cenv, pop_all_symbol)
     if tagged_list(exp, qmark_s): return compile_qmark(exp, target, linkage, cenv, pop_all_symbol)
     if tagged_list(exp, fn_s): return compile_obj(fn2obj(exp), target, linkage, cenv, pop_all_symbol)
-    if tagged_list(exp, shfn_s): return compile_shfn(exp, target, linkage, cenv, pop_all_symbol)
+    if tagged_list(exp, bracket_s): return compile_shfn(exp, target, linkage, cenv, pop_all_symbol)
     if tagged_list(exp, obj_s): return compile_obj(exp, target, linkage, cenv, pop_all_symbol)
     if tagged_list(exp, sobj_s): return compile_sobj(exp, target, linkage, cenv, pop_all_symbol, **kwargs)
     if tagged_list(exp, do_s): return compile_do(exp, target, linkage, cenv, pop_all_symbol)
@@ -997,7 +997,7 @@ def scan_out_xyz(exp):
     #if tagged_list(exp, load_module_s): return nil
     if tagged_list(exp, if_s): return scan_out_xyz_if(exp)
     if tagged_list(exp, fn_s): return scan_out_xyz_obj(fn2obj(exp))
-    if tagged_list(exp, shfn_s): return nil # impossible
+    if tagged_list(exp, bracket_s): return nil # impossible
     if tagged_list(exp, obj_s): return scan_out_xyz_obj(exp)
     if tagged_list(exp, sobj_s): return scan_out_xyz_sobj(exp)
     if tagged_list(exp, do_s): return scan_out_xyz_do(exp)

@@ -185,7 +185,7 @@ class Parser:
             self.match(T.LSQU)
             expr = self.__expr(T.RSQU)
             self.match(T.RSQU)
-            return list(lx.S(':shorthand-fn:'), expr)
+            return list(lx.S('bracket'), expr)
 
         if self.peek == T.QUOTE:
             self.match(T.QUOTE)
