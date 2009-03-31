@@ -861,11 +861,10 @@ class OP_RL(OP):
 
     def verify(self, instrs, labels):
         if self.op is la.name:
-          if self.reg is S('continue'):
-            for name, offs in labels:
-              if name is self.l: break
-            if instrs[offs - 1].op is not backptr.name:
-              raise RuntimeError('error: continue label at %d not preceded by backptr: %s' % (offs, self.l))
+          for name, offs in labels:
+            if name is self.l: break
+          if instrs[offs - 1].op is not backptr.name:
+            raise RuntimeError('error: continue label at %d not preceded by backptr: %s' % (offs, self.l))
 
     def get_body(self, index, labels, datums):
         i = lookup_lab(self.l, labels)
