@@ -36,6 +36,9 @@ static datum busy_base;
 datum busy_top;
 static datum to_base, to_top, to_ptr;
 
+static datum trap_pc, trap_pcb;
+static int trap_pc_done, trap_pcb_done;
+
 static datum become_a = nil, become_b = nil;
 static datum fz_list = (datum) &fz_head.object;
 
@@ -115,6 +118,16 @@ relocate(datum refloc)
 
             case DATUM_FORMAT_OPAQUE:
                 len = (len + 3) / 4;
+
+                if (!trap_pc_done && trap_pc >= p && trap_pc < p + len) {
+                    trap_pc_done = 1;
+                    trap_pc += to_ptr - p;
+                }
+
+                if (!trap_pcb_done && trap_pcb >= p && trap_pcb < p + len) {
+                    trap_pcb_done = 1;
+                    trap_pcb += to_ptr - p;
+                }
 
                 /* fall through */
             case DATUM_FORMAT_RECORD:
@@ -204,6 +217,12 @@ gc(datum *x1, datum *x2)
 #if GC_DEBUG
     prfmt(1, "Start GC\n");
 #endif
+
+    trap_pc = regs[R_PC];
+    trap_pc_done = !(trap_pc >= busy_base && trap_pc < busy_top);
+
+    trap_pcb = saved_regs[R_PC];
+    trap_pcb_done = !(trap_pcb >= busy_base && trap_pcb < busy_top);
 
     to_base = malloc(sizeof(datum) * HEAP_SIZE);
     if (!to_base) die("gc -- out of memory");
@@ -296,6 +315,9 @@ gc(datum *x1, datum *x2)
     busy_ptr = to_ptr;
     busy_top = to_top;
     if (to_ptr >= to_top) die("gc -- no progress");
+
+    regs[R_PC] = trap_pc;
+    saved_regs[R_PC] = trap_pcb;
 
 #if GC_DEBUG
     prfmt(1, "Finish GC\n");
