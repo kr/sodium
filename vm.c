@@ -336,10 +336,12 @@ closure_method2(datum d, datum name1, datum name2)
 
 #define sign_ext_imm(x) (((ssize_t) (I_RRI(x) << 15)) >> 15)
 
+#define pc (regs[R_PC])
+
 void
 start_body(uint *start_addr)
 {
-    register uint *pc, *tmp;
+    register uint *tmp;
     uint ra, rb, rc, rd, di, level;
     int index;
     ssize_t imm;

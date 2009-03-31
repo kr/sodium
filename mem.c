@@ -235,12 +235,14 @@ gc(datum *x1, datum *x2)
     relocate((datum) x2);
     for (i = 0; i < REG_COUNT; ++i) {
         if (i == R_FREE) continue; /* this register doesn't hold a datum */
+        if (i == R_PC) continue; /* this register doesn't hold a datum */
         relocate((datum) &regs[i]);
     }
 
     relocate((datum) &saved_stack);
     for (i = 0; i < REG_COUNT; ++i) {
         if (i == R_FREE) continue; /* this register doesn't hold a datum */
+        if (i == R_PC) continue; /* this register doesn't hold a datum */
         relocate((datum) saved_regs + i);
     }
     relocate((datum) &saved_x1);

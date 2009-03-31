@@ -6,7 +6,7 @@
 #include "mem.h"
 #include "nil.h"
 
-#define REG_COUNT 12
+#define REG_COUNT 13
 /*#define REG_COUNT 32*/
 #define R_NIL 0
 #define R_GLOBAL 1
@@ -20,6 +20,7 @@
 #define R_VM0 9
 #define R_VOID 10
 #define R_FREE 11
+#define R_PC 12
 
 int imep(datum x);
 
