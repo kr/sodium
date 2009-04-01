@@ -200,7 +200,7 @@ class Parser:
         if type == T.NAME:
             return lx.S(lexeme)
         if type == T.STR:
-            return lx.String(unescape(lexeme[1:-1])).setpos(pos)
+            return lx.String(unescape(lexeme[1:-1], pos)).setpos(pos)
         if type == T.DECF:
             return lx.Decimal(lexeme)
         if type == T.HEREDOC:
@@ -213,18 +213,46 @@ class Parser:
         first = parse()
         return cons(first, self.match_loop(parse, *sentinels))
 
-def unescape(s):
+def report_bad_escape(pos, s, i):
+    ex = ReadError('bad escape sequence %s' % s[i:i + 4])
+    report_compile_error(ex, file=pos[0], line=pos[1], char=pos[2] + 1 + i)
+
+def unescape(s, pos):
     i = 0
     l = len(s)
     r = [ ]
     while i < l:
         c = s[i]
-        if c == '\\':
-            i += 1
-            c = tab[s[i]]
-        # TODO octal and hex escape sequnces
-        r.append(c)
         i += 1
+        if c == '\\':
+            if s[i] in '01234567':
+              n = int(s[i])
+              i += 1
+              if i < l and s[i] in '01234567':
+                n = (n << 3) | int(s[i])
+                i += 1
+                if i < l and s[i] in '01234567':
+                  n = (n << 3) | int(s[i])
+                  i += 1
+
+              c = chr(n)
+            elif s[i] == 'x':
+              i += 1
+              if i >= l: report_bad_escape(pos, s, i - 2)
+              if s[i] not in '0123456789abcdef':
+                report_bad_escape(pos, s, i - 2)
+
+              n = int(s[i], 16)
+              i += 1
+              if i < l and s[i] in '0123456789abcdef':
+                n = (n << 4) | int(s[i], 16)
+                i += 1
+
+              c = chr(n)
+            else:
+              c = tab[s[i]]
+              i += 1
+        r.append(c)
     return ''.join(r)
 
 tab = {
