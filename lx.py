@@ -46,6 +46,7 @@ sobj_s = S('sobj')
 do_s = S('do')
 inline_s = S('inline')
 asm_s = S('asm')
+cint_s = S('cint')
 assign_s = S('=')
 def compile(exp, target, linkage, cenv, pop_all_symbol, **kwargs):
   try:
@@ -63,6 +64,7 @@ def compile(exp, target, linkage, cenv, pop_all_symbol, **kwargs):
     if tagged_list(exp, do_s): return compile_do(exp, target, linkage, cenv, pop_all_symbol)
     if tagged_list(exp, inline_s): return compile_inline(exp)
     if tagged_list(exp, return_s): return compile_return(exp, target, linkage, cenv, pop_all_symbol)
+    if tagged_list(exp, cint_s): return compile_cint(exp, target, linkage, cenv, pop_all_symbol)
     if tagged_list2(exp, assign_s): return compile(assign2prefix(exp, set__s), target, linkage, cenv, pop_all_symbol)
     if simple_macrop(exp): return compile(expand_simple_macros(exp),
             target, linkage, cenv, pop_all_symbol)
@@ -156,6 +158,12 @@ def compile_literal(exp, target, linkage, cenv, pop_all_symbol):
                         ir.cons(target, reg, target)),
                     pop_all_symbol)), pop_all_symbol)
   raise CompileError(exp, "Can't compile literal")
+
+def compile_cint(exp, target, linkage, cenv, pop_all_symbol):
+    name = exp.cadr()
+    return end_with_linkage(linkage,
+            make_ir_seq((), (target,), load_cint(target, str(name))),
+            pop_all_symbol)
 
 def compile_quoted(exp, target, linkage, cenv, pop_all_symbol):
     return compile_literal(exp.cadr(), target, linkage, cenv, pop_all_symbol)

@@ -319,6 +319,8 @@ class make_ir_seq:
                     elif symbolp(s.d):
                         real_instrs.append(OP_DATUM_OFFSET(String(s.d.s)))
                         symbol_offsets.append(i)
+                    elif isinstance(s.d, str):
+                        real_instrs.append(PACKED(s.d))
                     else:
                         raise "unsupported data type: %s %r" % (type(s.d), s.d)
                     i += 1
@@ -519,7 +521,13 @@ def bprim(reg, label): return OP_RL(bprim.name, reg, label)
 @reg_instr
 def load_imm(target_reg, val):
     if isinstance(val, String): return load_off(target_reg, val)
+    if not referencable_from_code(val):
+      raise AssemblingError('val cannot be referenced from code: %r' % val)
     return OP_RD(load_imm.name, target_reg, val)
+
+@reg_instr
+def load_cint(target_reg, name):
+    return OP_RD(load_imm.name, target_reg, '((%s) << 1) | 1' % name)
 
 # Three register instructions
 
@@ -878,16 +886,14 @@ class OP_RD(OP):
         OP.__init__(self, op)
         self.reg = r
         self.r = lookup_reg(r)
-        if not referencable_from_code(d):
-            raise AssemblingError('d cannot be referenced from code: %r' % d)
         self.d = d
 
     def get_body(self, index, labels, datums):
-        i = lookup_dat(self.d, datums)
-        return pack((5, self.r), (22, i))
+        return pack((5, self.r), (22, 0))
 
     def se_datums_and_symbols(self):
         if symbolp(self.d): return self.d, String(self.d.s)
+        if isinstance(self.d, str): return ()
         return (self.d,)
 
     def __repr__(self):
