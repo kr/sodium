@@ -117,7 +117,7 @@ relocate(datum refloc)
                 continue;
 
             case DATUM_FORMAT_OPAQUE:
-                len = (len + 3) / 4;
+                len = 1 + len / 4;
 
                 if (!trap_pc_done && trap_pc >= p && trap_pc < p + len) {
                     trap_pc_done = 1;
@@ -276,7 +276,7 @@ gc(datum *x1, datum *x2)
             relocate(np + 1); /* relocate the method table pointer */
             switch (datum_desc_format(descr)) {
                 case DATUM_FORMAT_OPAQUE:
-                    np += (len + 3) / 4 + 2;
+                    np += 3 + len / 4;
                     break;
                 case DATUM_FORMAT_FZ:
                     np += len + 2;
@@ -350,7 +350,7 @@ dalloc(size_t **ptr, size_t **top,
     size_t delta = len + 2;
 
     if (type == DATUM_FORMAT_OPAQUE) {
-        delta = (len + 3 / 4) + 2;
+        delta = 3 + len / 4;
     }
 
     if ((*ptr + delta) >= *top) gc(&x, &y);
@@ -430,8 +430,10 @@ first_reaper()
 datum
 make_opaque(size_t size, datum mtab)
 {
-    return dalloc(&busy_ptr,  &busy_top,
-                  DATUM_FORMAT_OPAQUE, size, mtab, nil, nil);
+    datum x;
+    x = dalloc(&busy_ptr,  &busy_top,
+               DATUM_FORMAT_OPAQUE, size, mtab, nil, nil);
+    return memset(x, 0, (1 + (size / 4)) * 4);
 }
 
 datum
@@ -444,8 +446,10 @@ make_record(size_t len, datum mtab, datum a, datum b)
 datum
 make_opaque_permanent(size_t size, datum mtab)
 {
-    return dalloc(&perm_ptr, &perm_top,
-                  DATUM_FORMAT_OPAQUE, size, mtab, nil, nil);
+    datum x;
+    x = dalloc(&perm_ptr, &perm_top,
+               DATUM_FORMAT_OPAQUE, size, mtab, nil, nil);
+    return memset(x, 0, (1 + (size / 4)) * 4);
 }
 
 datum
