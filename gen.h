@@ -5,10 +5,9 @@
 
 typedef size_t * datum;
 
-#define INT_TAG 0x1
-#define int2datum(x) ((datum) (((x) << 1) | INT_TAG))
+#define int2datum(x) ((datum) (((x) << 1) | 1))
 #define datum2int(d) (((int) (d)) >> 1)
-#define intp(x) (((uint) (x)) & INT_TAG)
+#define intp(x) (((uint) (x)) & 1)
 
 int truep(datum d);
 
