@@ -82,6 +82,29 @@ def int: sobj:
 
   (** x) (error "not implemented")
 
+  inline C (<< shamt) <<end
+    int x, shamt, mask;
+
+    x = datum2int(rcv);
+    shamt = datum2int(n_shamt);
+
+    if (shamt > 31) {
+      return die1("no bigints yet", nil);
+    }
+
+    mask = ~0 << (31 - shamt);
+
+    if (x > 0 && (x & mask)) {
+      return die1("no bigints yet", nil);
+    }
+
+    if (x < 0 && ~(x | ~mask)) {
+      return die1("no bigints yet", nil);
+    }
+
+    return int2datum(x << shamt);
+  end
+
   (str.):
     def upper (self / 10)
     def lower (self % 10)

@@ -2,7 +2,7 @@
 (frozen:0 length:0 assq:1 ==:1 schedule:1 run:1 filter:1 str:0)
 (assq:1 ==:1 run:1 filter:1 length:0 cdr:0 car:0 set-cdr!:1)
 (str:0)
-(frozen:0 str:0 **:1 %:1 /:1 *:1 -:1 +:1 >=:1 <:1 >:1 ==:1 cmp:1)
+(frozen:0 str:0 <<:1 **:1 %:1 /:1 *:1 -:1 +:1 >=:1 <:1 >:1 ==:1 cmp:1)
 (there:0 hi:0)
 (a b c)
 ok
