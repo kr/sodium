@@ -1,0 +1,8 @@
+import syscall
+
+pr syscall.O_RDONLY
+pr syscall.O_WRONLY
+pr syscall.O_RDWR
+pr syscall.O_CREAT
+
+pr (syscall.open "/tmp/no-such-file-i-hope" syscall.O_RDONLY)

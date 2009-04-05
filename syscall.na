@@ -1,0 +1,68 @@
+inline C <<end
+#define _GNU_SOURCE
+#include <unistd.h>
+#include <sys/syscall.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+end
+
+def syscall: obj:
+  inline C (run k args n) <<end
+    int k = datum2int(n_k);
+    unsigned int n = datum2int(n_n);
+    size_t x0, x1, x2;
+
+    if (n == 0) return int2datum(syscall(k));
+
+    x0 = (size_t) car(n_args);
+    if (x0 & 1) x0 >>= 1;
+    n_args = cdr(n_args);
+
+    if (n == 1) return int2datum(syscall(k, x0));
+
+    x1 = (size_t) car(n_args);
+    if (x1 & 1) x1 >>= 1;
+    n_args = cdr(n_args);
+
+    if (n == 2) return int2datum(syscall(k, x0, x1));
+
+    x2 = (size_t) car(n_args);
+    if (x2 & 1) x2 >>= 1;
+    n_args = cdr(n_args);
+
+    if (n == 3) return int2datum(syscall(k, x0, x1, x2));
+
+    die("syscall -- too many args");
+    return nil;
+  end
+
+def wrapper: obj:
+  (open pathname flags):
+    syscall (cint SYS_open) (list pathname flags) 2
+
+  (open pathname flags mode):
+    syscall (cint SYS_open) (list pathname flags mode) 3
+
+  (O_APPEND.): cint O_APPEND
+  (O_ASYNC.): cint O_ASYNC
+  (O_CLOEXEC.): cint O_CLOEXEC
+  (O_CREAT.): cint O_CREAT
+  (O_DIRECT.): cint O_DIRECT
+  (O_DIRECTORY.): cint O_DIRECTORY
+  (O_EXCL.): cint O_EXCL
+  (O_LARGEFILE.): cint O_LARGEFILE
+  (O_NDELAY.): cint O_NDELAY
+  (O_NOATIME.): cint O_NOATIME
+  (O_NOCTTY.): cint O_NOCTTY
+  (O_NOFOLLOW.): cint O_NOFOLLOW
+  (O_NONBLOCK.): cint O_NONBLOCK
+  (O_RDONLY.): cint O_RDONLY
+  (O_RDWR.): cint O_RDWR
+  (O_SYNC.): cint O_SYNC
+  (O_TRUNC.): cint O_TRUNC
+  (O_WRONLY.): cint O_WRONLY
+
+  (S_IRWXU.): cint S_IRWXU
+
+wrapper

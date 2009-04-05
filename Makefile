@@ -12,6 +12,7 @@ namodules := \
     reaper.na \
     str.na \
     symbol.na \
+    syscall.na \
     tuple.na \
 
 cmodules := vm.c mem.c gen.c prim.c
